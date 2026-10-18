@@ -82,8 +82,9 @@ fullcut/
 │       │   ├── [shopSlug]/   # public booking page per shop
 │       │   ├── dashboard/    # authenticated owner/staff area
 │       │   └── api/          # route handlers, incl. webhooks/stripe, webhooks/twilio
+│       ├── components/ui/    # shadcn/ui components
 │       ├── lib/              # domain logic (booking engine, money, time, messaging)
-│       └── tests/            # Vitest unit tests, Playwright e2e
+│       └── tests/            # unit/ (Vitest), e2e/ (Playwright)
 ├── services/
 │   └── ml/                   # FastAPI scoring service + training pipeline
 ├── supabase/
@@ -100,16 +101,25 @@ Update this section if the real layout differs.
 
 ## Commands
 
-> The repo is not scaffolded yet. These are the intended commands; replace them with the real ones once they exist and keep this section accurate.
+Run from the repository root (Node 24 per `.nvmrc`, pnpm pinned in `package.json`). Root scripts delegate to `apps/web`.
 
 ```bash
 pnpm install                 # install JS dependencies
-pnpm dev                     # run the web app locally
+pnpm dev                     # run the web app locally (http://localhost:3000)
 pnpm lint                    # ESLint
-pnpm typecheck               # tsc --noEmit
-pnpm test                    # Vitest unit tests
-pnpm test:e2e                # Playwright end-to-end tests
+pnpm typecheck               # next typegen && tsc --noEmit
+pnpm test                    # Vitest unit tests (apps/web/tests/unit)
+pnpm test:e2e                # Playwright e2e, desktop + mobile projects (starts `next dev` itself)
 
+pnpm --filter web exec playwright install chromium   # one-time: download the e2e browser
+pnpm --filter web exec shadcn add <component>        # add a shadcn/ui component
+```
+
+CI (`.github/workflows/ci.yml`) runs `pnpm lint`, `pnpm typecheck` and `pnpm test` on pull requests.
+
+> Not available yet (`supabase/` and `services/ml/` do not exist). Intended commands once they do:
+
+```bash
 supabase start               # local Postgres + Auth
 supabase migration new <name>
 supabase db reset            # rebuild local DB from migrations + seed
