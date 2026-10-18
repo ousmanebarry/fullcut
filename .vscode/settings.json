@@ -1,0 +1,24 @@
+{
+	"editor.formatOnSave": false,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit",
+		"source.organizeImports": "never"
+	},
+	"files.insertFinalNewline": true,
+	"files.trimTrailingWhitespace": true,
+	"eslint.workingDirectories": [{ "directory": "apps/web", "changeProcessCWD": true }],
+	"typescript.tsdk": "apps/web/node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"actionButtons": {
+		"defaultColor": "#ffffff",
+		"loadNpmCommands": false,
+		"reloadButton": null,
+		"commands": [
+			{ "name": "$(play) Dev", "color": "#4ade80", "singleInstance": true, "command": "pnpm dev" },
+			{ "name": "$(checklist) Lint", "color": "#facc15", "singleInstance": true, "command": "pnpm lint" },
+			{ "name": "$(symbol-class) Types", "color": "#60a5fa", "singleInstance": true, "command": "pnpm typecheck" },
+			{ "name": "$(beaker) Test", "color": "#c084fc", "singleInstance": true, "command": "pnpm test" },
+			{ "name": "$(browser) E2E", "color": "#fb923c", "singleInstance": true, "command": "pnpm test:e2e" }
+		]
+	}
+}

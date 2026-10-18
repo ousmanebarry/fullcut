@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+		"seunlanlege.action-buttons",
+		"dbaeumer.vscode-eslint",
+		"bradlc.vscode-tailwindcss",
+		"vitest.explorer",
+		"ms-playwright.playwright"
+	]
+}
