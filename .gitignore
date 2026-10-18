@@ -1,0 +1,49 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# build
+dist/
+build/
+
+# testing
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# env files (only .env.example is committed)
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# vercel
+.vercel
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+
+# python (services/ml)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# supabase local
+supabase/.branches/
+supabase/.temp/
