@@ -1,35 +1,31 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-sans",
-  subsets: ["latin"],
+	variable: '--font-sans',
+	subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+	variable: '--font-geist-mono',
+	subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Fullcut",
-  description:
-    "Booking for independent barbers and stylists. Flat price, zero commission.",
+	title: 'Fullcut',
+	description: 'Booking for independent barbers and stylists. Flat price, zero commission.',
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
+	width: 'device-width',
+	initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="flex min-h-full flex-col">{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: LayoutProps<'/'>) {
+	return (
+		<html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+			<body className="flex min-h-full flex-col">{children}</body>
+		</html>
+	);
 }
