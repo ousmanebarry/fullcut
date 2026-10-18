@@ -10,6 +10,7 @@ One-click migration is a key reason a shop switches to Fullcut. Imported history
 ## Do not guess export formats
 
 Competitor export formats differ and change over time. **Do not invent column names.** Before writing a mapper for a platform:
+
 1. Get a real sample export from that platform (ask the human for one), and anonymise it.
 2. Save it as a fixture in `apps/web/tests/fixtures/imports/<platform>/`.
 3. Write the mapper and tests against that fixture.

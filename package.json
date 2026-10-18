@@ -10,6 +10,21 @@
 		"lint": "pnpm --filter web lint",
 		"typecheck": "pnpm --filter web typecheck",
 		"test": "pnpm --filter web test",
-		"test:e2e": "pnpm --filter web test:e2e"
+		"test:e2e": "pnpm --filter web test:e2e",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"prepare": "husky"
+	},
+	"lint-staged": {
+		"apps/web/**/*.{ts,tsx,js,mjs,mts}": [
+			"pnpm --filter web exec eslint --fix --max-warnings=0 --no-warn-ignored",
+			"prettier --write"
+		],
+		"*.{json,css,yml,yaml}": "prettier --write"
+	},
+	"devDependencies": {
+		"husky": "^9.1.7",
+		"lint-staged": "^17.6.0",
+		"prettier": "^3.9.10"
 	}
 }

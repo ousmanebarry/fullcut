@@ -15,10 +15,30 @@
 		"reloadButton": null,
 		"commands": [
 			{ "name": "$(play) Dev", "color": "#4ade80", "singleInstance": true, "command": "pnpm dev" },
-			{ "name": "$(checklist) Lint", "color": "#facc15", "singleInstance": true, "command": "pnpm lint" },
-			{ "name": "$(symbol-class) Types", "color": "#60a5fa", "singleInstance": true, "command": "pnpm typecheck" },
-			{ "name": "$(beaker) Test", "color": "#c084fc", "singleInstance": true, "command": "pnpm test" },
-			{ "name": "$(browser) E2E", "color": "#fb923c", "singleInstance": true, "command": "pnpm test:e2e" }
+			{
+				"name": "$(checklist) Lint",
+				"color": "#facc15",
+				"singleInstance": true,
+				"command": "pnpm lint"
+			},
+			{
+				"name": "$(symbol-class) Types",
+				"color": "#60a5fa",
+				"singleInstance": true,
+				"command": "pnpm typecheck"
+			},
+			{
+				"name": "$(beaker) Test",
+				"color": "#c084fc",
+				"singleInstance": true,
+				"command": "pnpm test"
+			},
+			{
+				"name": "$(browser) E2E",
+				"color": "#fb923c",
+				"singleInstance": true,
+				"command": "pnpm test:e2e"
+			}
 		]
 	}
 }

@@ -34,9 +34,11 @@ Money and messages are where trust is won or lost. Fullcut's pitch is honesty: n
    - checkout expired / payment failed → booking `pending` → `cancelled` (frees the slot)
    - account updated → refresh the shop's onboarding/charges-enabled status
 4. Return 200 quickly. Any slow follow-up work goes to a background job.
+
 - Locally: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
 ### Refunds and cancellation policy
+
 - Each shop sets a policy, e.g. "full refund if cancelled 24 h or more before; deposit kept otherwise". Store it as structured data, not free text.
 - One function decides the refund amount from (policy, booking time, cancellation time). Unit test the boundaries (exactly 24 h, DST weeks).
 - No-show: the deposit is kept per policy; never charge more than the client agreed to.
@@ -49,14 +51,15 @@ Money and messages are where trust is won or lost. Fullcut's pitch is honesty: n
 
 ### Message types
 
-| Type | Examples | Consent |
-|---|---|---|
-| Transactional | Booking confirmation, reminder for a booked appointment, "reply YES to confirm", deposit link, cancellation/reschedule notice | Sent because the client booked; still stop if they opted out of SMS |
-| Marketing | "Who's due" rebooking nudges, promotions, standby offers to non-booked clients | Requires recorded opt-in (`marketing_opt_in`, timestamp, method) and an unsubscribe instruction |
+| Type          | Examples                                                                                                                      | Consent                                                                                         |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Transactional | Booking confirmation, reminder for a booked appointment, "reply YES to confirm", deposit link, cancellation/reschedule notice | Sent because the client booked; still stop if they opted out of SMS                             |
+| Marketing     | "Who's due" rebooking nudges, promotions, standby offers to non-booked clients                                                | Requires recorded opt-in (`marketing_opt_in`, timestamp, method) and an unsubscribe instruction |
 
 Fullcut starts in Canada, where commercial electronic messages fall under CASL (consent, sender identification, unsubscribe mechanism). Treat rebooking nudges as marketing. This is guidance, not legal advice; confirm requirements before launch.
 
 ### Rules
+
 - **Opt-out:** inbound `STOP` (and common variants) sets `clients.sms_opted_out = true` immediately and suppresses all further texts to that number for that shop. `START` re-subscribes.
 - **Quiet hours:** no texts between 21:00 and 09:00 in the shop's timezone. Messages scheduled inside quiet hours move to 09:00.
 - **Frequency caps:** at most one marketing message per client per 14 days per shop (configurable, never unlimited).

@@ -129,6 +129,7 @@ create table public.webhook_events (            -- idempotency for Stripe/Twilio
 ```
 
 Notes:
+
 - `blocked_until` is computed in the app: `timestamptz + interval` is not immutable, so it cannot live in a generated column. The `tstzrange` constructor is immutable, so `during` can.
 - The exclusion constraint only covers `pending` and `confirmed`. Cancelled, completed and no-show bookings never block the calendar; an expired hold stops blocking as soon as its status changes (see `fullcut-booking-engine`).
 - `[)` (half-open) ranges mean a booking ending at 10:00 and one starting at 10:00 do not overlap.
@@ -169,6 +170,7 @@ Owner-only actions (billing, deleting staff, changing deposit policy, exports) n
 ## Public (anonymous) access
 
 Clients booking on the public page are not logged in. Do **not** grant the `anon` role direct read access to `bookings` or `clients`.
+
 - Availability is computed on the server and only free slots are returned — never other clients' names or booking details.
 - Creating a booking happens in a server route handler that uses the service role, validates input with zod, derives `shop_id` from the URL slug on the server, and inserts.
 - Public shop info (name, services, prices) is exposed through a narrow view or server route, never by opening up the base tables.
@@ -180,6 +182,7 @@ Any new table holding shop data must be included in the CSV export feature, in t
 ## Writing an RLS test
 
 For each tenant table, a test should:
+
 1. Create two shops, each with one owner user.
 2. Insert a row for each shop (as service role).
 3. As shop A's user: selecting returns only shop A's row; inserting with `shop_id = B` fails; updating or deleting shop B's row affects 0 rows.

@@ -25,9 +25,11 @@ services/ml/
 ## 1. No-show risk model
 
 ### Label
+
 `no_show = 1` if a booking's final status is `no_show`; `0` if `completed`. Exclude `cancelled` bookings from the label set (model late cancellations separately later if needed).
 
 ### Features (computed as of booking/scoring time)
+
 - Lead time (hours between booking creation and appointment)
 - Client history: prior bookings, prior no-shows, prior late cancellations, no-show rate with smoothing (e.g. Bayesian average toward the shop's base rate), days since last visit
 - First visit vs. returning
@@ -37,21 +39,24 @@ services/ml/
 - Whether the client replied to a confirmation request (for re-scoring closer to the appointment)
 - Optionally weather forecast for the appointment time
 
-**No leakage:** every feature must use only information available at the moment of scoring. Client history counts only bookings that finished *before* the booking being scored. Write a test that builds features for a booking and asserts no later data was used.
+**No leakage:** every feature must use only information available at the moment of scoring. Client history counts only bookings that finished _before_ the booking being scored. Write a test that builds features for a booking and asserts no later data was used.
 
 ### Fairness rules (do not relax without asking the human)
+
 - Do **not** use: postal code, neighbourhood, distance from the shop, name, age, gender, or anything that is a proxy for them.
 - Cap friction: a client cannot be asked for a deposit by risk alone more than a configurable number of times in a row if they keep showing up; good behaviour must lower their score quickly.
 - The owner can override any tier per booking and disable automated actions entirely.
 - Every score returns plain-language top factors ("3 no-shows in the last 6 visits", "booked 5 weeks ahead") so the owner understands it.
 
 ### Training data
+
 - **Prototype** the pipeline on the public Kaggle "Medical Appointment No Shows" dataset to develop features, evaluation and the serving contract. It is clinic data, not salon data; do not ship weights trained on it to shops as if they were salon-specific.
 - **Production:** train on Fullcut's own completed/no-show labels (pooled across shops, with shop-level base rate as a feature), once enough labelled bookings exist.
 - **Cold start:** shops with little history use a transparent heuristic (e.g. first visit + long lead time + online source → medium) until the model has enough data. The response says which method produced the score.
 - Synthetic data generators are fine for tests and demos, never for reported metrics.
 
 ### Evaluation (required before any model is used)
+
 - **Time-based split** (train on older bookings, test on newer). Never a random split; it leaks the future.
 - Baseline: the client's smoothed historical no-show rate. A model must beat it to ship.
 - Report: ROC AUC, PR AUC, **precision and recall in the top 20% riskiest bookings**, Brier score, and a calibration plot.
@@ -59,7 +64,9 @@ services/ml/
 - Save metrics with the model version. A newly trained model is promoted only if it is not worse than the current one on the same holdout.
 
 ### Risk tiers and actions
+
 Tiers come from the score with shop-configurable thresholds (defaults e.g. low < 0.15 ≤ medium < 0.35 ≤ high). Actions per tier are configured by the shop, e.g.:
+
 - low → normal reminder
 - medium → "reply YES to confirm" text 24 h before
 - high → deposit request (if the shop enables it) and offer a standby spot to the waitlist
@@ -85,6 +92,7 @@ GET /health
 ## 3. "Who's due" rebooking
 
 For each client with at least 3 completed visits at the shop:
+
 - Usual interval = median days between their visits (robust to one odd gap).
 - Due when days since last visit > usual interval × 1.2 (configurable) **and** they have no future booking.
 - Suggest 2–3 open slots that match their usual weekday and time of day.

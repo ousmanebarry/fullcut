@@ -14,6 +14,7 @@ Domain code lives in `apps/web/lib/booking/` as pure functions with no database 
 Inputs: shop timezone, the service (duration, buffer), the staff member(s), a date range, availability rules, time off, and existing active bookings (`pending` + `confirmed`).
 
 Algorithm per staff member per local date:
+
 1. Take that weekday's availability rules (local wall-clock times like 09:00–17:00).
 2. Convert each window to UTC instants **for that specific date** using the shop's IANA timezone and a timezone library. Never apply a fixed offset; offsets change with DST.
 3. Subtract time off and existing bookings' blocked ranges (`starts_at` → `blocked_until`).
@@ -26,11 +27,13 @@ When the client picks "any staff", merge slots across staff and remember which s
 Return only what the client needs: start times. Never return other bookings or client data to the public page.
 
 ### Gap-aware ranking (later feature)
+
 After generating valid slots, a ranking step can order them to reduce dead time, e.g. prefer starts that touch an existing booking edge or leave a remaining gap long enough for the shop's shortest service. Ranking reorders or highlights slots; it never hides a valid slot unless the owner turns on a stricter mode.
 
 ## Creating a booking
 
 Always on the server, in this order:
+
 1. Validate input with zod (service id, staff id, start instant, client name/phone).
 2. Load the service and shop **by the shop slug from the URL**, server-side. Never trust a `shop_id` sent by the browser on public routes.
 3. Recompute `ends_at = starts_at + duration` and `blocked_until = ends_at + buffer` on the server. Never trust times computed by the client.
