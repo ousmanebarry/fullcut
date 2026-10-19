@@ -49,7 +49,10 @@ test.describe('public booking page', () => {
 
 		await chooseService(page);
 		await expect(page.getByRole('radio', { name: 'Anyone' })).toBeChecked();
-		await expect(page.getByRole('button', { name: /, 10:00 AM$/ }).first()).toBeVisible();
+		// The first open day is today, so a fixed time like 10:00 AM may already have passed.
+		await expect(
+			page.getByRole('button', { name: /, \d{1,2}:\d{2} [AP]M$/ }).first(),
+		).toBeVisible();
 		await expectNoAxeViolations(page);
 
 		await chooseTomorrowAt(page, '10:00 AM');
@@ -156,7 +159,7 @@ test.describe('public booking page', () => {
 	});
 
 	test('unknown shops get a not-found page', async ({ page }) => {
-		shop = { slug: '', name: '', staff: [], cleanup: async () => {} };
+		shop = { id: '', slug: '', name: '', staff: [], staffIds: [], cleanup: async () => {} };
 		await page.goto('/no-such-shop-e2e');
 		await expect(
 			page.getByRole('heading', { name: "This booking page isn't available" }),
