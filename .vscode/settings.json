@@ -14,53 +14,67 @@
 		"loadNpmCommands": false,
 		"reloadButton": null,
 		"commands": [
-			{ "name": "$(play) Dev", "color": "#4ade80", "singleInstance": true, "command": "pnpm dev" },
+			{
+				"name": "$(play) Dev",
+				"color": "#4ade80",
+				"singleInstance": true,
+				"tooltip": "Start the web app at http://localhost:3000 (pnpm dev)",
+				"command": "pnpm dev"
+			},
 			{
 				"name": "$(checklist) Lint",
 				"color": "#facc15",
 				"singleInstance": true,
+				"tooltip": "Run ESLint on the web app; warnings fail (pnpm lint)",
 				"command": "pnpm lint"
 			},
 			{
 				"name": "$(symbol-class) Types",
 				"color": "#60a5fa",
 				"singleInstance": true,
+				"tooltip": "Type-check the web app with tsc (pnpm typecheck)",
 				"command": "pnpm typecheck"
 			},
 			{
 				"name": "$(beaker) Test",
 				"color": "#c084fc",
 				"singleInstance": true,
+				"tooltip": "Run the Vitest unit tests; no database needed (pnpm test)",
 				"command": "pnpm test"
 			},
 			{
 				"name": "$(browser) E2E",
 				"color": "#fb923c",
 				"singleInstance": true,
+				"tooltip": "Run the Playwright end-to-end tests on desktop and mobile (pnpm test:e2e)",
 				"command": "pnpm test:e2e"
 			},
 			{
 				"name": "$(database) DB Start",
 				"color": "#2dd4bf",
 				"singleInstance": true,
+				"tooltip": "Start the local Supabase database in Docker; run this first (pnpm db:start)",
 				"command": "pnpm db:start"
 			},
 			{
 				"name": "$(refresh) DB Reset",
 				"color": "#f472b6",
 				"singleInstance": true,
+				"tooltip": "Rebuild the local database from migrations and seed data; erases local changes (pnpm db:reset)",
 				"command": "pnpm db:reset"
 			},
 			{
 				"name": "$(beaker) DB Test",
 				"color": "#a78bfa",
 				"singleInstance": true,
+				"tooltip": "Run the database tests (RLS, constraints) and the double-booking concurrency test (pnpm db:test)",
 				"command": "pnpm db:test"
 			},
 			{
 				"name": "$(debug-stop) DB Stop",
 				"color": "#f87171",
 				"singleInstance": true,
+				"tooltip": "Stop the local Supabase containers; data is kept (pnpm db:stop)",
 				"command": "pnpm db:stop"
 			}
 		]
