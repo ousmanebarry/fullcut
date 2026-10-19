@@ -43,7 +43,8 @@ test('a new owner signs up, sets up their shop and lands on the dashboard', asyn
 	await page.getByRole('button', { name: 'Create my shop' }).click();
 
 	await expect(page).toHaveURL(/\/dashboard$/, NAVIGATION);
-	await expect(page.getByRole('heading', { level: 1, name: shopName })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+	await expect(page.getByRole('banner').getByText(shopName)).toBeVisible();
 
 	await page.goto('/dashboard/settings/services');
 	await expect(page.getByLabel('Name').first()).toHaveValue('Haircut');
