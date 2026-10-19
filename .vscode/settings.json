@@ -38,6 +38,30 @@
 				"color": "#fb923c",
 				"singleInstance": true,
 				"command": "pnpm test:e2e"
+			},
+			{
+				"name": "$(database) DB Start",
+				"color": "#2dd4bf",
+				"singleInstance": true,
+				"command": "pnpm db:start"
+			},
+			{
+				"name": "$(refresh) DB Reset",
+				"color": "#f472b6",
+				"singleInstance": true,
+				"command": "pnpm db:reset"
+			},
+			{
+				"name": "$(beaker) DB Test",
+				"color": "#a78bfa",
+				"singleInstance": true,
+				"command": "pnpm db:test"
+			},
+			{
+				"name": "$(debug-stop) DB Stop",
+				"color": "#f87171",
+				"singleInstance": true,
+				"command": "pnpm db:stop"
 			}
 		]
 	}
