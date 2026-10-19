@@ -7,8 +7,8 @@
 	"files.insertFinalNewline": true,
 	"files.trimTrailingWhitespace": true,
 	"eslint.workingDirectories": [{ "directory": "apps/web", "changeProcessCWD": true }],
-	"typescript.tsdk": "apps/web/node_modules/typescript/lib",
-	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"js/ts.tsdk.path": "apps/web/node_modules/typescript/lib",
+	"js/ts.tsdk.promptToUseWorkspaceVersion": true,
 	"actionButtons": {
 		"defaultColor": "#ffffff",
 		"loadNpmCommands": false,
