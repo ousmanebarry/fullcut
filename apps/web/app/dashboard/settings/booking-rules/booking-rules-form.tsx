@@ -29,6 +29,8 @@ export interface BookingRulesDefaults {
 	slotStepMinutes: number;
 	minLeadMinutes: number;
 	maxHorizonDays: number;
+	cancelCutoffHours: number;
+	maxActiveBookingsPerPhone: number;
 	bookingPageEnabled: boolean;
 }
 
@@ -107,6 +109,24 @@ export function BookingRulesForm({ defaults }: { defaults: BookingRulesDefaults 
 				inputMode="numeric"
 				defaultValue={state.values?.maxHorizonDays ?? String(defaults.maxHorizonDays)}
 				error={errors?.maxHorizonDays}
+			/>
+			<TextField
+				name="cancelCutoffHours"
+				label="Online changes allowed until (hours before)"
+				hint="Clients can cancel or reschedule from their link until this many hours before the start."
+				inputMode="numeric"
+				defaultValue={state.values?.cancelCutoffHours ?? String(defaults.cancelCutoffHours)}
+				error={errors?.cancelCutoffHours}
+			/>
+			<TextField
+				name="maxActiveBookingsPerPhone"
+				label="Upcoming bookings per client"
+				hint="Most upcoming online bookings one phone number can hold at once."
+				inputMode="numeric"
+				defaultValue={
+					state.values?.maxActiveBookingsPerPhone ?? String(defaults.maxActiveBookingsPerPhone)
+				}
+				error={errors?.maxActiveBookingsPerPhone}
 			/>
 			<SubmitButton className="justify-self-start">Save</SubmitButton>
 		</form>

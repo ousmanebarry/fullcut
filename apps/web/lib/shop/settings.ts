@@ -73,6 +73,8 @@ export interface BookingRulesInput {
 	slotStepMinutes: number;
 	minLeadMinutes: number;
 	maxHorizonDays: number;
+	cancelCutoffHours: number;
+	maxActiveBookingsPerPhone: number;
 	bookingPageEnabled: boolean;
 }
 
@@ -88,6 +90,8 @@ export async function updateBookingRules(
 			slot_step_minutes: input.slotStepMinutes,
 			min_lead_minutes: input.minLeadMinutes,
 			max_horizon_days: input.maxHorizonDays,
+			cancel_cutoff_hours: input.cancelCutoffHours,
+			max_active_bookings_per_phone: input.maxActiveBookingsPerPhone,
 			booking_page_enabled: input.bookingPageEnabled,
 		})
 		.eq('id', actor.shopId)

@@ -1,9 +1,11 @@
 'use server';
 
+import { updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { toUserFacingError } from '@/lib/db/errors';
 import { failure, fieldErrorsFrom, type FormState } from '@/lib/forms';
+import { publicShopTag } from '@/lib/public-booking/cached';
 import { onboardingSchema, toOnboardPayload } from '@/lib/shop/schemas';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -36,5 +38,6 @@ export async function completeOnboarding(_prev: FormState, formData: FormData): 
 		);
 	}
 
+	updateTag(publicShopTag.slug(parsed.data.shop.slug));
 	redirect('/dashboard');
 }
