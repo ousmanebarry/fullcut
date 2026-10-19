@@ -1,0 +1,50 @@
+export interface DbErrorLike {
+	code?: string;
+	message?: string;
+}
+
+export interface UserFacingError {
+	field?: string;
+	message: string;
+}
+
+const CONSTRAINT_MESSAGES: Record<string, UserFacingError> = {
+	shops_slug_unique: { field: 'slug', message: 'That link is already taken. Try another.' },
+	shops_slug_format: {
+		field: 'slug',
+		message: 'Use lowercase letters, numbers and single hyphens.',
+	},
+	shops_phone_e164_format: { field: 'phone', message: 'Enter a valid phone number.' },
+	shops_logo_url_https: { field: 'logoUrl', message: 'Use a full https:// link.' },
+	shops_slot_step_valid: { field: 'slotStepMinutes', message: 'Choose a slot step.' },
+	shops_min_lead_valid: { field: 'minLeadMinutes', message: 'Lead time can be at most 7 days.' },
+	shops_max_horizon_valid: { field: 'maxHorizonDays', message: 'Choose between 1 and 365 days.' },
+	services_duration_positive: {
+		field: 'durationMinutes',
+		message: 'Duration must be more than 0.',
+	},
+	services_price_nonnegative: { field: 'price', message: 'Price cannot be negative.' },
+	availability_rules_time_order: { message: 'Start must be before end.' },
+	time_off_time_order: { field: 'endDate', message: 'End must be after start.' },
+};
+
+const RAISED_MESSAGES: Record<string, string> = {
+	onboarding_already_member: 'You already have a shop.',
+	onboarding_no_services: 'Add at least one service.',
+	availability_rules_forbidden: 'You can only change your own hours.',
+	staff_not_found: 'That staff member no longer exists.',
+};
+
+/** Maps a Postgres/PostgREST error to a message safe to show, keyed to a form field where possible. */
+export function toUserFacingError(error: DbErrorLike): UserFacingError {
+	const message = error.message ?? '';
+	const constraint = /constraint "([^"]+)"/.exec(message)?.[1];
+	if (constraint && CONSTRAINT_MESSAGES[constraint]) return CONSTRAINT_MESSAGES[constraint];
+
+	const raised = RAISED_MESSAGES[message];
+	if (raised) return { message: raised };
+
+	if (error.code === '42501') return { message: "You don't have permission to do that." };
+	if (error.code === '23503') return { message: 'That item no longer exists.' };
+	return { message: 'Something went wrong. Try again.' };
+}
