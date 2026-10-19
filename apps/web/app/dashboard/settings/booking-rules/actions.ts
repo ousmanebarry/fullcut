@@ -19,6 +19,8 @@ export async function saveBookingRules(_prev: FormState, formData: FormData): Pr
 		slotStepMinutes: textField(formData, 'slotStepMinutes'),
 		minLeadMinutes: textField(formData, 'minLeadMinutes'),
 		maxHorizonDays: textField(formData, 'maxHorizonDays'),
+		cancelCutoffHours: textField(formData, 'cancelCutoffHours'),
+		maxActiveBookingsPerPhone: textField(formData, 'maxActiveBookingsPerPhone'),
 		bookingPageEnabled: checkboxField(formData, 'bookingPageEnabled'),
 	});
 	if (!parsed.success)

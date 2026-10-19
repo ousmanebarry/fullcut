@@ -6,6 +6,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./', import.meta.url)),
+			'server-only': fileURLToPath(new URL('./tests/db/server-only-stub.ts', import.meta.url)),
 		},
 	},
 	test: {

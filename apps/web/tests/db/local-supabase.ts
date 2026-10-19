@@ -11,7 +11,26 @@ export function localSupabaseApi(): { url: string; publishableKey: string } {
 	const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 	const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 	if (url && publishableKey) return { url, publishableKey };
+	const status = supabaseStatus();
+	return { url: status.url, publishableKey: status.publishableKey };
+}
 
+/** Points the app's env (lib/env.ts) at the local stack so server code can run in tests. */
+export function useLocalSupabaseEnv(): void {
+	if (
+		process.env.NEXT_PUBLIC_SUPABASE_URL &&
+		process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY &&
+		process.env.SUPABASE_SECRET_KEY
+	) {
+		return;
+	}
+	const status = supabaseStatus();
+	process.env.NEXT_PUBLIC_SUPABASE_URL = status.url;
+	process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = status.publishableKey;
+	process.env.SUPABASE_SECRET_KEY = status.secretKey;
+}
+
+function supabaseStatus(): { url: string; publishableKey: string; secretKey: string } {
 	const output = execSync('pnpm exec supabase status -o env', {
 		cwd: repoRoot,
 		encoding: 'utf8',
@@ -24,6 +43,9 @@ export function localSupabaseApi(): { url: string; publishableKey: string } {
 	}
 	const apiUrl = vars.get('API_URL');
 	const key = vars.get('PUBLISHABLE_KEY');
-	if (!apiUrl || !key) throw new Error('Local Supabase is not running (`pnpm db:start`).');
-	return { url: apiUrl, publishableKey: key };
+	const secretKey = vars.get('SECRET_KEY');
+	if (!apiUrl || !key || !secretKey) {
+		throw new Error('Local Supabase is not running (`pnpm db:start`).');
+	}
+	return { url: apiUrl, publishableKey: key, secretKey };
 }

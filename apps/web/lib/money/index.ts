@@ -21,9 +21,8 @@ export function centsToDollarInput(cents: number): string {
 	return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, '0')}`;
 }
 
-export function formatCents(cents: number, currency: string, locale = 'en-CA'): string {
-	return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100);
-}
+// Lives in its own module so client components can format prices without pulling in zod.
+export { formatCents } from './format';
 
 export const dollarsToCentsSchema = z.string().transform((value, ctx) => {
 	const cents = parseDollarsToCents(value);

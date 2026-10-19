@@ -3,7 +3,7 @@
 import { failure, fieldErrorsFrom, formValues, textField, type FormState } from '@/lib/forms';
 import { shopProfileSchema } from '@/lib/shop/schemas';
 import { updateShopProfile } from '@/lib/shop/settings';
-import { settingsActionContext, toFormState } from '../_lib/action';
+import { expirePublicShop, settingsActionContext, toFormState } from '../_lib/action';
 
 export async function saveShopProfile(_prev: FormState, formData: FormData): Promise<FormState> {
 	const { actor, db } = await settingsActionContext();
@@ -21,9 +21,8 @@ export async function saveShopProfile(_prev: FormState, formData: FormData): Pro
 	if (!parsed.success)
 		return failure('Check the highlighted fields.', fieldErrorsFrom(parsed.error), values);
 
-	return toFormState(
-		await updateShopProfile(db, actor, parsed.data),
-		'Shop details saved.',
-		values,
-	);
+	const result = await updateShopProfile(db, actor, parsed.data);
+	// A new slug may have a cached "not found" from before it existed.
+	if (result.ok) await expirePublicShop(parsed.data.slug);
+	return toFormState(result, 'Shop details saved.', values);
 }

@@ -117,6 +117,40 @@ export function formatSlotLabel(instant: Instant, zone: TimeZone): string {
 	return local.toFormat(ambiguous ? 'ccc, LLL d, h:mm a ZZZZ' : 'ccc, LLL d, h:mm a');
 }
 
+/** e.g. `9:00 AM`; adds the zone abbreviation only when the wall time occurs twice. */
+export function formatLocalTime(instant: Instant, zone: TimeZone): string {
+	const local = DateTime.fromMillis(instant, { zone, locale: 'en-US' });
+	const ambiguous = local.getPossibleOffsets().length > 1;
+	return local.toFormat(ambiguous ? 'h:mm a ZZZZ' : 'h:mm a');
+}
+
+/** e.g. `Tuesday, October 20, 2026 at 9:00 AM EDT`. */
+export function formatLongDateTime(instant: Instant, zone: TimeZone): string {
+	return DateTime.fromMillis(instant, { zone, locale: 'en-US' }).toFormat(
+		"cccc, LLLL d, yyyy 'at' h:mm a ZZZZ",
+	);
+}
+
+/** Weekday, day and month parts for a day picker, e.g. `{ weekday: 'Tue', day: '20', month: 'Oct' }`. */
+export function localDateParts(date: LocalDate): { weekday: string; day: string; month: string } {
+	const day = utcDate(date).setLocale('en-US');
+	return { weekday: day.toFormat('ccc'), day: day.toFormat('d'), month: day.toFormat('LLL') };
+}
+
+export function plusDays(date: LocalDate, days: number): LocalDate {
+	return utcDate(date).plus({ days }).toFormat('yyyy-MM-dd') as LocalDate;
+}
+
+/** Whole calendar days from `from` to `to` (negative when `to` is earlier). */
+export function daysBetween(from: LocalDate, to: LocalDate): number {
+	return Math.round(utcDate(to).diff(utcDate(from), 'days').days);
+}
+
+/** Long zone name at `instant`, e.g. `Eastern Daylight Time`. */
+export function zoneLongName(instant: Instant, zone: TimeZone): string {
+	return DateTime.fromMillis(instant, { zone, locale: 'en-US' }).toFormat('ZZZZZ');
+}
+
 function utcDate(date: LocalDate): DateTime {
 	return DateTime.fromISO(date, { zone: 'utc' });
 }

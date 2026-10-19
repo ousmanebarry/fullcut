@@ -7,6 +7,11 @@ insert into public.shops (id, name, slug, timezone, currency) values
   ('10000000-0000-4000-8000-000000000001', 'Demo Barbers', 'demo-barbers', 'America/Toronto', 'CAD'),
   ('10000000-0000-4000-8000-000000000002', 'Other Shop',   'other-shop',   'America/Toronto', 'CAD');
 
+update public.shops
+set about_text = 'Classic cuts, skin fades and beard work. Walk-ins welcome when the chairs are free.',
+    address = '123 Example Street, Toronto, ON'
+where id = '10000000-0000-4000-8000-000000000001';
+
 -- Logins: two owners and one staff-role member (local only) ------------------
 
 insert into auth.users (

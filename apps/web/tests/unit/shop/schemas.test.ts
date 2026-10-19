@@ -134,35 +134,41 @@ describe('shopProfileSchema', () => {
 });
 
 describe('bookingRulesSchema', () => {
+	const valid = {
+		slotStepMinutes: '15',
+		minLeadMinutes: '120',
+		maxHorizonDays: '60',
+		cancelCutoffHours: '2',
+		maxActiveBookingsPerPhone: '3',
+		bookingPageEnabled: true,
+	};
+
 	it('coerces form strings and checks ranges', () => {
-		expect(
-			bookingRulesSchema.parse({
-				slotStepMinutes: '15',
-				minLeadMinutes: '120',
-				maxHorizonDays: '60',
-				bookingPageEnabled: true,
-			}),
-		).toEqual({
+		expect(bookingRulesSchema.parse(valid)).toEqual({
 			slotStepMinutes: 15,
 			minLeadMinutes: 120,
 			maxHorizonDays: 60,
+			cancelCutoffHours: 2,
+			maxActiveBookingsPerPhone: 3,
 			bookingPageEnabled: true,
 		});
+		expect(bookingRulesSchema.safeParse({ ...valid, slotStepMinutes: '7' }).success).toBe(false);
+		expect(bookingRulesSchema.safeParse({ ...valid, maxHorizonDays: '366' }).success).toBe(false);
+	});
+
+	it('bounds the cancel cutoff and per-phone cap', () => {
+		expect(bookingRulesSchema.safeParse({ ...valid, cancelCutoffHours: '0' }).success).toBe(true);
+		expect(bookingRulesSchema.safeParse({ ...valid, cancelCutoffHours: '169' }).success).toBe(
+			false,
+		);
+		expect(bookingRulesSchema.safeParse({ ...valid, cancelCutoffHours: '1.5' }).success).toBe(
+			false,
+		);
+		expect(bookingRulesSchema.safeParse({ ...valid, maxActiveBookingsPerPhone: '0' }).success).toBe(
+			false,
+		);
 		expect(
-			bookingRulesSchema.safeParse({
-				slotStepMinutes: '7',
-				minLeadMinutes: '0',
-				maxHorizonDays: '60',
-				bookingPageEnabled: true,
-			}).success,
-		).toBe(false);
-		expect(
-			bookingRulesSchema.safeParse({
-				slotStepMinutes: '15',
-				minLeadMinutes: '0',
-				maxHorizonDays: '366',
-				bookingPageEnabled: true,
-			}).success,
+			bookingRulesSchema.safeParse({ ...valid, maxActiveBookingsPerPhone: '21' }).success,
 		).toBe(false);
 	});
 });

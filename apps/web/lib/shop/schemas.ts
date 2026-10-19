@@ -148,6 +148,16 @@ export const bookingRulesSchema = z.object({
 		.int({ error: 'Enter whole days.' })
 		.min(1, { error: 'Allow booking at least 1 day ahead.' })
 		.max(365, { error: 'Allow booking at most 365 days ahead.' }),
+	cancelCutoffHours: z.coerce
+		.number({ error: 'Enter a number of hours.' })
+		.int({ error: 'Enter whole hours.' })
+		.min(0, { error: 'Use 0 or more hours.' })
+		.max(168, { error: 'Use at most 168 hours (7 days).' }),
+	maxActiveBookingsPerPhone: z.coerce
+		.number({ error: 'Enter a number of bookings.' })
+		.int({ error: 'Enter a whole number.' })
+		.min(1, { error: 'Allow at least 1 booking.' })
+		.max(20, { error: 'Allow at most 20 bookings.' }),
 	bookingPageEnabled: z.boolean(),
 });
 

@@ -19,6 +19,18 @@ const CONSTRAINT_MESSAGES: Record<string, UserFacingError> = {
 	shops_slot_step_valid: { field: 'slotStepMinutes', message: 'Choose a slot step.' },
 	shops_min_lead_valid: { field: 'minLeadMinutes', message: 'Lead time can be at most 7 days.' },
 	shops_max_horizon_valid: { field: 'maxHorizonDays', message: 'Choose between 1 and 365 days.' },
+	shops_cancel_cutoff_valid: {
+		field: 'cancelCutoffHours',
+		message: 'Choose between 0 and 168 hours.',
+	},
+	shops_max_active_bookings_valid: {
+		field: 'maxActiveBookingsPerPhone',
+		message: 'Choose between 1 and 20 bookings.',
+	},
+	bookings_client_notes_length: {
+		field: 'notes',
+		message: 'Keep notes under 500 characters.',
+	},
 	services_duration_positive: {
 		field: 'durationMinutes',
 		message: 'Duration must be more than 0.',
@@ -46,5 +58,7 @@ export function toUserFacingError(error: DbErrorLike): UserFacingError {
 
 	if (error.code === '42501') return { message: "You don't have permission to do that." };
 	if (error.code === '23503') return { message: 'That item no longer exists.' };
+	if (error.code === '23P01') return { message: 'That time was just taken. Pick another.' };
+	if (error.code === 'FC001') return { message: 'This client has too many upcoming bookings.' };
 	return { message: 'Something went wrong. Try again.' };
 }

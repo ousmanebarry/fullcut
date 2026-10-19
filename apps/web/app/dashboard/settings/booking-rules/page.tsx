@@ -24,6 +24,8 @@ async function BookingRules() {
 				slotStepMinutes: shop.slot_step_minutes,
 				minLeadMinutes: shop.min_lead_minutes,
 				maxHorizonDays: shop.max_horizon_days,
+				cancelCutoffHours: shop.cancel_cutoff_hours,
+				maxActiveBookingsPerPhone: shop.max_active_bookings_per_phone,
 				bookingPageEnabled: shop.booking_page_enabled,
 			}}
 		/>
