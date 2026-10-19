@@ -30,20 +30,28 @@ export function NewBookingForm({
 	services: ServiceOption[];
 	staff: StaffOption[];
 	isOwner: boolean;
-	initial: { staffId: string; date: string; time: string };
+	initial: {
+		staffId: string;
+		date: string;
+		time: string;
+		serviceId?: string;
+		client?: ClientMatch | null;
+	};
 	nowTime?: string;
 	onDone: () => void;
 }) {
 	const [source, setSource] = useState<ManualSource>('phone');
-	const [client, setClient] = useState<ClientMatch | null>(null);
+	const [client, setClient] = useState<ClientMatch | null>(initial.client ?? null);
 	const [query, setQuery] = useState('');
 	const [matches, setMatches] = useState<ClientMatch[]>([]);
 	const [name, setName] = useState('');
 	const [phone, setPhone] = useState('');
 	const [notes, setNotes] = useState('');
 	const [when, setWhen] = useState<When>({
-		serviceId: services[0]?.id ?? '',
-		staffId: initial.staffId || (staff[0]?.id ?? ''),
+		serviceId: services.some((s) => s.id === initial.serviceId)
+			? (initial.serviceId ?? '')
+			: (services[0]?.id ?? ''),
+		staffId: staff.some((s) => s.id === initial.staffId) ? initial.staffId : (staff[0]?.id ?? ''),
 		date: initial.date,
 		time: initial.time,
 		overrideHours: false,

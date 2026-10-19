@@ -94,5 +94,7 @@ export const calendarParamsSchema = z.object({
 	booking: idSchema.optional().catch(undefined),
 	new: z.literal('1').optional().catch(undefined),
 	time: localTimeSchema.optional().catch(undefined),
+	client: idSchema.optional().catch(undefined),
+	service: idSchema.optional().catch(undefined),
 });
 export type CalendarParams = z.output<typeof calendarParamsSchema>;

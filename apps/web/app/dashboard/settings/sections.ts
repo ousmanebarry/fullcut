@@ -43,6 +43,12 @@ const SECTIONS: (SettingsSection & { ownerOnly: boolean })[] = [
 		description: 'Slot length, notice and how far ahead',
 		ownerOnly: true,
 	},
+	{
+		href: '/dashboard/settings/export',
+		label: 'Export data',
+		description: 'Download all your shop data as spreadsheets',
+		ownerOnly: true,
+	},
 ];
 
 export function settingsSections(role: ShopRole): SettingsSection[] {
