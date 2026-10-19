@@ -36,11 +36,25 @@
 				"command": "pnpm typecheck"
 			},
 			{
+				"name": "$(paintcan) Format",
+				"color": "#e5e7eb",
+				"singleInstance": true,
+				"tooltip": "Check Prettier formatting across the repo; CI runs this (pnpm format:check)",
+				"command": "pnpm format:check"
+			},
+			{
 				"name": "$(beaker) Test",
 				"color": "#c084fc",
 				"singleInstance": true,
 				"tooltip": "Run the Vitest unit tests; no database needed (pnpm test)",
 				"command": "pnpm test"
+			},
+			{
+				"name": "$(eye) Watch",
+				"color": "#c084fc",
+				"singleInstance": true,
+				"tooltip": "Re-run Vitest unit tests on file changes (pnpm test:watch)",
+				"command": "pnpm test:watch"
 			},
 			{
 				"name": "$(browser) E2E",
