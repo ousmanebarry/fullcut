@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { transitionBooking } from '@/lib/booking/transition-booking';
 import type { BookingEvent, BookingStatus } from '@/lib/booking/types';
-import { at } from './fixtures';
+import { at, toronto } from './fixtures';
 
 const startsAt = at('2026-03-10T14:00:00Z');
 const pendingExpiresAt = at('2026-03-09T12:15:00Z');
@@ -86,5 +86,52 @@ describe('transitionBooking', () => {
 				later,
 			).ok,
 		).toBe(false);
+	});
+
+	describe('undoOutcome', () => {
+		// 2026-11-01 is the fall-back day in Toronto: local midnight is 04:00Z before, 05:00Z after.
+		const markedAt = at('2026-11-01T14:00:00Z');
+		const outcome = (status: BookingStatus) => ({
+			status,
+			startsAt: at('2026-11-01T13:00:00Z'),
+			pendingExpiresAt: null,
+			outcomeMarkedAt: markedAt,
+		});
+
+		it.each(['completed', 'no_show'] as const)(
+			'returns %s to confirmed until the end of that shop-local day',
+			(status) => {
+				const lastMinute = at('2026-11-02T04:59:00Z');
+				expect(transitionBooking(outcome(status), 'undoOutcome', lastMinute, toronto)).toEqual({
+					ok: true,
+					value: 'confirmed',
+				});
+				expect(
+					transitionBooking(outcome(status), 'undoOutcome', at('2026-11-02T05:00:00Z'), toronto),
+				).toEqual({ ok: false, error: { code: 'undo_window_passed' } });
+			},
+		);
+
+		it('needs the marked time and the shop zone', () => {
+			const now = at('2026-11-01T15:00:00Z');
+			expect(transitionBooking(outcome('completed'), 'undoOutcome', now).ok).toBe(false);
+			expect(
+				transitionBooking(
+					{ ...outcome('completed'), outcomeMarkedAt: null },
+					'undoOutcome',
+					now,
+					toronto,
+				).ok,
+			).toBe(false);
+		});
+
+		it.each(['pending', 'confirmed', 'cancelled'] as const)('is not allowed from %s', (status) => {
+			expect(
+				transitionBooking(outcome(status), 'undoOutcome', at('2026-11-01T15:00:00Z'), toronto),
+			).toEqual({
+				ok: false,
+				error: { code: 'invalid_transition', from: status, event: 'undoOutcome' },
+			});
+		});
 	});
 });
