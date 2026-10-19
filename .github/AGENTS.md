@@ -86,6 +86,8 @@ fullcut/
 │       │   ├── dashboard/    # authenticated owner/staff area (settings/ for shop setup)
 │       │   └── api/          # route handlers, incl. webhooks/stripe, webhooks/twilio
 │       ├── proxy.ts          # session refresh + signed-in/out redirects (Next 16 "middleware")
+│       ├── next.config.ts    # security headers (CSP etc.)
+│       ├── public/           # sw.js (static-asset + offline-page cache only), offline.html
 │       ├── components/ui/    # shadcn/ui components
 │       ├── lib/              # domain logic (auth, booking engine, public booking, dashboard, clients, export, money, shop settings, supabase clients, time)
 │       └── tests/            # unit/ (Vitest), db/ (Vitest against local Supabase), e2e/ (Playwright)
@@ -126,7 +128,9 @@ pnpm db:types                # regenerate + format apps/web/lib/database.types.t
 pnpm exec supabase migration new <name>
 ```
 
-CI (`.github/workflows/ci.yml`) runs `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` and a build on pull requests, plus a separate `database` job (`supabase start`, `db:reset`, `db:test`).
+CI (`.github/workflows/ci.yml`) runs `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, a build and the client-bundle secret scan (`pnpm --filter web check:bundle`) on pull requests, plus a `database` job (`supabase start`, `db:reset`, `db:test`) and an `e2e` job (Playwright against `next build` + `next start`, with `DEMO_*` set so the demo spec runs).
+
+Deploys (`.github/workflows/deploy.yml`, on push to `main`): CI again → `supabase db push` to staging → approval → `supabase db push` to production → `vercel build` / `vercel deploy --prebuilt --prod`. Migrations ship before code, so they must work with the previous app version. See `docs/adr/0007-deployment-and-demo-shop.md` for headers, the PWA service worker rules and the demo shop.
 
 > Not available yet (`services/ml/` does not exist). Intended commands once it does:
 
@@ -152,6 +156,7 @@ Breaking any of these is a serious bug. Tests must cover each one.
 7. **Secrets.** The Supabase service-role key, Stripe secret key and Twilio auth token are server-only. Never put them in `NEXT_PUBLIC_*` variables, client components or logs.
 8. **Messaging consent.** Transactional messages (confirmations, reminders for a booked appointment) are separate from marketing messages (rebooking nudges, promotions). Marketing messages require recorded opt-in consent and an unsubscribe path. Respect STOP replies immediately. Respect quiet hours in the shop's timezone.
 9. **ML never blocks.** Scoring is called with a short timeout; on failure the booking proceeds with `risk_score = null` and default (non-friction) handling.
+10. **Demo shop.** The shop where `public.is_demo_shop(shop_id)` is true is public and reset nightly: never send real SMS/email or take payments for it.
 
 ---
 
