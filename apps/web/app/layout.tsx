@@ -14,12 +14,19 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
 	title: 'Fullcut',
+	applicationName: 'Fullcut',
 	description: 'Booking for independent barbers and stylists. Flat price, zero commission.',
+	appleWebApp: {
+		capable: true,
+		title: 'Fullcut',
+		statusBarStyle: 'default',
+	},
 };
 
 export const viewport: Viewport = {
 	width: 'device-width',
 	initialScale: 1,
+	themeColor: '#ffffff',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
