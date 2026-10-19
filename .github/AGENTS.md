@@ -87,7 +87,7 @@ fullcut/
 │       │   └── api/          # route handlers, incl. webhooks/stripe, webhooks/twilio
 │       ├── proxy.ts          # session refresh + signed-in/out redirects (Next 16 "middleware")
 │       ├── components/ui/    # shadcn/ui components
-│       ├── lib/              # domain logic (auth, booking engine, public booking, money, shop settings, supabase clients, time)
+│       ├── lib/              # domain logic (auth, booking engine, public booking, dashboard, clients, export, money, shop settings, supabase clients, time)
 │       └── tests/            # unit/ (Vitest), db/ (Vitest against local Supabase), e2e/ (Playwright)
 ├── services/
 │   └── ml/                   # FastAPI scoring service + training pipeline
