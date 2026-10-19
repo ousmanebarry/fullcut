@@ -66,7 +66,7 @@ type ShopRow = {
 	cancel_cutoff_hours: number;
 };
 
-function toBookingShop(row: ShopRow): BookingShop {
+export function toBookingShop(row: ShopRow): BookingShop {
 	const zone = timeZone(row.timezone);
 	return {
 		id: row.id,
