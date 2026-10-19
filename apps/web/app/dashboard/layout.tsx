@@ -9,6 +9,7 @@ import { requireShopMember } from '@/lib/auth/session';
 const NAV = [
 	{ href: '/dashboard', label: 'Today' },
 	{ href: '/dashboard/calendar', label: 'Calendar' },
+	{ href: '/dashboard/clients', label: 'Clients' },
 	{ href: '/dashboard/settings', label: 'Settings' },
 ];
 

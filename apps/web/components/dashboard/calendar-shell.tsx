@@ -13,6 +13,7 @@ import {
 	SheetTitle,
 } from '@/components/ui/sheet';
 import type { LayoutColumn } from '@/lib/dashboard/calendar-layout';
+import type { ClientMatch } from '@/lib/dashboard/types';
 import type { CalendarModel } from '@/lib/dashboard/views';
 import { cn } from '@/lib/utils';
 import { BookingDetails } from './booking-details';
@@ -21,9 +22,17 @@ import { NewBookingForm } from './new-booking-form';
 import { minuteToTime, useNow, zonedMinuteOfDay } from './use-now';
 
 const PATH = '/dashboard/calendar';
-const DRAWER_PARAMS = ['booking', 'new', 'time'];
+const DRAWER_PARAMS = ['booking', 'new', 'time', 'client', 'service'];
 
-export function CalendarShell({ model, isOwner }: { model: CalendarModel; isOwner: boolean }) {
+export function CalendarShell({
+	model,
+	isOwner,
+	prefillClient = null,
+}: {
+	model: CalendarModel;
+	isOwner: boolean;
+	prefillClient?: ClientMatch | null;
+}) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const now = useNow();
@@ -69,6 +78,11 @@ export function CalendarShell({ model, isOwner }: { model: CalendarModel; isOwne
 		staffId: (isNew && staffParam) || phoneStaffId || '',
 		date: (isNew && searchParams.get('date')) || model.date,
 		time: (isNew && searchParams.get('time')) || '',
+		serviceId: (isNew && searchParams.get('service')) || '',
+		client:
+			isNew && prefillClient && searchParams.get('client') === prefillClient.id
+				? prefillClient
+				: null,
 	};
 
 	return (
@@ -222,7 +236,7 @@ export function CalendarShell({ model, isOwner }: { model: CalendarModel; isOwne
 					<div className="px-4 pb-6">
 						{isNew ? (
 							<NewBookingForm
-								key={`${newInitial.staffId}|${newInitial.date}|${newInitial.time}`}
+								key={`${newInitial.staffId}|${newInitial.date}|${newInitial.time}|${newInitial.client?.id ?? ''}`}
 								services={model.services}
 								staff={model.staff}
 								isOwner={isOwner}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { CalendarShell } from '@/components/dashboard/calendar-shell';
 import { requireShopMember, toActor } from '@/lib/auth/session';
+import { loadClientMatch } from '@/lib/dashboard/queries';
 import { calendarParamsSchema } from '@/lib/dashboard/schemas';
 import { currentInstant, loadCalendar } from '@/lib/dashboard/views';
 import { toBookingShop } from '@/lib/public-booking/data';
@@ -31,12 +32,11 @@ async function Calendar({
 		),
 	);
 	const db = await createClient();
-	const model = await loadCalendar(
-		db,
-		toBookingShop(ctx.shop),
-		toActor(ctx),
-		params,
-		currentInstant(),
+	const [model, prefillClient] = await Promise.all([
+		loadCalendar(db, toBookingShop(ctx.shop), toActor(ctx), params, currentInstant()),
+		params.new && params.client ? loadClientMatch(db, ctx.shop.id, params.client) : null,
+	]);
+	return (
+		<CalendarShell model={model} isOwner={ctx.role === 'owner'} prefillClient={prefillClient} />
 	);
-	return <CalendarShell model={model} isOwner={ctx.role === 'owner'} />;
 }
