@@ -113,18 +113,20 @@ pnpm test:e2e                # Playwright e2e, desktop + mobile projects (starts
 
 pnpm --filter web exec playwright install chromium   # one-time: download the e2e browser
 pnpm --filter web exec shadcn add <component>        # add a shadcn/ui component
+
+pnpm db:start                # local Supabase via Docker (ports 553xx; Studio http://127.0.0.1:55323)
+pnpm db:stop
+pnpm db:reset                # rebuild local DB from migrations + seed
+pnpm db:test                 # pgTAP tests (supabase/tests) + concurrency test (apps/web/tests/db)
+pnpm db:types                # regenerate + format apps/web/lib/database.types.ts
+pnpm exec supabase migration new <name>
 ```
 
-CI (`.github/workflows/ci.yml`) runs `pnpm lint`, `pnpm typecheck` and `pnpm test` on pull requests.
+CI (`.github/workflows/ci.yml`) runs `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` and a build on pull requests, plus a separate `database` job (`supabase start`, `db:reset`, `db:test`).
 
-> Not available yet (`supabase/` and `services/ml/` do not exist). Intended commands once they do:
+> Not available yet (`services/ml/` does not exist). Intended commands once it does:
 
 ```bash
-supabase start               # local Postgres + Auth
-supabase migration new <name>
-supabase db reset            # rebuild local DB from migrations + seed
-supabase gen types typescript --local > apps/web/lib/database.types.ts
-
 cd services/ml && uv run pytest        # ML tests
 cd services/ml && uv run fastapi dev   # run scoring service locally
 

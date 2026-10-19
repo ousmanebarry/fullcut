@@ -5,7 +5,7 @@ Each file in this folder is a self-contained spec an agent can plan and implemen
 | # | Milestone | Depends on | Main skills |
 |---|---|---|---|
 | 01 | Scaffold (done) | — | — |
-| 02 | [Database foundation](02-database.md) | 01 | data-and-tenancy |
+| 02 | [Database foundation](02-database.md) (done) | 01 | data-and-tenancy |
 | 03 | [Booking engine (pure logic)](03-booking-engine.md) | 02 | booking-engine |
 | 04 | [Auth and shop setup](04-auth-and-shop-setup.md) | 02, 03 | data-and-tenancy |
 | 05 | [Public booking page](05-public-booking-page.md) | 03, 04 | booking-engine |
