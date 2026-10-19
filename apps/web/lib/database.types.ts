@@ -227,6 +227,7 @@ export type Database = {
 					name: string;
 					price_cents: number;
 					shop_id: string;
+					sort_order: number;
 					updated_at: string;
 				};
 				ComputedFields: never;
@@ -240,6 +241,7 @@ export type Database = {
 					name: string;
 					price_cents: number;
 					shop_id: string;
+					sort_order?: number;
 					updated_at?: string;
 				};
 				Update: {
@@ -252,6 +254,7 @@ export type Database = {
 					name?: string;
 					price_cents?: number;
 					shop_id?: string;
+					sort_order?: number;
 					updated_at?: string;
 				};
 				Relationships: [
@@ -306,29 +309,53 @@ export type Database = {
 			};
 			shops: {
 				Row: {
+					about_text: string | null;
+					address: string | null;
+					booking_page_enabled: boolean;
 					created_at: string;
 					currency: string;
 					id: string;
+					logo_url: string | null;
+					max_horizon_days: number;
+					min_lead_minutes: number;
 					name: string;
+					phone: string | null;
+					slot_step_minutes: number;
 					slug: string;
 					timezone: string;
 					updated_at: string;
 				};
 				ComputedFields: never;
 				Insert: {
+					about_text?: string | null;
+					address?: string | null;
+					booking_page_enabled?: boolean;
 					created_at?: string;
 					currency?: string;
 					id?: string;
+					logo_url?: string | null;
+					max_horizon_days?: number;
+					min_lead_minutes?: number;
 					name: string;
+					phone?: string | null;
+					slot_step_minutes?: number;
 					slug: string;
 					timezone: string;
 					updated_at?: string;
 				};
 				Update: {
+					about_text?: string | null;
+					address?: string | null;
+					booking_page_enabled?: boolean;
 					created_at?: string;
 					currency?: string;
 					id?: string;
+					logo_url?: string | null;
+					max_horizon_days?: number;
+					min_lead_minutes?: number;
 					name?: string;
+					phone?: string | null;
+					slot_step_minutes?: number;
 					slug?: string;
 					timezone?: string;
 					updated_at?: string;
@@ -441,8 +468,18 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Functions: {
+			is_own_staff: { Args: { p_shop_id: string; p_staff_id: string }; Returns: boolean };
 			is_shop_member: { Args: { p_shop_id: string }; Returns: boolean };
 			is_shop_owner: { Args: { p_shop_id: string }; Returns: boolean };
+			onboard_shop: { Args: { p_payload: Json; p_user_id: string }; Returns: string };
+			reorder_services: {
+				Args: { p_service_ids: string[]; p_shop_id: string };
+				Returns: undefined;
+			};
+			replace_availability_rules: {
+				Args: { p_rules: Json; p_staff_id: string };
+				Returns: undefined;
+			};
 		};
 		Enums: {
 			[_ in never]: never;
