@@ -31,6 +31,10 @@ const CONSTRAINT_MESSAGES: Record<string, UserFacingError> = {
 		field: 'notes',
 		message: 'Keep notes under 500 characters.',
 	},
+	clients_shop_phone_unique: { field: 'phone', message: 'Another client already has this number.' },
+	clients_phone_e164_format: { field: 'phone', message: 'Enter a valid phone number.' },
+	clients_email_normalized: { field: 'email', message: 'Enter a valid email address.' },
+	client_notes_body_length: { field: 'body', message: 'Notes must be 1 to 1000 characters.' },
 	services_duration_positive: {
 		field: 'durationMinutes',
 		message: 'Duration must be more than 0.',
@@ -45,6 +49,12 @@ const RAISED_MESSAGES: Record<string, string> = {
 	onboarding_no_services: 'Add at least one service.',
 	availability_rules_forbidden: 'You can only change your own hours.',
 	staff_not_found: 'That staff member no longer exists.',
+	client_not_found: 'That client no longer exists.',
+	merge_forbidden: 'Only the shop owner can merge clients.',
+	merge_same_client: 'Choose two different clients.',
+	merge_anonymised_client: 'Deleted clients cannot be merged.',
+	anonymise_forbidden: "Only the shop owner can delete a client's data.",
+	client_has_upcoming_bookings: 'Cancel their upcoming bookings first.',
 };
 
 /** Maps a Postgres/PostgREST error to a message safe to show, keyed to a form field where possible. */

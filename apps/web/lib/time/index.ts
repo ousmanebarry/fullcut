@@ -131,6 +131,16 @@ export function formatLongDateTime(instant: Instant, zone: TimeZone): string {
 	);
 }
 
+/** e.g. `Oct 20, 2026`. */
+export function formatShortDate(instant: Instant, zone: TimeZone): string {
+	return DateTime.fromMillis(instant, { zone, locale: 'en-US' }).toFormat('LLL d, yyyy');
+}
+
+/** Spreadsheet-friendly local time, e.g. `2026-10-20 09:00`. */
+export function formatSheetDateTime(instant: Instant, zone: TimeZone): string {
+	return DateTime.fromMillis(instant, { zone }).toFormat('yyyy-MM-dd HH:mm');
+}
+
 /** Weekday, day and month parts for a day picker, e.g. `{ weekday: 'Tue', day: '20', month: 'Oct' }`. */
 export function localDateParts(date: LocalDate): { weekday: string; day: string; month: string } {
 	const day = utcDate(date).setLocale('en-US');

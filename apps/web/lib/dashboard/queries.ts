@@ -6,6 +6,7 @@ import type {
 	ShopSchedulingSettings,
 	TimeOff,
 } from '@/lib/booking/types';
+import { clientSearchPattern } from '@/lib/clients/search';
 import { dateWindow, nearestSlots } from '@/lib/public-booking/availability';
 import {
 	loadSchedulingContext,
@@ -32,7 +33,7 @@ import {
 } from '@/lib/time';
 import type { ClientMatch, DashboardBooking, DashboardSlot } from './types';
 
-const BOOKING_COLUMNS =
+export const BOOKING_COLUMNS =
 	'id, status, source, starts_at, ends_at, blocked_until, price_cents, client_notes, cancel_reason, outcome_marked_at, created_at, staff_id, service_id, client_id, client:clients!bookings_client_same_shop_fk(name, phone_e164), service:services!bookings_service_same_shop_fk(name), staff:staff!bookings_staff_same_shop_fk(display_name)';
 
 // Lower bound for range queries so (shop_id, starts_at) stays index-bounded; no service runs this long.
@@ -270,16 +271,35 @@ export async function suggestedSlots(
 	return nearestSlots(slots, requested).map((s) => toDashboardSlot(s.startsAt, shop.timezone));
 }
 
-const LIKE_SPECIALS = /[\\%_]/g;
+/** A live client to prefill the new-booking form, e.g. from "Book again". */
+export async function loadClientMatch(
+	db: Db,
+	shopId: string,
+	clientId: string,
+): Promise<ClientMatch | null> {
+	const { data, error } = await db
+		.from('clients')
+		.select('id, name, phone_e164')
+		.eq('shop_id', shopId)
+		.eq('id', clientId)
+		.is('anonymised_at', null)
+		.maybeSingle();
+	if (error) throw error;
+	return data ? { id: data.id, name: data.name, phone: data.phone_e164 } : null;
+}
 
 /** Name (contains) or phone (digits contained) search within the shop; at most 8 matches. */
 export async function searchClients(db: Db, shopId: string, query: string): Promise<ClientMatch[]> {
-	const digits = query.replace(/\D/g, '');
-	const byPhone = digits.length >= 3 && !/[a-z]/i.test(query);
-	let request = db.from('clients').select('id, name, phone_e164').eq('shop_id', shopId);
-	request = byPhone
-		? request.like('phone_e164', `%${digits}%`)
-		: request.ilike('name', `%${query.replace(LIKE_SPECIALS, '\\$&')}%`);
+	const pattern = clientSearchPattern(query);
+	let request = db
+		.from('clients')
+		.select('id, name, phone_e164')
+		.eq('shop_id', shopId)
+		.is('anonymised_at', null);
+	request =
+		'phone' in pattern
+			? request.like('phone_e164', pattern.phone)
+			: request.ilike('name', pattern.name);
 	const { data, error } = await request.order('name').order('id').limit(8);
 	if (error) throw error;
 	return data.map((c) => ({ id: c.id, name: c.name, phone: c.phone_e164 }));
