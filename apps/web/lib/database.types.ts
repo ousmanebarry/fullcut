@@ -731,6 +731,7 @@ export type Database = {
 					retry_after_seconds: number;
 				}[];
 			};
+			is_demo_shop: { Args: { p_shop_id: string }; Returns: boolean };
 			is_own_staff: { Args: { p_shop_id: string; p_staff_id: string }; Returns: boolean };
 			is_shop_member: { Args: { p_shop_id: string }; Returns: boolean };
 			is_shop_owner: { Args: { p_shop_id: string }; Returns: boolean };
