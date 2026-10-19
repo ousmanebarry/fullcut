@@ -7,7 +7,7 @@ insert into public.shops (id, name, slug, timezone, currency) values
   ('10000000-0000-4000-8000-000000000001', 'Demo Barbers', 'demo-barbers', 'America/Toronto', 'CAD'),
   ('10000000-0000-4000-8000-000000000002', 'Other Shop',   'other-shop',   'America/Toronto', 'CAD');
 
--- Owner logins (local only) --------------------------------------------------
+-- Logins: two owners and one staff-role member (local only) ------------------
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -21,13 +21,16 @@ select
   '', '', '', ''
 from (values
   ('20000000-0000-4000-8000-000000000001'::uuid, 'owner@demo-barbers.example.com', 'demo-owner-password',  'Demo Owner'),
-  ('20000000-0000-4000-8000-000000000002'::uuid, 'owner@other-shop.example.com',   'other-owner-password', 'Other Owner')
+  ('20000000-0000-4000-8000-000000000002'::uuid, 'owner@other-shop.example.com',   'other-owner-password', 'Other Owner'),
+  ('20000000-0000-4000-8000-000000000003'::uuid, 'staff@demo-barbers.example.com', 'demo-staff-password',  'Jordan Demo')
 ) as u (id, email, password, name);
 
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 select u.id::text, u.id, jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true), 'email', now(), now(), now()
 from auth.users u
-where u.id in ('20000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000002');
+where u.id in (
+  '20000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000003'
+);
 
 -- Staff and memberships ------------------------------------------------------
 
@@ -39,7 +42,8 @@ insert into public.staff (id, shop_id, display_name) values
 
 insert into public.shop_members (shop_id, user_id, role, staff_id) values
   ('10000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001', 'owner', '30000000-0000-4000-8000-000000000001'),
-  ('10000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'owner', '30000000-0000-4000-8000-000000000004');
+  ('10000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'owner', '30000000-0000-4000-8000-000000000004'),
+  ('10000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000003', 'staff', '30000000-0000-4000-8000-000000000002');
 
 -- Services (duration + buffer <= 60 min so the hourly booking grid below never overlaps) --
 

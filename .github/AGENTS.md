@@ -79,12 +79,16 @@ fullcut/
 ├── apps/
 │   └── web/                  # Next.js app: public booking pages + shop dashboard
 │       ├── app/
+│       │   ├── (auth)/       # /login, /signup and their server actions
+│       │   ├── auth/callback/ # email-link (PKCE / token hash) handler
+│       │   ├── onboarding/   # first-run shop setup wizard
 │       │   ├── [shopSlug]/   # public booking page per shop
-│       │   ├── dashboard/    # authenticated owner/staff area
+│       │   ├── dashboard/    # authenticated owner/staff area (settings/ for shop setup)
 │       │   └── api/          # route handlers, incl. webhooks/stripe, webhooks/twilio
+│       ├── proxy.ts          # session refresh + signed-in/out redirects (Next 16 "middleware")
 │       ├── components/ui/    # shadcn/ui components
-│       ├── lib/              # domain logic (booking engine, money, time, messaging)
-│       └── tests/            # unit/ (Vitest), e2e/ (Playwright)
+│       ├── lib/              # domain logic (auth, booking engine, money, shop settings, supabase clients, time)
+│       └── tests/            # unit/ (Vitest), db/ (Vitest against local Supabase), e2e/ (Playwright)
 ├── services/
 │   └── ml/                   # FastAPI scoring service + training pipeline
 ├── supabase/
@@ -109,7 +113,7 @@ pnpm dev                     # run the web app locally (http://localhost:3000)
 pnpm lint                    # ESLint
 pnpm typecheck               # next typegen && tsc --noEmit
 pnpm test                    # Vitest unit tests (apps/web/tests/unit)
-pnpm test:e2e                # Playwright e2e, desktop + mobile projects (starts `next dev` itself)
+pnpm test:e2e                # Playwright e2e, desktop + mobile projects (starts `next dev` itself; needs db:start + apps/web/.env.local)
 
 pnpm --filter web exec playwright install chromium   # one-time: download the e2e browser
 pnpm --filter web exec shadcn add <component>        # add a shadcn/ui component
@@ -117,7 +121,7 @@ pnpm --filter web exec shadcn add <component>        # add a shadcn/ui component
 pnpm db:start                # local Supabase via Docker (ports 553xx; Studio http://127.0.0.1:55323)
 pnpm db:stop
 pnpm db:reset                # rebuild local DB from migrations + seed
-pnpm db:test                 # pgTAP tests (supabase/tests) + concurrency test (apps/web/tests/db)
+pnpm db:test                 # pgTAP tests (supabase/tests) + DB integration tests (apps/web/tests/db: concurrency, settings authz)
 pnpm db:types                # regenerate + format apps/web/lib/database.types.ts
 pnpm exec supabase migration new <name>
 ```

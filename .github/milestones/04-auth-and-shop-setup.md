@@ -57,6 +57,7 @@ Shown after first sign-up when the user belongs to no shop:
 ### 4.5 Invite staff logins (optional in this milestone)
 
 - Owner invites by email → membership with role `staff`, linked to a staff profile. Can be deferred; note it if skipped.
+- **Deferred.** Staff-role logins and RLS for them exist (staff edit only their own hours and time off), but there is no invite flow yet; the seed has one staff login for testing. See ADR 0004.
 
 ### 4.6 UX details
 
