@@ -165,7 +165,7 @@ export function OnboardingWizard({
 					<TextField
 						name="slug"
 						label="Booking link"
-						hint={`Clients book at fullcut.app/${draft.shop.slug || 'your-shop'}`}
+						hint={`Clients book at fullcut.ca/${draft.shop.slug || 'your-shop'}`}
 						autoCapitalize="none"
 						autoCorrect="off"
 						spellCheck={false}

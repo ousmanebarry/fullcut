@@ -1,6 +1,6 @@
 # Milestone 05 — Public booking page
 
-**Goal:** a client opens `fullcut.app/<shop-slug>` on their phone, picks a service, a stylist and a time, enters their name and phone, and gets a confirmed booking — in three steps, no account, no app. They can later view or cancel it from a private link.
+**Goal:** a client opens `fullcut.ca/<shop-slug>` on their phone, picks a service, a stylist and a time, enters their name and phone, and gets a confirmed booking — in three steps, no account, no app. They can later view or cancel it from a private link.
 
 **Depends on:** 03, 04
 **Skills to read:** `fullcut-booking-engine`, `fullcut-data-and-tenancy`

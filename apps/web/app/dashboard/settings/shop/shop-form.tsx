@@ -57,7 +57,7 @@ export function ShopProfileForm({
 				hint={
 					slugChanged
 						? 'Changing your link breaks old links you have shared (Instagram bio, cards, texts).'
-						: `fullcut.app/${slug || 'your-shop'}`
+						: `fullcut.ca/${slug || 'your-shop'}`
 				}
 				autoCapitalize="none"
 				autoCorrect="off"
