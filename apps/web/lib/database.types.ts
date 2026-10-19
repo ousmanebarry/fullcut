@@ -69,10 +69,57 @@ export type Database = {
 					},
 				];
 			};
+			booking_links: {
+				Row: {
+					booking_id: string;
+					created_at: string;
+					expires_at: string;
+					id: string;
+					revoked_at: string | null;
+					shop_id: string;
+					token_hash: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					booking_id: string;
+					created_at?: string;
+					expires_at: string;
+					id?: string;
+					revoked_at?: string | null;
+					shop_id: string;
+					token_hash: string;
+				};
+				Update: {
+					booking_id?: string;
+					created_at?: string;
+					expires_at?: string;
+					id?: string;
+					revoked_at?: string | null;
+					shop_id?: string;
+					token_hash?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'booking_links_booking_same_shop_fk';
+						columns: ['shop_id', 'booking_id'];
+						isOneToOne: false;
+						referencedRelation: 'bookings';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'booking_links_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			bookings: {
 				Row: {
 					blocked_until: string;
 					client_id: string;
+					client_notes: string | null;
 					created_at: string;
 					deposit_cents: number;
 					during: unknown;
@@ -94,6 +141,7 @@ export type Database = {
 				Insert: {
 					blocked_until: string;
 					client_id: string;
+					client_notes?: string | null;
 					created_at?: string;
 					deposit_cents?: number;
 					during?: never;
@@ -114,6 +162,7 @@ export type Database = {
 				Update: {
 					blocked_until?: string;
 					client_id?: string;
+					client_notes?: string | null;
 					created_at?: string;
 					deposit_cents?: number;
 					during?: never;
@@ -216,6 +265,25 @@ export type Database = {
 					},
 				];
 			};
+			public_rate_limits: {
+				Row: {
+					hits: number;
+					key: string;
+					window_start: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					hits?: number;
+					key: string;
+					window_start: string;
+				};
+				Update: {
+					hits?: number;
+					key?: string;
+					window_start?: string;
+				};
+				Relationships: [];
+			};
 			services: {
 				Row: {
 					active: boolean;
@@ -312,10 +380,12 @@ export type Database = {
 					about_text: string | null;
 					address: string | null;
 					booking_page_enabled: boolean;
+					cancel_cutoff_hours: number;
 					created_at: string;
 					currency: string;
 					id: string;
 					logo_url: string | null;
+					max_active_bookings_per_phone: number;
 					max_horizon_days: number;
 					min_lead_minutes: number;
 					name: string;
@@ -330,10 +400,12 @@ export type Database = {
 					about_text?: string | null;
 					address?: string | null;
 					booking_page_enabled?: boolean;
+					cancel_cutoff_hours?: number;
 					created_at?: string;
 					currency?: string;
 					id?: string;
 					logo_url?: string | null;
+					max_active_bookings_per_phone?: number;
 					max_horizon_days?: number;
 					min_lead_minutes?: number;
 					name: string;
@@ -347,10 +419,12 @@ export type Database = {
 					about_text?: string | null;
 					address?: string | null;
 					booking_page_enabled?: boolean;
+					cancel_cutoff_hours?: number;
 					created_at?: string;
 					currency?: string;
 					id?: string;
 					logo_url?: string | null;
+					max_active_bookings_per_phone?: number;
 					max_horizon_days?: number;
 					min_lead_minutes?: number;
 					name?: string;
@@ -468,6 +542,36 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Functions: {
+			create_public_booking: {
+				Args: {
+					p_blocked_until: string;
+					p_client_name: string;
+					p_email: string;
+					p_ends_at: string;
+					p_link_expires_at: string;
+					p_marketing_opt_in: boolean;
+					p_notes: string;
+					p_phone_e164: string;
+					p_price_cents: number;
+					p_service_id: string;
+					p_shop_id: string;
+					p_source: string;
+					p_staff_id: string;
+					p_starts_at: string;
+					p_token_hash: string;
+				};
+				Returns: {
+					booking_id: string;
+					client_id: string;
+				}[];
+			};
+			hit_rate_limit: {
+				Args: { p_key: string; p_max: number; p_window_seconds: number };
+				Returns: {
+					allowed: boolean;
+					retry_after_seconds: number;
+				}[];
+			};
 			is_own_staff: { Args: { p_shop_id: string; p_staff_id: string }; Returns: boolean };
 			is_shop_member: { Args: { p_shop_id: string }; Returns: boolean };
 			is_shop_owner: { Args: { p_shop_id: string }; Returns: boolean };
