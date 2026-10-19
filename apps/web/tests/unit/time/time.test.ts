@@ -2,18 +2,24 @@ import { describe, expect, it } from 'vitest';
 import {
 	addLocalDays,
 	addMinutes,
+	daysBetween,
 	eachLocalDate,
+	formatLocalTime,
+	formatLongDateTime,
 	formatSlotLabel,
 	instantFromIso,
 	instantToIso,
 	localDate,
 	localDateOf,
+	localDateParts,
 	localMinuteOfDay,
 	localTime,
 	parseLocalTime,
+	plusDays,
 	timeZone,
 	weekdayOf,
 	zonedToInstant,
+	zoneLongName,
 } from '@/lib/time';
 
 const toronto = timeZone('America/Toronto');
@@ -141,6 +147,44 @@ describe('formatSlotLabel', () => {
 		);
 		expect(formatSlotLabel(instantFromIso('2026-11-01T07:30:00Z'), toronto)).toBe(
 			'Sun, Nov 1, 2:30 AM',
+		);
+	});
+});
+
+describe('display helpers', () => {
+	it('formats a time of day, disambiguating the repeated fall-back hour', () => {
+		expect(formatLocalTime(instantFromIso('2026-03-09T13:00:00Z'), toronto)).toBe('9:00 AM');
+		expect(formatLocalTime(instantFromIso('2026-11-01T05:30:00Z'), toronto)).toBe('1:30 AM EDT');
+		expect(formatLocalTime(instantFromIso('2026-11-01T06:30:00Z'), toronto)).toBe('1:30 AM EST');
+	});
+
+	it('formats a long date-time with the zone', () => {
+		expect(formatLongDateTime(instantFromIso('2026-10-20T13:00:00Z'), toronto)).toBe(
+			'Tuesday, October 20, 2026 at 9:00 AM EDT',
+		);
+	});
+
+	it('splits a local date into day-picker parts', () => {
+		expect(localDateParts(localDate('2026-10-20'))).toEqual({
+			weekday: 'Tue',
+			day: '20',
+			month: 'Oct',
+		});
+	});
+
+	it('does calendar-day arithmetic on local dates', () => {
+		expect(plusDays(localDate('2026-02-27'), 2)).toBe('2026-03-01');
+		expect(plusDays(localDate('2026-03-01'), -1)).toBe('2026-02-28');
+		expect(daysBetween(localDate('2026-03-07'), localDate('2026-03-09'))).toBe(2);
+		expect(daysBetween(localDate('2026-03-09'), localDate('2026-03-07'))).toBe(-2);
+	});
+
+	it('names the zone for the instant', () => {
+		expect(zoneLongName(instantFromIso('2026-07-01T12:00:00Z'), toronto)).toBe(
+			'Eastern Daylight Time',
+		);
+		expect(zoneLongName(instantFromIso('2026-12-01T12:00:00Z'), toronto)).toBe(
+			'Eastern Standard Time',
 		);
 	});
 });
