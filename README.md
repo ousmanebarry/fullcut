@@ -35,7 +35,7 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | One-click migration                 | Imports clients, services and history from competitor exports.                         |
 | Branded booking page                | The shop controls it. No marketplace, no competitor listings.                          |
 
-> **Status:** early scaffold. The web app toolchain (Next.js, Tailwind, shadcn/ui, tests, CI) is in place. Supabase, the ML service, Stripe and Twilio are planned and not built yet.
+> **Status:** early scaffold. The web app toolchain (Next.js, Tailwind, shadcn/ui, tests, CI) and the Supabase database (schema, RLS, seed data, database tests) are in place. The ML service, Stripe and Twilio are planned and not built yet.
 
 ## Tech stack
 
@@ -43,7 +43,7 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | -------- | -------------------------------------------------- | ------- |
 | Web app  | Next.js (App Router), TypeScript, Tailwind, shadcn | Present |
 | Tests    | Vitest (unit), Playwright (e2e)                    | Present |
-| Database | Supabase (Postgres, Auth, row-level security)      | Planned |
+| Database | Supabase (Postgres, Auth, row-level security)      | Present |
 | Payments | Stripe Connect                                     | Planned |
 | SMS      | Twilio                                             | Planned |
 | ML       | Python, FastAPI, scikit-learn / LightGBM           | Planned |
@@ -62,6 +62,25 @@ Open <http://localhost:3000>.
 
 Environment variables are not needed to run the current scaffold. When integrations land, copy `.env.example` to `apps/web/.env.local` and fill it in. Never commit real values.
 
+### Local database
+
+Requires Docker. The Supabase CLI is a dev dependency, so `pnpm install` provides it.
+
+```bash
+pnpm db:start   # Postgres, Auth and Studio (http://127.0.0.1:55323)
+pnpm db:reset   # rebuild from migrations + seed
+pnpm db:test    # database tests + concurrency test
+```
+
+Local ports use 553xx instead of Supabase's default 543xx, because Windows/Hyper-V often reserves the 543xx range. Run `pnpm exec supabase status` for the local URL and keys.
+
+The seed creates two shops with fake data and one owner login each. **These credentials exist only in your local database:**
+
+| Shop         | Email                            | Password               |
+| ------------ | -------------------------------- | ---------------------- |
+| Demo Barbers | `owner@demo-barbers.example.com` | `demo-owner-password`  |
+| Other Shop   | `owner@other-shop.example.com`   | `other-owner-password` |
+
 ## Commands
 
 Run everything from the repository root.
@@ -75,6 +94,11 @@ Run everything from the repository root.
 | `pnpm test:e2e`     | Playwright e2e on desktop and mobile Chrome |
 | `pnpm format`       | Format the repo with Prettier               |
 | `pnpm format:check` | Check formatting without writing            |
+| `pnpm db:start`     | Start local Supabase (Docker)               |
+| `pnpm db:stop`      | Stop local Supabase                         |
+| `pnpm db:reset`     | Rebuild local DB from migrations and seed   |
+| `pnpm db:test`      | pgTAP database tests + concurrency test     |
+| `pnpm db:types`     | Regenerate `apps/web/lib/database.types.ts` |
 
 One-time setup for e2e: `pnpm --filter web exec playwright install chromium`.
 
@@ -89,20 +113,21 @@ fullcut/
 │       ├── app/        routes and layouts
 │       ├── components/ UI (shadcn/ui in components/ui)
 │       ├── lib/        domain logic as plain, testable functions
-│       └── tests/      unit/ (Vitest) and e2e/ (Playwright)
+│       └── tests/      unit/ (Vitest), e2e/ (Playwright), db/ (DB integration)
+├── supabase/           migrations, seed.sql, database tests (pgTAP)
 ├── docs/adr/           architecture decision records
 └── .github/            CI workflow, AGENTS.md and agent skills
 ```
 
-`supabase/` and `services/ml/` will be added when those parts are built.
+`services/ml/` will be added when the ML service is built.
 
 ## Quality gates
 
-| Where      | What runs                                                               |
-| ---------- | ----------------------------------------------------------------------- |
-| Editor     | ESLint fix on save; recommended extensions in `.vscode/extensions.json` |
-| Pre-commit | Husky + lint-staged: ESLint and Prettier on staged files                |
-| CI (PRs)   | Format check, lint, typecheck, unit tests, production build             |
+| Where      | What runs                                                                                    |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| Editor     | ESLint fix on save; recommended extensions in `.vscode/extensions.json`                      |
+| Pre-commit | Husky + lint-staged: ESLint and Prettier on staged files                                     |
+| CI (PRs)   | Format check, lint, typecheck, unit tests, production build; separate job for database tests |
 
 ### VS Code status bar buttons
 

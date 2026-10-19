@@ -14,11 +14,14 @@ Fullcut is multi-tenant: many shops share one Postgres database. Isolation is en
 3. Every tenant table gets policies for the operations it needs, using the `public.is_shop_member()` helper below.
 4. Every new tenant table gets a database test proving a member of shop A cannot select, insert, update or delete rows of shop B.
 5. Migrations are append-only. Create with `supabase migration new <name>`; never edit an applied migration.
-6. After schema changes, regenerate types (`supabase gen types typescript --local > apps/web/lib/database.types.ts`) and commit them.
+6. After schema changes, regenerate types (`pnpm db:types`) and commit them.
 7. Name constraints explicitly (`bookings_no_overlap`, `clients_shop_phone_unique`) so errors map cleanly to user messages.
 8. Never seed real personal data. `seed.sql` uses obviously fake names and `+1 555` style numbers.
+9. A tenant row that references another tenant row uses a composite foreign key `(shop_id, x_id) references x (shop_id, id)` so it can never point into another shop (ADR 0002). Parents carry `unique (shop_id, id)`.
 
 ## Core schema (starting point)
+
+The applied schema lives in `supabase/migrations/`. It follows the shapes below, plus: `created_at` on every table, `updated_at` with a `set_updated_at()` trigger on shops, staff, services, clients and bookings, composite same-shop FKs instead of the simple `staff_id`/`client_id`/`service_id` references shown here, and named checks such as `clients_phone_e164_format` and `clients_email_normalized`.
 
 Adjust as the product evolves, but keep these shapes and invariants.
 
@@ -133,6 +136,7 @@ Notes:
 - `blocked_until` is computed in the app: `timestamptz + interval` is not immutable, so it cannot live in a generated column. The `tstzrange` constructor is immutable, so `during` can.
 - The exclusion constraint only covers `pending` and `confirmed`. Cancelled, completed and no-show bookings never block the calendar; an expired hold stops blocking as soon as its status changes (see `fullcut-booking-engine`).
 - `[)` (half-open) ranges mean a booking ending at 10:00 and one starting at 10:00 do not overlap.
+- Concurrent inserts into an exclusion constraint can deadlock (`40P01`) instead of raising `23P01`. The `bookings_lock_staff` trigger takes a per-staff transaction advisory lock before each booking write, so concurrent writers for one staff queue up and losers always get `23P01`. Keep it when changing bookings.
 - `webhook_events` is written only by server code using the service role. Enable RLS on it with no policies so client roles cannot touch it.
 - Verify the constraint and policies against the current Supabase/Postgres docs when you first apply them; adjust syntax if your Postgres version differs.
 
@@ -187,7 +191,7 @@ For each tenant table, a test should:
 2. Insert a row for each shop (as service role).
 3. As shop A's user: selecting returns only shop A's row; inserting with `shop_id = B` fails; updating or deleting shop B's row affects 0 rows.
 
-Use pgTAP (`supabase test db`) or an integration test that signs in as each user through the Supabase client.
+Use pgTAP (`supabase test db`) or an integration test that signs in as each user through the Supabase client. The pgTAP suite in `supabase/tests/database/` has helpers in `00_helpers.test.sql`: `tests.seed_two_shops()`, `tests.authenticate_as(uuid)`, and `tests.rls_isolation(table, cols, values_a, values_b)`, which emits the standard 9 cross-shop checks for a table.
 
 ## Checklist for a migration
 

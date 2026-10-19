@@ -1,0 +1,564 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type Database = {
+	graphql_public: {
+		Tables: {
+			[_ in never]: never;
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			graphql: {
+				Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json };
+				Returns: Json;
+			};
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
+	public: {
+		Tables: {
+			availability_rules: {
+				Row: {
+					created_at: string;
+					end_time: string;
+					id: string;
+					shop_id: string;
+					staff_id: string;
+					start_time: string;
+					weekday: number;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					end_time: string;
+					id?: string;
+					shop_id: string;
+					staff_id: string;
+					start_time: string;
+					weekday: number;
+				};
+				Update: {
+					created_at?: string;
+					end_time?: string;
+					id?: string;
+					shop_id?: string;
+					staff_id?: string;
+					start_time?: string;
+					weekday?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'availability_rules_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'availability_rules_staff_same_shop_fk';
+						columns: ['shop_id', 'staff_id'];
+						isOneToOne: false;
+						referencedRelation: 'staff';
+						referencedColumns: ['shop_id', 'id'];
+					},
+				];
+			};
+			bookings: {
+				Row: {
+					blocked_until: string;
+					client_id: string;
+					created_at: string;
+					deposit_cents: number;
+					during: unknown;
+					ends_at: string;
+					id: string;
+					pending_expires_at: string | null;
+					price_cents: number;
+					risk_model_version: string | null;
+					risk_score: number | null;
+					service_id: string;
+					shop_id: string;
+					source: string;
+					staff_id: string;
+					starts_at: string;
+					status: string;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					blocked_until: string;
+					client_id: string;
+					created_at?: string;
+					deposit_cents?: number;
+					during?: never;
+					ends_at: string;
+					id?: string;
+					pending_expires_at?: string | null;
+					price_cents: number;
+					risk_model_version?: string | null;
+					risk_score?: number | null;
+					service_id: string;
+					shop_id: string;
+					source?: string;
+					staff_id: string;
+					starts_at: string;
+					status: string;
+					updated_at?: string;
+				};
+				Update: {
+					blocked_until?: string;
+					client_id?: string;
+					created_at?: string;
+					deposit_cents?: number;
+					during?: never;
+					ends_at?: string;
+					id?: string;
+					pending_expires_at?: string | null;
+					price_cents?: number;
+					risk_model_version?: string | null;
+					risk_score?: number | null;
+					service_id?: string;
+					shop_id?: string;
+					source?: string;
+					staff_id?: string;
+					starts_at?: string;
+					status?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'bookings_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'clients';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'bookings_service_same_shop_fk';
+						columns: ['shop_id', 'service_id'];
+						isOneToOne: false;
+						referencedRelation: 'services';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'bookings_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'bookings_staff_same_shop_fk';
+						columns: ['shop_id', 'staff_id'];
+						isOneToOne: false;
+						referencedRelation: 'staff';
+						referencedColumns: ['shop_id', 'id'];
+					},
+				];
+			};
+			clients: {
+				Row: {
+					created_at: string;
+					email: string | null;
+					first_source: string | null;
+					id: string;
+					marketing_opt_in: boolean;
+					marketing_opt_in_at: string | null;
+					marketing_opt_in_method: string | null;
+					name: string;
+					phone_e164: string | null;
+					shop_id: string;
+					sms_opted_out: boolean;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					email?: string | null;
+					first_source?: string | null;
+					id?: string;
+					marketing_opt_in?: boolean;
+					marketing_opt_in_at?: string | null;
+					marketing_opt_in_method?: string | null;
+					name: string;
+					phone_e164?: string | null;
+					shop_id: string;
+					sms_opted_out?: boolean;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					email?: string | null;
+					first_source?: string | null;
+					id?: string;
+					marketing_opt_in?: boolean;
+					marketing_opt_in_at?: string | null;
+					marketing_opt_in_method?: string | null;
+					name?: string;
+					phone_e164?: string | null;
+					shop_id?: string;
+					sms_opted_out?: boolean;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'clients_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
+			services: {
+				Row: {
+					active: boolean;
+					buffer_minutes: number;
+					created_at: string;
+					deposit_cents: number;
+					duration_minutes: number;
+					id: string;
+					name: string;
+					price_cents: number;
+					shop_id: string;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					active?: boolean;
+					buffer_minutes?: number;
+					created_at?: string;
+					deposit_cents?: number;
+					duration_minutes: number;
+					id?: string;
+					name: string;
+					price_cents: number;
+					shop_id: string;
+					updated_at?: string;
+				};
+				Update: {
+					active?: boolean;
+					buffer_minutes?: number;
+					created_at?: string;
+					deposit_cents?: number;
+					duration_minutes?: number;
+					id?: string;
+					name?: string;
+					price_cents?: number;
+					shop_id?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'services_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
+			shop_members: {
+				Row: {
+					created_at: string;
+					role: string;
+					shop_id: string;
+					staff_id: string | null;
+					user_id: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					role: string;
+					shop_id: string;
+					staff_id?: string | null;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					role?: string;
+					shop_id?: string;
+					staff_id?: string | null;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'shop_members_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'shop_members_staff_same_shop_fk';
+						columns: ['shop_id', 'staff_id'];
+						isOneToOne: false;
+						referencedRelation: 'staff';
+						referencedColumns: ['shop_id', 'id'];
+					},
+				];
+			};
+			shops: {
+				Row: {
+					created_at: string;
+					currency: string;
+					id: string;
+					name: string;
+					slug: string;
+					timezone: string;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					currency?: string;
+					id?: string;
+					name: string;
+					slug: string;
+					timezone: string;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					currency?: string;
+					id?: string;
+					name?: string;
+					slug?: string;
+					timezone?: string;
+					updated_at?: string;
+				};
+				Relationships: [];
+			};
+			staff: {
+				Row: {
+					active: boolean;
+					created_at: string;
+					display_name: string;
+					id: string;
+					shop_id: string;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					active?: boolean;
+					created_at?: string;
+					display_name: string;
+					id?: string;
+					shop_id: string;
+					updated_at?: string;
+				};
+				Update: {
+					active?: boolean;
+					created_at?: string;
+					display_name?: string;
+					id?: string;
+					shop_id?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'staff_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
+			time_off: {
+				Row: {
+					created_at: string;
+					ends_at: string;
+					id: string;
+					reason: string | null;
+					shop_id: string;
+					staff_id: string;
+					starts_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					ends_at: string;
+					id?: string;
+					reason?: string | null;
+					shop_id: string;
+					staff_id: string;
+					starts_at: string;
+				};
+				Update: {
+					created_at?: string;
+					ends_at?: string;
+					id?: string;
+					reason?: string | null;
+					shop_id?: string;
+					staff_id?: string;
+					starts_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'time_off_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'time_off_staff_same_shop_fk';
+						columns: ['shop_id', 'staff_id'];
+						isOneToOne: false;
+						referencedRelation: 'staff';
+						referencedColumns: ['shop_id', 'id'];
+					},
+				];
+			};
+			webhook_events: {
+				Row: {
+					event_id: string;
+					provider: string;
+					received_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					event_id: string;
+					provider: string;
+					received_at?: string;
+				};
+				Update: {
+					event_id?: string;
+					provider?: string;
+					received_at?: string;
+				};
+				Relationships: [];
+			};
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			is_shop_member: { Args: { p_shop_id: string }; Returns: boolean };
+			is_shop_owner: { Args: { p_shop_id: string }; Returns: boolean };
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
+};
+
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>];
+
+export type Tables<
+	DefaultSchemaTableNameOrOptions extends
+		| keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+		| { schema: keyof DatabaseWithoutInternals },
+	TableName extends (DefaultSchemaTableNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+				DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+		: never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+	? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+			DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+			Row: infer R;
+		}
+		? R
+		: never
+	: DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+		? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+				Row: infer R;
+			}
+			? R
+			: never
+		: never;
+
+export type TablesInsert<
+	DefaultSchemaTableNameOrOptions extends
+		keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+	TableName extends (DefaultSchemaTableNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+		: never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+	? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+			Insert: infer I;
+		}
+		? I
+		: never
+	: DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+		? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+				Insert: infer I;
+			}
+			? I
+			: never
+		: never;
+
+export type TablesUpdate<
+	DefaultSchemaTableNameOrOptions extends
+		keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+	TableName extends (DefaultSchemaTableNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+		: never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+	? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+			Update: infer U;
+		}
+		? U
+		: never
+	: DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+		? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+				Update: infer U;
+			}
+			? U
+			: never
+		: never;
+
+export type Enums<
+	DefaultSchemaEnumNameOrOptions extends
+		keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
+	EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+		: never) = never,
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+	? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+	: DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+		? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+		: never;
+
+export type CompositeTypes<
+	PublicCompositeTypeNameOrOptions extends
+		keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
+	CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+		: never) = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+	? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+	: PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+		? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+		: never;
+
+export const Constants = {
+	graphql_public: {
+		Enums: {},
+	},
+	public: {
+		Enums: {},
+	},
+} as const;
