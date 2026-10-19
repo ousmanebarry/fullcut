@@ -10,6 +10,7 @@
 		"lint": "pnpm --filter web lint",
 		"typecheck": "pnpm --filter web typecheck",
 		"test": "pnpm --filter web test",
+		"test:watch": "pnpm --filter web test:watch",
 		"test:e2e": "pnpm --filter web test:e2e",
 		"db:start": "supabase start",
 		"db:stop": "supabase stop",
