@@ -23,6 +23,48 @@ export type Database = {
 	};
 	public: {
 		Tables: {
+			audit_events: {
+				Row: {
+					action: string;
+					actor_email: string | null;
+					actor_user_id: string | null;
+					created_at: string;
+					details: NonNullable<Json>;
+					id: string;
+					shop_id: string;
+					subject_id: string | null;
+				};
+				ComputedFields: never;
+				Insert: {
+					action: string;
+					actor_email?: string | null;
+					actor_user_id?: string | null;
+					created_at?: string;
+					details?: NonNullable<Json>;
+					id?: string;
+					shop_id: string;
+					subject_id?: string | null;
+				};
+				Update: {
+					action?: string;
+					actor_email?: string | null;
+					actor_user_id?: string | null;
+					created_at?: string;
+					details?: NonNullable<Json>;
+					id?: string;
+					shop_id?: string;
+					subject_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'audit_events_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			availability_rules: {
 				Row: {
 					created_at: string;
@@ -194,6 +236,13 @@ export type Database = {
 						foreignKeyName: 'bookings_client_same_shop_fk';
 						columns: ['shop_id', 'client_id'];
 						isOneToOne: false;
+						referencedRelation: 'client_stats';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'bookings_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
 						referencedRelation: 'clients';
 						referencedColumns: ['shop_id', 'id'];
 					},
@@ -220,8 +269,59 @@ export type Database = {
 					},
 				];
 			};
+			client_notes: {
+				Row: {
+					author_user_id: string | null;
+					body: string;
+					client_id: string;
+					created_at: string;
+					id: string;
+					shop_id: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					author_user_id?: string | null;
+					body: string;
+					client_id: string;
+					created_at?: string;
+					id?: string;
+					shop_id: string;
+				};
+				Update: {
+					author_user_id?: string | null;
+					body?: string;
+					client_id?: string;
+					created_at?: string;
+					id?: string;
+					shop_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'client_notes_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'client_stats';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'client_notes_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'clients';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'client_notes_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			clients: {
 				Row: {
+					anonymised_at: string | null;
 					created_at: string;
 					email: string | null;
 					first_source: string | null;
@@ -237,6 +337,7 @@ export type Database = {
 				};
 				ComputedFields: never;
 				Insert: {
+					anonymised_at?: string | null;
 					created_at?: string;
 					email?: string | null;
 					first_source?: string | null;
@@ -251,6 +352,7 @@ export type Database = {
 					updated_at?: string;
 				};
 				Update: {
+					anonymised_at?: string | null;
 					created_at?: string;
 					email?: string | null;
 					first_source?: string | null;
@@ -548,9 +650,37 @@ export type Database = {
 			};
 		};
 		Views: {
-			[_ in never]: never;
+			client_stats: {
+				Row: {
+					anonymised_at: string | null;
+					avg_spend_cents: number | null;
+					cancellations: number | null;
+					created_at: string | null;
+					email: string | null;
+					id: string | null;
+					last_visit_at: string | null;
+					name: string | null;
+					next_booking_at: string | null;
+					no_shows: number | null;
+					phone_e164: string | null;
+					shop_id: string | null;
+					total_bookings: number | null;
+					visits: number | null;
+				};
+				ComputedFields: never;
+				Relationships: [
+					{
+						foreignKeyName: 'clients_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 		};
 		Functions: {
+			anonymise_client: { Args: { p_client_id: string }; Returns: undefined };
 			create_public_booking: {
 				Args: {
 					p_blocked_until: string;
@@ -604,6 +734,10 @@ export type Database = {
 			is_own_staff: { Args: { p_shop_id: string; p_staff_id: string }; Returns: boolean };
 			is_shop_member: { Args: { p_shop_id: string }; Returns: boolean };
 			is_shop_owner: { Args: { p_shop_id: string }; Returns: boolean };
+			merge_clients: {
+				Args: { p_contact?: Json; p_keep_id: string; p_merge_id: string };
+				Returns: string;
+			};
 			onboard_shop: { Args: { p_payload: Json; p_user_id: string }; Returns: string };
 			reorder_services: {
 				Args: { p_service_ids: string[]; p_shop_id: string };
