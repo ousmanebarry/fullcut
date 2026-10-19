@@ -118,6 +118,8 @@ export type Database = {
 			bookings: {
 				Row: {
 					blocked_until: string;
+					cancel_reason: string | null;
+					cancelled_at: string | null;
 					client_id: string;
 					client_notes: string | null;
 					created_at: string;
@@ -125,6 +127,7 @@ export type Database = {
 					during: unknown;
 					ends_at: string;
 					id: string;
+					outcome_marked_at: string | null;
 					pending_expires_at: string | null;
 					price_cents: number;
 					risk_model_version: string | null;
@@ -140,6 +143,8 @@ export type Database = {
 				ComputedFields: never;
 				Insert: {
 					blocked_until: string;
+					cancel_reason?: string | null;
+					cancelled_at?: string | null;
 					client_id: string;
 					client_notes?: string | null;
 					created_at?: string;
@@ -147,6 +152,7 @@ export type Database = {
 					during?: never;
 					ends_at: string;
 					id?: string;
+					outcome_marked_at?: string | null;
 					pending_expires_at?: string | null;
 					price_cents: number;
 					risk_model_version?: string | null;
@@ -161,6 +167,8 @@ export type Database = {
 				};
 				Update: {
 					blocked_until?: string;
+					cancel_reason?: string | null;
+					cancelled_at?: string | null;
 					client_id?: string;
 					client_notes?: string | null;
 					created_at?: string;
@@ -168,6 +176,7 @@ export type Database = {
 					during?: never;
 					ends_at?: string;
 					id?: string;
+					outcome_marked_at?: string | null;
 					pending_expires_at?: string | null;
 					price_cents?: number;
 					risk_model_version?: string | null;
@@ -559,6 +568,26 @@ export type Database = {
 					p_staff_id: string;
 					p_starts_at: string;
 					p_token_hash: string;
+				};
+				Returns: {
+					booking_id: string;
+					client_id: string;
+				}[];
+			};
+			create_staff_booking: {
+				Args: {
+					p_blocked_until: string;
+					p_client_id?: string;
+					p_client_name: string;
+					p_ends_at: string;
+					p_notes: string;
+					p_phone_e164?: string;
+					p_price_cents: number;
+					p_service_id: string;
+					p_shop_id: string;
+					p_source: string;
+					p_staff_id: string;
+					p_starts_at: string;
 				};
 				Returns: {
 					booking_id: string;
