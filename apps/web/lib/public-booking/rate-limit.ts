@@ -12,10 +12,14 @@ export const RATE_LIMITS = {
 	managePerIp: { max: 20, windowSeconds: 3600 },
 } as const satisfies Record<string, RateLimit>;
 
-/** Client IP as reported by the hosting proxy (Vercel sets both headers); null if absent. */
+// Local dev sees every request as loopback; one shared bucket would block the whole machine.
+const LOOPBACK = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1', 'localhost']);
+
+/** Client IP as reported by the hosting proxy (Vercel sets both headers); null if absent or loopback. */
 export function clientIp(headers: Headers): string | null {
 	const forwarded = headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-	return forwarded || headers.get('x-real-ip')?.trim() || null;
+	const ip = forwarded || headers.get('x-real-ip')?.trim() || null;
+	return ip && !LOOPBACK.has(ip) ? ip : null;
 }
 
 /** Hashed so raw IPs and phone numbers are never stored. */

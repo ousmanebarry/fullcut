@@ -201,6 +201,9 @@ describe('rate limiting helpers', () => {
 		);
 		expect(clientIp(new Headers({ 'x-real-ip': '203.0.113.8' }))).toBe('203.0.113.8');
 		expect(clientIp(new Headers())).toBeNull();
+		expect(clientIp(new Headers({ 'x-forwarded-for': '::1' }))).toBeNull();
+		expect(clientIp(new Headers({ 'x-forwarded-for': '127.0.0.1' }))).toBeNull();
+		expect(clientIp(new Headers({ 'x-real-ip': '::ffff:127.0.0.1' }))).toBeNull();
 	});
 
 	it('never puts the raw value in the key', () => {

@@ -18,5 +18,6 @@ Clients book on `/<shopSlug>` without an account and later view, cancel or resch
 
 - Fixed windows allow up to 2× the limit across a window boundary; acceptable for abuse protection, not for billing.
 - The client IP comes from `x-forwarded-for` / `x-real-ip`, which is only trustworthy behind a proxy that sets it (Vercel). Self-hosting needs the proxy configured to overwrite these headers.
+- Loopback addresses are treated as "no IP" (only the per-phone limit applies), since in local dev every request arrives as `::1`.
 - Old rate-limit windows are pruned opportunistically (~1% of hits) rather than by a scheduled job.
 - Service and staff ids are exposed to the public page because the APIs address them; shop ids, client data and other bookings never are.
