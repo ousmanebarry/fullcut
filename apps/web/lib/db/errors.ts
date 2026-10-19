@@ -55,6 +55,7 @@ const RAISED_MESSAGES: Record<string, string> = {
 	merge_anonymised_client: 'Deleted clients cannot be merged.',
 	anonymise_forbidden: "Only the shop owner can delete a client's data.",
 	client_has_upcoming_bookings: 'Cancel their upcoming bookings first.',
+	demo_shop_locked: "The demo shop's profile, link and team can't be changed.",
 };
 
 /** Maps a Postgres/PostgREST error to a message safe to show, keyed to a form field where possible. */

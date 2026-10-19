@@ -35,7 +35,7 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | One-click migration                 | Imports clients, services and history from competitor exports.                         |
 | Branded booking page                | The shop controls it. No marketplace, no competitor listings.                          |
 
-> **Status:** early scaffold. The web app toolchain (Next.js, Tailwind, shadcn/ui, tests, CI) and the Supabase database (schema, RLS, seed data, database tests) are in place. The ML service, Stripe and Twilio are planned and not built yet.
+> **Status:** in development and deployed. The web app (public booking pages, dashboard, client book and export), the Supabase database and the deploy pipeline are in place, and the dashboard installs as a PWA. The ML service, Stripe and Twilio are planned and not built yet.
 
 ## Tech stack
 
@@ -47,7 +47,8 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | Payments | Stripe Connect                                     | Planned |
 | SMS      | Twilio                                             | Planned |
 | ML       | Python, FastAPI, scikit-learn / LightGBM           | Planned |
-| Hosting  | Vercel (web), Railway or Fly.io (ML)               | Planned |
+| Hosting  | Vercel (web), Supabase cloud (database, auth)      | Present |
+| Hosting  | Railway or Fly.io (ML)                             | Planned |
 
 ## Getting started
 
@@ -55,12 +56,14 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 
 ```bash
 pnpm install
+pnpm db:start
+cp .env.example apps/web/.env.local   # then fill in the Supabase values below
 pnpm dev
 ```
 
 Open <http://localhost:3000>.
 
-Environment variables are not needed to run the current scaffold. When integrations land, copy `.env.example` to `apps/web/.env.local` and fill it in. Never commit real values.
+For local development, `apps/web/.env.local` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`. Take them from `pnpm exec supabase status` (`API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY`). The other variables are optional locally. Never commit real values.
 
 ### Local database
 
@@ -100,6 +103,8 @@ Run everything from the repository root.
 | `pnpm db:test`      | pgTAP database tests + concurrency test     |
 | `pnpm db:types`     | Regenerate `apps/web/lib/database.types.ts` |
 
+`pnpm --filter web check:bundle` scans the last build's browser bundle for server secrets (run `pnpm --filter web build` first).
+
 One-time setup for e2e: `pnpm --filter web exec playwright install chromium`.
 
 Add a shadcn/ui component: `pnpm --filter web exec shadcn add <component>`.
@@ -121,13 +126,74 @@ fullcut/
 
 `services/ml/` will be added when the ML service is built.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    client["Clients<br/>(phone browser)"] --> web
+    owner["Owners and staff<br/>(installed PWA)"] --> web
+    web["Next.js on Vercel<br/>booking pages, dashboard, route handlers"]
+    web -->|"RLS-scoped user sessions,<br/>service role for public routes"| db[("Supabase<br/>Postgres + Auth")]
+    db -->|"Realtime (bookings)"| web
+    cron["pg_cron<br/>nightly demo reset"] --> db
+    web -.->|planned| stripe["Stripe / Twilio"]
+    web -.->|planned| ml["ML scoring service"]
+```
+
+## Environments
+
+| Environment | Web                                   | Database                    | Data                       |
+| ----------- | ------------------------------------- | --------------------------- | -------------------------- |
+| Local       | `pnpm dev` on <http://localhost:3000> | Supabase in Docker          | `supabase/seed.sql` (fake) |
+| CI          | `next build` + `next start` for e2e   | Supabase in Docker          | `supabase/seed.sql` (fake) |
+| Preview     | Vercel preview URL per pull request   | Staging Supabase project    | Test data only, never prod |
+| Production  | Your domain, deployed by `deploy.yml` | Production Supabase project | Real shops + the demo shop |
+
+## Deployment
+
+Pull requests get a Vercel preview that talks to the **staging** Supabase project. Merging to `main` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
+
+```mermaid
+flowchart LR
+    push["push to main"] --> ci["CI: lint, types, unit,<br/>DB tests, e2e, secret scan"]
+    ci --> staging["supabase db push<br/>(staging)"]
+    staging --> approve{"approve<br/>production"}
+    approve --> prod["supabase db push<br/>(production)"]
+    prod --> vercel["vercel build + deploy --prebuilt"]
+```
+
+- Migrations run before the new code is deployed, so they must keep working with the previous app version (add first, remove in a later release).
+- `seed.sql` is never pushed to a cloud project.
+- Vercel's own auto-deploy of `main` is off ([apps/web/vercel.json](apps/web/vercel.json)); production only ships through the workflow.
+- To apply migrations by hand: `pnpm exec supabase link --project-ref <ref>` then `pnpm exec supabase db push`.
+
+Security headers (CSP, HSTS, frame and referrer policies) live in [apps/web/next.config.ts](apps/web/next.config.ts). See [ADR 0007](docs/adr/0007-deployment-and-demo-shop.md) for the reasoning.
+
+### Demo shop
+
+Production has a shared, writable demo shop with fake data, rebuilt every night at 08:00 UTC. To set it up once:
+
+1. In the production Supabase dashboard, **Authentication → Users → Add user**: an email such as `demo@<your-domain>`, any long password, **Auto Confirm User** on. Copy the user's UID.
+2. In the **SQL Editor**, run `select private.configure_demo_shop('<uid>', 'fullcut-demo');`. The second argument is the demo booking page slug.
+3. In Vercel (Production), set `DEMO_USER_ID`, `DEMO_USER_EMAIL`, `DEMO_PASSWORD` (any long random string; mark it Sensitive) and `DEMO_SHOP_SLUG`, then redeploy.
+
+The home page then shows **Open the demo dashboard** and **See a booking page**. To reset the demo immediately, run `select private.reset_demo_shop();`.
+
+### Installing the dashboard (PWA)
+
+- iPhone/iPad: open the site in Safari, then **Share → Add to Home Screen**.
+- Android: open it in Chrome, then **⋮ → Install app** (the dashboard also offers an Install button).
+
+The service worker only caches static files and an offline page; booking data always comes from the network.
+
 ## Quality gates
 
-| Where      | What runs                                                                                    |
-| ---------- | -------------------------------------------------------------------------------------------- |
-| Editor     | ESLint fix on save; recommended extensions in `.vscode/extensions.json`                      |
-| Pre-commit | Husky + lint-staged: ESLint and Prettier on staged files                                     |
-| CI (PRs)   | Format check, lint, typecheck, unit tests, production build; separate job for database tests |
+| Where      | What runs                                                                                                                                                       |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Editor     | ESLint fix on save; recommended extensions in `.vscode/extensions.json`                                                                                         |
+| Pre-commit | Husky + lint-staged: ESLint and Prettier on staged files                                                                                                        |
+| CI (PRs)   | Format check, lint, typecheck, unit tests, production build, bundle secret scan; separate jobs for database tests and Playwright e2e against a production build |
+| Deploy     | CI again, then staging migrations, then (after approval) production migrations and the Vercel deploy                                                            |
 
 ### VS Code status bar buttons
 

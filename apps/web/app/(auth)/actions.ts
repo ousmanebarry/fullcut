@@ -1,10 +1,14 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { signInSchema, signUpSchema } from '@/lib/auth/schemas';
 import { safeRedirectPath } from '@/lib/auth/redirect';
-import { getSiteUrl } from '@/lib/env';
+import { signInAsDemoUser } from '@/lib/demo/sign-in';
+import { getDemoEnv, getSiteUrl } from '@/lib/env';
 import { failure, fieldErrorsFrom, success, type FormState } from '@/lib/forms';
+import { clientIp, hitRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/public-booking/rate-limit';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 export async function signIn(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -73,4 +77,26 @@ export async function signOut(): Promise<void> {
 	const supabase = await createClient();
 	await supabase.auth.signOut();
 	redirect('/login');
+}
+
+export async function signInAsDemo(): Promise<FormState> {
+	const demo = getDemoEnv();
+	if (!demo) return failure('The demo is not available right now.');
+
+	const admin = createAdminClient();
+	const ip = clientIp(await headers());
+	if (ip) {
+		const { allowed } = await hitRateLimit(
+			admin,
+			rateLimitKey('demo', ip),
+			RATE_LIMITS.demoSignInPerIp,
+		);
+		if (!allowed) return failure('Too many demo sign-ins from this network. Try again later.');
+	}
+
+	const supabase = await createClient();
+	if (!(await signInAsDemoUser(admin, supabase, demo))) {
+		return failure('The demo is not available right now. Try again in a moment.');
+	}
+	redirect('/dashboard');
 }

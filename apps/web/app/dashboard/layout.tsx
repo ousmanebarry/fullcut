@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { signOut } from '@/app/(auth)/actions';
 import { BookingsLive } from '@/components/dashboard/bookings-live';
+import { InstallHint } from '@/components/pwa/install-hint';
+import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { requireShopMember } from '@/lib/auth/session';
@@ -42,8 +44,12 @@ export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>)
 					</nav>
 				</div>
 			</header>
-			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
+			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+				<InstallHint />
+				{children}
+			</main>
 			<Toaster position="top-center" />
+			<ServiceWorkerRegister />
 			<Suspense fallback={null}>
 				<LiveUpdates />
 			</Suspense>

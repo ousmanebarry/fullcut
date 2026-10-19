@@ -10,6 +10,7 @@ export const RATE_LIMITS = {
 	bookingPerIp: { max: 10, windowSeconds: 3600 },
 	bookingPerPhone: { max: 5, windowSeconds: 3600 },
 	managePerIp: { max: 20, windowSeconds: 3600 },
+	demoSignInPerIp: { max: 10, windowSeconds: 3600 },
 } as const satisfies Record<string, RateLimit>;
 
 // Local dev sees every request as loopback; one shared bucket would block the whole machine.
