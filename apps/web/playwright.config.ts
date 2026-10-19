@@ -18,7 +18,8 @@ export default defineConfig({
 		{ name: 'mobile-chrome', use: { ...devices['Pixel 7'] } },
 	],
 	webServer: {
-		command: 'pnpm dev',
+		// CI tests the production build (run `pnpm build` first) so headers and CSP are exercised.
+		command: process.env.CI ? 'pnpm start' : 'pnpm dev',
 		url: baseURL,
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000,

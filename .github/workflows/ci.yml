@@ -2,12 +2,14 @@ name: CI
 
 on:
   pull_request:
+  # Called by deploy.yml so main is re-tested before anything ships.
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,6 +37,8 @@ jobs:
 
       - run: pnpm --filter web build
 
+      - run: pnpm --filter web check:bundle
+
   database:
     runs-on: ubuntu-latest
     steps:
@@ -55,3 +59,48 @@ jobs:
 
       # pgTAP tests (RLS, constraints) then the booking concurrency test
       - run: pnpm db:test
+
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Realtime stays on for the live-calendar test.
+      - run: pnpm exec supabase start -x storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Point the app at the local stack
+        run: |
+          eval "$(pnpm exec supabase status -o env)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
+            echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
+            echo "SUPABASE_DB_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+
+      - run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - run: pnpm --filter web build
+
+      # Built with a real secret key in env, so this also catches the literal value leaking.
+      - run: pnpm --filter web check:bundle
+
+      - run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/web/test-results/
+          retention-days: 7
