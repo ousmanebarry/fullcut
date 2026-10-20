@@ -31,12 +31,18 @@ export function verifyTwilioSignature(
 	return signature !== null && twilio.validateRequest(authToken, signature, url, params);
 }
 
+export type WebhookProvider = 'twilio' | 'stripe';
+
 /** Records a provider event; false means it was already processed. */
-export async function recordWebhookEvent(db: Db, eventId: string): Promise<boolean> {
+export async function recordWebhookEvent(
+	db: Db,
+	eventId: string,
+	provider: WebhookProvider = 'twilio',
+): Promise<boolean> {
 	const { data, error } = await db
 		.from('webhook_events')
 		.upsert(
-			{ provider: 'twilio', event_id: eventId },
+			{ provider, event_id: eventId },
 			{ onConflict: 'provider,event_id', ignoreDuplicates: true },
 		)
 		.select('event_id');
@@ -45,8 +51,12 @@ export async function recordWebhookEvent(db: Db, eventId: string): Promise<boole
 }
 
 /** Lets a provider retry reprocess an event whose handling failed. */
-export async function forgetWebhookEvent(db: Db, eventId: string): Promise<void> {
-	await db.from('webhook_events').delete().eq('provider', 'twilio').eq('event_id', eventId);
+export async function forgetWebhookEvent(
+	db: Db,
+	eventId: string,
+	provider: WebhookProvider = 'twilio',
+): Promise<void> {
+	await db.from('webhook_events').delete().eq('provider', provider).eq('event_id', eventId);
 }
 
 /** Constant-time comparison for shared secrets of any length. */

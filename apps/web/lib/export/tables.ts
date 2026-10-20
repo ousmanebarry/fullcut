@@ -270,6 +270,48 @@ const bookings = source({
 	],
 });
 
+const payments = source({
+	file: 'payments.csv',
+	table: 'payments',
+	fetch: async (ctx: ExportContext, cursor: Cursor | null) =>
+		unwrap(
+			await keyset(
+				ctx.db
+					.from('payments')
+					.select(
+						'id, booking_id, status, amount_cents, platform_fee_cents, currency, paid_at, refund_due_cents, refunded_cents, free_cancel_hours, late_cancel_keeps_deposit, no_show_keeps_deposit, stripe_payment_intent_id, created_at',
+					)
+					.eq('shop_id', ctx.shopId),
+				'created_at',
+				cursor,
+			)
+				.order('created_at')
+				.order('id')
+				.limit(EXPORT_PAGE_SIZE),
+		),
+	cursor: byCreated,
+	columns: ({ ctx, local }) => [
+		{ header: 'payment_id', value: (r) => r.id },
+		{ header: 'booking_id', value: (r) => r.booking_id },
+		{ header: 'status', value: (r) => r.status },
+		{ header: 'amount', value: (r) => dollars(r.amount_cents) },
+		{ header: 'platform_fee', value: (r) => dollars(r.platform_fee_cents) },
+		{ header: 'refunded', value: (r) => dollars(r.refunded_cents) },
+		{
+			header: 'refund_owed',
+			value: (r) => dollars(Math.max(0, r.refund_due_cents - r.refunded_cents)),
+		},
+		{ header: 'currency', value: (r) => r.currency },
+		{ header: 'paid_at', value: (r) => local(r.paid_at) },
+		{ header: 'free_cancel_hours', value: (r) => r.free_cancel_hours },
+		{ header: 'late_cancel_keeps_deposit', value: (r) => r.late_cancel_keeps_deposit },
+		{ header: 'no_show_keeps_deposit', value: (r) => r.no_show_keeps_deposit },
+		{ header: 'stripe_payment_intent_id', value: (r) => r.stripe_payment_intent_id },
+		{ header: 'created_at', value: (r) => local(r.created_at) },
+		{ header: 'timezone', value: () => ctx.timezone },
+	],
+});
+
 const availability = source({
 	file: 'availability.csv',
 	table: 'availability_rules',
@@ -447,6 +489,7 @@ export const EXPORT_SOURCES: readonly ExportSource[] = [
 	services,
 	staff,
 	bookings,
+	payments,
 	availability,
 	timeOff,
 	activity,

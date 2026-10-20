@@ -102,3 +102,23 @@ export function getJobsSecret(): string | null {
 	const secret = process.env.JOBS_SECRET;
 	return secret && secret.length >= 32 ? secret : null;
 }
+
+/**
+ * Server-only. Null when payments are not configured. Live keys are refused anywhere but a production
+ * deploy, so local dev, tests, CI and previews can never create real charges.
+ */
+export function getStripeSecretKey(): string | null {
+	const key = process.env.STRIPE_SECRET_KEY;
+	if (!key) return null;
+	if (/^(sk|rk)_test_\w+$/.test(key)) return key;
+	if (/^(sk|rk)_live_\w+$/.test(key) && process.env.VERCEL_ENV === 'production') return key;
+	throw new Error('STRIPE_SECRET_KEY must be a test-mode key outside production.');
+}
+
+/** Server-only. Signing secrets (comma-separated) of every Stripe destination posting to us. */
+export function getStripeWebhookSecrets(): string[] {
+	return (process.env.STRIPE_WEBHOOK_SECRET ?? '')
+		.split(',')
+		.map((secret) => secret.trim())
+		.filter((secret) => /^whsec_\w+$/.test(secret));
+}

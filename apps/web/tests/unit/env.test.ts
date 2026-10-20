@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getJobsSecret, getMessagingMode, getSiteUrl, getTwilioWebhookBaseUrl } from '@/lib/env';
+import {
+	getJobsSecret,
+	getMessagingMode,
+	getSiteUrl,
+	getStripeSecretKey,
+	getStripeWebhookSecrets,
+	getTwilioWebhookBaseUrl,
+} from '@/lib/env';
 
 describe('getSiteUrl', () => {
 	afterEach(() => {
@@ -68,5 +75,40 @@ describe('messaging env', () => {
 		expect(getTwilioWebhookBaseUrl()).toBe('https://fullcut.example.com');
 		vi.stubEnv('TWILIO_WEBHOOK_BASE_URL', 'https://tunnel.example.com');
 		expect(getTwilioWebhookBaseUrl()).toBe('https://tunnel.example.com');
+	});
+});
+
+describe('stripe env', () => {
+	afterEach(() => {
+		vi.unstubAllEnvs();
+	});
+
+	it('is off without a key', () => {
+		vi.stubEnv('STRIPE_SECRET_KEY', '');
+		expect(getStripeSecretKey()).toBeNull();
+	});
+
+	it('accepts test-mode keys', () => {
+		vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_abc123');
+		expect(getStripeSecretKey()).toBe('sk_test_abc123');
+		vi.stubEnv('STRIPE_SECRET_KEY', 'rk_test_abc123');
+		expect(getStripeSecretKey()).toBe('rk_test_abc123');
+	});
+
+	it('refuses live keys outside a production deploy', () => {
+		vi.stubEnv('STRIPE_SECRET_KEY', 'sk_live_abc123');
+		vi.stubEnv('VERCEL_ENV', 'preview');
+		expect(() => getStripeSecretKey()).toThrow(/test-mode/);
+		vi.stubEnv('VERCEL_ENV', undefined);
+		expect(() => getStripeSecretKey()).toThrow(/test-mode/);
+		vi.stubEnv('VERCEL_ENV', 'production');
+		expect(getStripeSecretKey()).toBe('sk_live_abc123');
+	});
+
+	it('reads one or more webhook secrets', () => {
+		vi.stubEnv('STRIPE_WEBHOOK_SECRET', undefined);
+		expect(getStripeWebhookSecrets()).toEqual([]);
+		vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_one, whsec_two,not-a-secret');
+		expect(getStripeWebhookSecrets()).toEqual(['whsec_one', 'whsec_two']);
 	});
 });
