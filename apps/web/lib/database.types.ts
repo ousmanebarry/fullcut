@@ -454,6 +454,94 @@ export type Database = {
 					},
 				];
 			};
+			payments: {
+				Row: {
+					amount_cents: number;
+					booking_id: string;
+					created_at: string;
+					currency: string;
+					free_cancel_hours: number;
+					id: string;
+					late_cancel_keeps_deposit: boolean;
+					no_show_keeps_deposit: boolean;
+					paid_at: string | null;
+					platform_fee_cents: number;
+					refund_decided_at: string | null;
+					refund_due_cents: number;
+					refund_error: string | null;
+					refund_owed_cents: number | null;
+					refunded_cents: number;
+					shop_id: string;
+					status: string;
+					stripe_account_id: string;
+					stripe_checkout_session_id: string | null;
+					stripe_payment_intent_id: string | null;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					amount_cents: number;
+					booking_id: string;
+					created_at?: string;
+					currency: string;
+					free_cancel_hours: number;
+					id?: string;
+					late_cancel_keeps_deposit: boolean;
+					no_show_keeps_deposit: boolean;
+					paid_at?: string | null;
+					platform_fee_cents?: number;
+					refund_decided_at?: string | null;
+					refund_due_cents?: number;
+					refund_error?: string | null;
+					refund_owed_cents?: never;
+					refunded_cents?: number;
+					shop_id: string;
+					status?: string;
+					stripe_account_id: string;
+					stripe_checkout_session_id?: string | null;
+					stripe_payment_intent_id?: string | null;
+					updated_at?: string;
+				};
+				Update: {
+					amount_cents?: number;
+					booking_id?: string;
+					created_at?: string;
+					currency?: string;
+					free_cancel_hours?: number;
+					id?: string;
+					late_cancel_keeps_deposit?: boolean;
+					no_show_keeps_deposit?: boolean;
+					paid_at?: string | null;
+					platform_fee_cents?: number;
+					refund_decided_at?: string | null;
+					refund_due_cents?: number;
+					refund_error?: string | null;
+					refund_owed_cents?: never;
+					refunded_cents?: number;
+					shop_id?: string;
+					status?: string;
+					stripe_account_id?: string;
+					stripe_checkout_session_id?: string | null;
+					stripe_payment_intent_id?: string | null;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'payments_booking_same_shop_fk';
+						columns: ['shop_id', 'booking_id'];
+						isOneToOne: true;
+						referencedRelation: 'bookings';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'payments_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			public_rate_limits: {
 				Row: {
 					hits: number;
@@ -671,12 +759,19 @@ export type Database = {
 					cancel_cutoff_hours: number;
 					created_at: string;
 					currency: string;
+					deposit_default_cents: number;
+					deposit_default_percent: number;
+					deposit_default_type: string;
+					deposit_mode: string;
+					free_cancel_hours: number;
 					id: string;
+					late_cancel_keeps_deposit: boolean;
 					logo_url: string | null;
 					max_active_bookings_per_phone: number;
 					max_horizon_days: number;
 					min_lead_minutes: number;
 					name: string;
+					no_show_keeps_deposit: boolean;
 					phone: string | null;
 					slot_step_minutes: number;
 					slug: string;
@@ -687,6 +782,9 @@ export type Database = {
 					sms_reminder_lead_hours: number;
 					sms_rescheduled_enabled: boolean;
 					sms_sign_off: string | null;
+					stripe_account_id: string | null;
+					stripe_charges_enabled: boolean;
+					stripe_details_submitted: boolean;
 					timezone: string;
 					updated_at: string;
 				};
@@ -698,12 +796,19 @@ export type Database = {
 					cancel_cutoff_hours?: number;
 					created_at?: string;
 					currency?: string;
+					deposit_default_cents?: number;
+					deposit_default_percent?: number;
+					deposit_default_type?: string;
+					deposit_mode?: string;
+					free_cancel_hours?: number;
 					id?: string;
+					late_cancel_keeps_deposit?: boolean;
 					logo_url?: string | null;
 					max_active_bookings_per_phone?: number;
 					max_horizon_days?: number;
 					min_lead_minutes?: number;
 					name: string;
+					no_show_keeps_deposit?: boolean;
 					phone?: string | null;
 					slot_step_minutes?: number;
 					slug: string;
@@ -714,6 +819,9 @@ export type Database = {
 					sms_reminder_lead_hours?: number;
 					sms_rescheduled_enabled?: boolean;
 					sms_sign_off?: string | null;
+					stripe_account_id?: string | null;
+					stripe_charges_enabled?: boolean;
+					stripe_details_submitted?: boolean;
 					timezone: string;
 					updated_at?: string;
 				};
@@ -724,12 +832,19 @@ export type Database = {
 					cancel_cutoff_hours?: number;
 					created_at?: string;
 					currency?: string;
+					deposit_default_cents?: number;
+					deposit_default_percent?: number;
+					deposit_default_type?: string;
+					deposit_mode?: string;
+					free_cancel_hours?: number;
 					id?: string;
+					late_cancel_keeps_deposit?: boolean;
 					logo_url?: string | null;
 					max_active_bookings_per_phone?: number;
 					max_horizon_days?: number;
 					min_lead_minutes?: number;
 					name?: string;
+					no_show_keeps_deposit?: boolean;
 					phone?: string | null;
 					slot_step_minutes?: number;
 					slug?: string;
@@ -740,6 +855,9 @@ export type Database = {
 					sms_reminder_lead_hours?: number;
 					sms_rescheduled_enabled?: boolean;
 					sms_sign_off?: string | null;
+					stripe_account_id?: string | null;
+					stripe_charges_enabled?: boolean;
+					stripe_details_submitted?: boolean;
 					timezone?: string;
 					updated_at?: string;
 				};
@@ -910,29 +1028,65 @@ export type Database = {
 					isSetofReturn: true;
 				};
 			};
-			create_public_booking: {
+			confirm_deposit_payment: {
 				Args: {
-					p_blocked_until: string;
-					p_client_name: string;
-					p_email: string;
-					p_ends_at: string;
-					p_link_expires_at: string;
-					p_marketing_opt_in: boolean;
-					p_notes: string;
-					p_phone_e164: string;
-					p_price_cents: number;
-					p_service_id: string;
+					p_booking_id: string;
+					p_payment_intent_id: string;
+					p_session_id: string;
 					p_shop_id: string;
-					p_source: string;
-					p_staff_id: string;
-					p_starts_at: string;
-					p_token_hash: string;
 				};
-				Returns: {
-					booking_id: string;
-					client_id: string;
-				}[];
+				Returns: string;
 			};
+			create_public_booking:
+				| {
+						Args: {
+							p_blocked_until: string;
+							p_client_name: string;
+							p_email: string;
+							p_ends_at: string;
+							p_link_expires_at: string;
+							p_marketing_opt_in: boolean;
+							p_notes: string;
+							p_phone_e164: string;
+							p_price_cents: number;
+							p_service_id: string;
+							p_shop_id: string;
+							p_source: string;
+							p_staff_id: string;
+							p_starts_at: string;
+							p_token_hash: string;
+						};
+						Returns: {
+							booking_id: string;
+							client_id: string;
+						}[];
+				  }
+				| {
+						Args: {
+							p_blocked_until: string;
+							p_client_name: string;
+							p_deposit_cents: number;
+							p_email: string;
+							p_ends_at: string;
+							p_link_expires_at: string;
+							p_marketing_opt_in: boolean;
+							p_notes: string;
+							p_pending_expires_at: string;
+							p_phone_e164: string;
+							p_platform_fee_cents: number;
+							p_price_cents: number;
+							p_service_id: string;
+							p_shop_id: string;
+							p_source: string;
+							p_staff_id: string;
+							p_starts_at: string;
+							p_token_hash: string;
+						};
+						Returns: {
+							booking_id: string;
+							client_id: string;
+						}[];
+				  };
 			create_staff_booking: {
 				Args: {
 					p_blocked_until: string;
@@ -953,6 +1107,11 @@ export type Database = {
 					client_id: string;
 				}[];
 			};
+			expire_deposit_checkout: {
+				Args: { p_booking_id: string; p_session_id: string; p_shop_id: string };
+				Returns: boolean;
+			};
+			expire_pending_holds: { Args: Record<PropertyKey, never>; Returns: number };
 			hit_rate_limit: {
 				Args: { p_key: string; p_max: number; p_window_seconds: number };
 				Returns: {
