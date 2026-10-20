@@ -116,7 +116,7 @@ export async function changeBookingStatus(
 		.from('bookings')
 		.update(
 			event === 'cancel'
-				? { status: next.value, cancel_reason: cancelReason ?? null }
+				? { status: next.value, cancel_reason: cancelReason ?? null, cancelled_by: 'shop' }
 				: { status: next.value },
 		)
 		.eq('shop_id', actor.shopId)

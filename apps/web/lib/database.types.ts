@@ -162,6 +162,8 @@ export type Database = {
 					blocked_until: string;
 					cancel_reason: string | null;
 					cancelled_at: string | null;
+					cancelled_by: string | null;
+					client_confirmed_at: string | null;
 					client_id: string;
 					client_notes: string | null;
 					created_at: string;
@@ -187,6 +189,8 @@ export type Database = {
 					blocked_until: string;
 					cancel_reason?: string | null;
 					cancelled_at?: string | null;
+					cancelled_by?: string | null;
+					client_confirmed_at?: string | null;
 					client_id: string;
 					client_notes?: string | null;
 					created_at?: string;
@@ -211,6 +215,8 @@ export type Database = {
 					blocked_until?: string;
 					cancel_reason?: string | null;
 					cancelled_at?: string | null;
+					cancelled_by?: string | null;
+					client_confirmed_at?: string | null;
 					client_id?: string;
 					client_notes?: string | null;
 					created_at?: string;
@@ -376,6 +382,78 @@ export type Database = {
 					},
 				];
 			};
+			inbound_messages: {
+				Row: {
+					body: string | null;
+					booking_id: string | null;
+					client_id: string | null;
+					created_at: string;
+					from_phone: string | null;
+					handled_at: string | null;
+					handled_by: string | null;
+					id: string;
+					kind: string;
+					shop_id: string;
+					twilio_sid: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					body?: string | null;
+					booking_id?: string | null;
+					client_id?: string | null;
+					created_at?: string;
+					from_phone?: string | null;
+					handled_at?: string | null;
+					handled_by?: string | null;
+					id?: string;
+					kind: string;
+					shop_id: string;
+					twilio_sid: string;
+				};
+				Update: {
+					body?: string | null;
+					booking_id?: string | null;
+					client_id?: string | null;
+					created_at?: string;
+					from_phone?: string | null;
+					handled_at?: string | null;
+					handled_by?: string | null;
+					id?: string;
+					kind?: string;
+					shop_id?: string;
+					twilio_sid?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'inbound_messages_booking_same_shop_fk';
+						columns: ['shop_id', 'booking_id'];
+						isOneToOne: false;
+						referencedRelation: 'bookings';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'inbound_messages_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'client_stats';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'inbound_messages_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'clients';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'inbound_messages_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			public_rate_limits: {
 				Row: {
 					hits: number;
@@ -394,6 +472,105 @@ export type Database = {
 					window_start?: string;
 				};
 				Relationships: [];
+			};
+			scheduled_messages: {
+				Row: {
+					attempts: number;
+					body: string | null;
+					booking_id: string;
+					client_id: string;
+					created_at: string;
+					dedupe_key: string;
+					delivered_at: string | null;
+					delivery_status: string | null;
+					error_code: number | null;
+					id: string;
+					last_error: string | null;
+					locked_at: string | null;
+					send_at: string;
+					sent_at: string | null;
+					shop_id: string;
+					skip_reason: string | null;
+					status: string;
+					twilio_sid: string | null;
+					type: string;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					attempts?: number;
+					body?: string | null;
+					booking_id: string;
+					client_id: string;
+					created_at?: string;
+					dedupe_key: string;
+					delivered_at?: string | null;
+					delivery_status?: string | null;
+					error_code?: number | null;
+					id?: string;
+					last_error?: string | null;
+					locked_at?: string | null;
+					send_at: string;
+					sent_at?: string | null;
+					shop_id: string;
+					skip_reason?: string | null;
+					status?: string;
+					twilio_sid?: string | null;
+					type: string;
+					updated_at?: string;
+				};
+				Update: {
+					attempts?: number;
+					body?: string | null;
+					booking_id?: string;
+					client_id?: string;
+					created_at?: string;
+					dedupe_key?: string;
+					delivered_at?: string | null;
+					delivery_status?: string | null;
+					error_code?: number | null;
+					id?: string;
+					last_error?: string | null;
+					locked_at?: string | null;
+					send_at?: string;
+					sent_at?: string | null;
+					shop_id?: string;
+					skip_reason?: string | null;
+					status?: string;
+					twilio_sid?: string | null;
+					type?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'scheduled_messages_booking_same_shop_fk';
+						columns: ['shop_id', 'booking_id'];
+						isOneToOne: false;
+						referencedRelation: 'bookings';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'scheduled_messages_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'client_stats';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'scheduled_messages_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'clients';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'scheduled_messages_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
 			};
 			services: {
 				Row: {
@@ -503,6 +680,13 @@ export type Database = {
 					phone: string | null;
 					slot_step_minutes: number;
 					slug: string;
+					sms_cancelled_enabled: boolean;
+					sms_confirm_request_enabled: boolean;
+					sms_confirmation_enabled: boolean;
+					sms_reminder_enabled: boolean;
+					sms_reminder_lead_hours: number;
+					sms_rescheduled_enabled: boolean;
+					sms_sign_off: string | null;
 					timezone: string;
 					updated_at: string;
 				};
@@ -523,6 +707,13 @@ export type Database = {
 					phone?: string | null;
 					slot_step_minutes?: number;
 					slug: string;
+					sms_cancelled_enabled?: boolean;
+					sms_confirm_request_enabled?: boolean;
+					sms_confirmation_enabled?: boolean;
+					sms_reminder_enabled?: boolean;
+					sms_reminder_lead_hours?: number;
+					sms_rescheduled_enabled?: boolean;
+					sms_sign_off?: string | null;
 					timezone: string;
 					updated_at?: string;
 				};
@@ -542,6 +733,13 @@ export type Database = {
 					phone?: string | null;
 					slot_step_minutes?: number;
 					slug?: string;
+					sms_cancelled_enabled?: boolean;
+					sms_confirm_request_enabled?: boolean;
+					sms_confirmation_enabled?: boolean;
+					sms_reminder_enabled?: boolean;
+					sms_reminder_lead_hours?: number;
+					sms_rescheduled_enabled?: boolean;
+					sms_sign_off?: string | null;
 					timezone?: string;
 					updated_at?: string;
 				};
@@ -681,6 +879,37 @@ export type Database = {
 		};
 		Functions: {
 			anonymise_client: { Args: { p_client_id: string }; Returns: undefined };
+			claim_due_messages: {
+				Args: { p_limit: number };
+				Returns: {
+					attempts: number;
+					body: string | null;
+					booking_id: string;
+					client_id: string;
+					created_at: string;
+					dedupe_key: string;
+					delivered_at: string | null;
+					delivery_status: string | null;
+					error_code: number | null;
+					id: string;
+					last_error: string | null;
+					locked_at: string | null;
+					send_at: string;
+					sent_at: string | null;
+					shop_id: string;
+					skip_reason: string | null;
+					status: string;
+					twilio_sid: string | null;
+					type: string;
+					updated_at: string;
+				}[];
+				SetofOptions: {
+					from: '*';
+					to: 'scheduled_messages';
+					isOneToOne: false;
+					isSetofReturn: true;
+				};
+			};
 			create_public_booking: {
 				Args: {
 					p_blocked_until: string;

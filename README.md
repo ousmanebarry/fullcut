@@ -45,7 +45,7 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | Tests    | Vitest (unit), Playwright (e2e)                    | Present |
 | Database | Supabase (Postgres, Auth, row-level security)      | Present |
 | Payments | Stripe Connect                                     | Planned |
-| SMS      | Twilio                                             | Planned |
+| SMS      | Twilio (Messaging Service, two-way replies)        | Present |
 | ML       | Python, FastAPI, scikit-learn / LightGBM           | Planned |
 | Hosting  | Vercel (web), Supabase cloud (database, auth)      | Present |
 | Hosting  | Railway or Fly.io (ML)                             | Planned |
@@ -64,6 +64,8 @@ pnpm dev
 Open <http://localhost:3000>.
 
 For local development, `apps/web/.env.local` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`. Take them from `pnpm exec supabase status` (`API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY`). The other variables are optional locally. Never commit real values.
+
+Texts are only logged (never sent) unless `MESSAGING_MODE=twilio`. To process queued texts locally, set `JOBS_SECRET` (32+ random characters) and run `pnpm jobs:dev` next to `pnpm dev`. See [Text messages](#text-messages-twilio).
 
 ### Local database
 
@@ -91,6 +93,7 @@ Run everything from the repository root.
 | Command             | Purpose                                     |
 | ------------------- | ------------------------------------------- |
 | `pnpm dev`          | Run the web app locally                     |
+| `pnpm jobs:dev`     | Tick `/api/jobs/tick` every 15 s locally    |
 | `pnpm lint`         | ESLint (warnings fail)                      |
 | `pnpm typecheck`    | `next typegen` then `tsc --noEmit`          |
 | `pnpm test`         | Vitest unit tests                           |
@@ -135,8 +138,11 @@ flowchart TD
     web["Next.js on Vercel<br/>booking pages, dashboard, route handlers"]
     web -->|"RLS-scoped user sessions,<br/>service role for public routes"| db[("Supabase<br/>Postgres + Auth")]
     db -->|"Realtime (bookings)"| web
-    cron["pg_cron<br/>nightly demo reset"] --> db
-    web -.->|planned| stripe["Stripe / Twilio"]
+    cron["pg_cron<br/>demo reset, job tick every minute"] --> db
+    db -->|"pg_net: POST /api/jobs/tick"| web
+    web -->|"SMS"| twilio["Twilio"]
+    twilio -->|"status + inbound webhooks"| web
+    web -.->|planned| stripe["Stripe"]
     web -.->|planned| ml["ML scoring service"]
 ```
 
@@ -178,6 +184,22 @@ Production has a shared, writable demo shop with fake data, rebuilt every night 
 3. In Vercel (Production), set `DEMO_USER_ID`, `DEMO_USER_EMAIL`, `DEMO_PASSWORD` (any long random string; mark it Sensitive) and `DEMO_SHOP_SLUG`, then redeploy.
 
 The home page then shows **Open the demo dashboard** and **See a booking page**. To reset the demo immediately, run `select private.reset_demo_shop();`.
+
+### Text messages (Twilio)
+
+Booking changes queue texts in `scheduled_messages`; pg_cron calls `/api/jobs/tick` every minute to send them ([ADR 0008](docs/adr/0008-background-jobs-and-messaging.md)). The demo shop is never texted. Per environment (staging first):
+
+1. In Twilio: buy a number, create a Messaging Service with it in the sender pool, and (on a trial account) verify each phone you will text under **Verified Caller IDs**.
+2. In Vercel, set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (Sensitive), `TWILIO_MESSAGING_SERVICE_SID`, `JOBS_SECRET` (Sensitive, 32+ random characters) and, where real texts should go out, `MESSAGING_MODE=twilio`. Redeploy.
+3. In the Supabase **SQL Editor** for that project:
+   ```sql
+   select vault.create_secret('https://<deployment-host>/api/jobs/tick', 'jobs_tick_url');
+   select vault.create_secret('<same value as JOBS_SECRET>', 'jobs_secret');
+   ```
+   To change one later: `select vault.update_secret((select id from vault.secrets where name = 'jobs_secret'), '<new value>');`.
+4. In the Messaging Service, **Integration → Incoming messages → Send a webhook**: `https://<deployment-host>/api/webhooks/twilio/inbound` (POST). Delivery callbacks are set per message automatically.
+
+Check it works: `select * from net._http_response order by created desc limit 5;` should show 200s from the tick.
 
 ### Installing the dashboard (PWA)
 

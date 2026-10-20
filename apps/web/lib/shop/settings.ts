@@ -7,7 +7,7 @@ import { toUserFacingError, type UserFacingError } from '@/lib/db/errors';
 import type { Instant } from '@/lib/time';
 import { instantToIso } from '@/lib/time';
 import { hoursToRules, type WeeklyHours } from './hours';
-import type { ServiceInput } from './schemas';
+import type { MessageSettingsInput, ServiceInput } from './schemas';
 
 // Mutations behind the settings pages. Callers pass a user-scoped client (RLS applies) and an actor
 // derived on the server; every write is also filtered by the actor's shop_id.
@@ -93,6 +93,28 @@ export async function updateBookingRules(
 			cancel_cutoff_hours: input.cancelCutoffHours,
 			max_active_bookings_per_phone: input.maxActiveBookingsPerPhone,
 			booking_page_enabled: input.bookingPageEnabled,
+		})
+		.eq('id', actor.shopId)
+		.select('id');
+	return settle(error, data);
+}
+
+export async function updateMessageSettings(
+	db: Db,
+	actor: Actor,
+	input: MessageSettingsInput,
+): Promise<MutationResult> {
+	if (!isOwner(actor)) return fail(OWNER_ONLY);
+	const { data, error } = await db
+		.from('shops')
+		.update({
+			sms_confirmation_enabled: input.confirmationEnabled,
+			sms_reminder_enabled: input.reminderEnabled,
+			sms_confirm_request_enabled: input.confirmRequestEnabled,
+			sms_rescheduled_enabled: input.rescheduledEnabled,
+			sms_cancelled_enabled: input.cancelledEnabled,
+			sms_reminder_lead_hours: input.reminderLeadHours,
+			sms_sign_off: input.signOff,
 		})
 		.eq('id', actor.shopId)
 		.select('id');

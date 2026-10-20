@@ -135,7 +135,7 @@ export async function cancelManagedBooking(
 	}
 	const { data, error } = await db
 		.from('bookings')
-		.update({ status: 'cancelled' })
+		.update({ status: 'cancelled', cancelled_by: 'client' })
 		.eq('id', booking.bookingId)
 		.eq('shop_id', booking.shop.id)
 		.in('status', ['pending', 'confirmed'])

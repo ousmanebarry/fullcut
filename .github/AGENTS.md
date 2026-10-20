@@ -84,12 +84,12 @@ fullcut/
 │       │   ├── onboarding/   # first-run shop setup wizard
 │       │   ├── [shopSlug]/   # public booking page per shop
 │       │   ├── dashboard/    # authenticated owner/staff area (settings/ for shop setup)
-│       │   └── api/          # route handlers, incl. webhooks/stripe, webhooks/twilio
+│       │   └── api/          # route handlers: public/, manage/, jobs/tick (pg_cron caller), webhooks/twilio/{status,inbound}
 │       ├── proxy.ts          # session refresh + signed-in/out redirects (Next 16 "middleware")
 │       ├── next.config.ts    # security headers (CSP etc.)
 │       ├── public/           # sw.js (static-asset + offline-page cache only), offline.html
 │       ├── components/ui/    # shadcn/ui components
-│       ├── lib/              # domain logic (auth, booking engine, public booking, dashboard, clients, export, money, shop settings, supabase clients, time)
+│       ├── lib/              # domain logic (auth, booking engine, public booking, dashboard, clients, export, messaging, money, shop settings, supabase clients, time)
 │       └── tests/            # unit/ (Vitest), db/ (Vitest against local Supabase), e2e/ (Playwright)
 ├── services/
 │   └── ml/                   # FastAPI scoring service + training pipeline
@@ -112,6 +112,7 @@ Run from the repository root (Node 24 per `.nvmrc`, pnpm pinned in `package.json
 ```bash
 pnpm install                 # install JS dependencies
 pnpm dev                     # run the web app locally (http://localhost:3000)
+pnpm jobs:dev                # tick /api/jobs/tick every 15 s locally (needs JOBS_SECRET in apps/web/.env.local)
 pnpm lint                    # ESLint
 pnpm typecheck               # next typegen && tsc --noEmit
 pnpm test                    # Vitest unit tests (apps/web/tests/unit)
@@ -131,6 +132,7 @@ pnpm exec supabase migration new <name>
 CI (`.github/workflows/ci.yml`) runs `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, a build and the client-bundle secret scan (`pnpm --filter web check:bundle`) on pull requests, plus a `database` job (`supabase start`, `db:reset`, `db:test`) and an `e2e` job (Playwright against `next build` + `next start`, with `DEMO_*` set so the demo spec runs).
 
 Deploys (`.github/workflows/deploy.yml`, on push to `main`): CI again → `supabase db push` to staging → approval → `supabase db push` to production → `vercel build` / `vercel deploy --prebuilt --prod`. Migrations ship before code, so they must work with the previous app version. See `docs/adr/0007-deployment-and-demo-shop.md` for headers, the PWA service worker rules and the demo shop.
+Background jobs and SMS (`docs/adr/0008-background-jobs-and-messaging.md`): a `bookings` trigger queues texts in `scheduled_messages`; pg_cron + pg_net POST `/api/jobs/tick` every minute (no-op until the `jobs_tick_url` / `jobs_secret` Vault secrets exist). `MESSAGING_MODE=log` (default) never contacts Twilio. Send-time rules live in `apps/web/lib/messaging/rules.ts`, templates in `templates.ts`. New periodic work belongs in the tick route, not a new cron job.
 
 > Not available yet (`services/ml/` does not exist). Intended commands once it does:
 
