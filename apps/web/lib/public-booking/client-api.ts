@@ -51,6 +51,7 @@ export interface BookingRequest {
 	email?: string;
 	notes?: string;
 	marketingOptIn: boolean;
+	expectedDepositCents: number;
 	website: string;
 }
 
@@ -64,6 +65,10 @@ export function createBooking(slug: string, body: BookingRequest, source: string
 
 export function cancelBooking(token: string) {
 	return call<{ status: 'cancelled' }>('/api/manage/cancel', postJson({ token }));
+}
+
+export function resumeCheckout(token: string) {
+	return call<{ checkoutUrl: string }>('/api/manage/checkout', postJson({ token }));
 }
 
 export function rescheduleBooking(token: string, staffId: string, startsAt: string) {

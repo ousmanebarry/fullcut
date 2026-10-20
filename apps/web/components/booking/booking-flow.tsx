@@ -97,7 +97,14 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 										<span className="font-medium">{s.name}</span>
 										<span className="text-sm text-muted-foreground">{s.durationMinutes} min</span>
 									</span>
-									<span className="font-medium">{formatCents(s.priceCents, shop.currency)}</span>
+									<span className="grid justify-items-end">
+										<span className="font-medium">{formatCents(s.priceCents, shop.currency)}</span>
+										{s.depositCents > 0 ? (
+											<span className="text-xs text-muted-foreground">
+												{formatCents(s.depositCents, shop.currency)} deposit
+											</span>
+										) : null}
+									</span>
 								</button>
 							</li>
 						))}
@@ -147,6 +154,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 						priceCents: service.priceCents,
 						currency: shop.currency,
 					}}
+					depositCents={service.depositCents}
 					onSlotChange={setSlot}
 					onBooked={(result) => {
 						setCreated(result);

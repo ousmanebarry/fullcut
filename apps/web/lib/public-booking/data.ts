@@ -7,6 +7,13 @@ import type {
 	TimeOff,
 } from '@/lib/booking/types';
 import { countryForCurrency } from '@/lib/contact/phone';
+import {
+	depositFor,
+	type CancellationPolicy,
+	type DepositMode,
+	type DepositPolicy,
+	type DepositType,
+} from '@/lib/payments/policy';
 import type { Db } from '@/lib/shop/settings';
 import { slugSchema } from '@/lib/shop/slug';
 import {
@@ -33,12 +40,22 @@ export interface BookingShop {
 	timezone: TimeZone;
 	settings: ShopSchedulingSettings;
 	cancelCutoffHours: number;
+	payments: ShopPayments;
+}
+
+export interface ShopPayments {
+	depositPolicy: DepositPolicy;
+	cancellationPolicy: CancellationPolicy;
+	/** Stripe can take charges for this shop (account ready). */
+	chargesEnabled: boolean;
 }
 
 export interface BookableService extends Service {
 	id: string;
 	name: string;
 	priceCents: number;
+	/** The service's own deposit, used in per-service mode. */
+	depositCents: number;
 }
 
 export interface BookableStaff {
@@ -47,7 +64,7 @@ export interface BookableStaff {
 }
 
 const SHOP_COLUMNS =
-	'id, slug, name, about_text, address, phone, logo_url, currency, timezone, booking_page_enabled, slot_step_minutes, min_lead_minutes, max_horizon_days, cancel_cutoff_hours';
+	'id, slug, name, about_text, address, phone, logo_url, currency, timezone, booking_page_enabled, slot_step_minutes, min_lead_minutes, max_horizon_days, cancel_cutoff_hours, stripe_charges_enabled, deposit_mode, deposit_default_type, deposit_default_cents, deposit_default_percent, free_cancel_hours, late_cancel_keeps_deposit, no_show_keeps_deposit';
 
 type ShopRow = {
 	id: string;
@@ -64,6 +81,14 @@ type ShopRow = {
 	min_lead_minutes: number;
 	max_horizon_days: number;
 	cancel_cutoff_hours: number;
+	stripe_charges_enabled: boolean;
+	deposit_mode: string;
+	deposit_default_type: string;
+	deposit_default_cents: number;
+	deposit_default_percent: number;
+	free_cancel_hours: number;
+	late_cancel_keeps_deposit: boolean;
+	no_show_keeps_deposit: boolean;
 };
 
 export function toBookingShop(row: ShopRow): BookingShop {
@@ -86,7 +111,38 @@ export function toBookingShop(row: ShopRow): BookingShop {
 			maxHorizonDays: row.max_horizon_days,
 		},
 		cancelCutoffHours: row.cancel_cutoff_hours,
+		payments: {
+			// The database constrains both columns to these values.
+			depositPolicy: {
+				mode: row.deposit_mode as DepositMode,
+				defaultType: row.deposit_default_type as DepositType,
+				defaultCents: row.deposit_default_cents,
+				defaultPercent: row.deposit_default_percent,
+			},
+			cancellationPolicy: {
+				freeCancelHours: row.free_cancel_hours,
+				lateCancelKeepsDeposit: row.late_cancel_keeps_deposit,
+				noShowKeepsDeposit: row.no_show_keeps_deposit,
+			},
+			chargesEnabled: row.stripe_charges_enabled,
+		},
 	};
+}
+
+/**
+ * The deposit a client pays for `service` right now; 0 means none. `paymentsAvailable` is false when
+ * this deployment has no Stripe key, so a misconfigured environment never asks for money it can't take.
+ */
+export function serviceDeposit(
+	shop: BookingShop,
+	service: BookableService,
+	paymentsAvailable: boolean,
+): number {
+	return depositFor(
+		shop.payments.depositPolicy,
+		service,
+		paymentsAvailable && shop.payments.chargesEnabled,
+	);
 }
 
 /** The shop behind a public booking page, or null if unknown or not published. */
@@ -115,7 +171,7 @@ export async function loadShopById(db: Db, shopId: string): Promise<BookingShop 
 export async function loadActiveServices(db: Db, shopId: string): Promise<BookableService[]> {
 	const { data, error } = await db
 		.from('services')
-		.select('id, name, duration_minutes, buffer_minutes, price_cents')
+		.select('id, name, duration_minutes, buffer_minutes, price_cents, deposit_cents')
 		.eq('shop_id', shopId)
 		.eq('active', true)
 		.order('sort_order')
@@ -127,6 +183,7 @@ export async function loadActiveServices(db: Db, shopId: string): Promise<Bookab
 		durationMinutes: s.duration_minutes,
 		bufferMinutes: s.buffer_minutes,
 		priceCents: s.price_cents,
+		depositCents: s.deposit_cents,
 	}));
 }
 
@@ -146,6 +203,7 @@ export async function loadActiveStaff(db: Db, shopId: string): Promise<BookableS
 export async function getPublicShop(
 	db: Db,
 	slug: string,
+	paymentsAvailable: boolean,
 ): Promise<{ shopId: string; shop: PublicShop } | null> {
 	const shop = await loadBookingShop(db, slug);
 	if (!shop) return null;
@@ -165,12 +223,14 @@ export async function getPublicShop(
 			timezone: shop.timezone,
 			currency: shop.currency,
 			country: countryForCurrency(shop.currency) === 'US' ? 'US' : 'CA',
-			services: services.map(({ id, name, durationMinutes, priceCents }) => ({
-				id,
-				name,
-				durationMinutes,
-				priceCents,
+			services: services.map((service) => ({
+				id: service.id,
+				name: service.name,
+				durationMinutes: service.durationMinutes,
+				priceCents: service.priceCents,
+				depositCents: serviceDeposit(shop, service, paymentsAvailable),
 			})),
+			cancellationPolicy: shop.payments.cancellationPolicy,
 			staff,
 		},
 	};

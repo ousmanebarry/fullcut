@@ -1,14 +1,17 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FormError } from '@/components/forms/fields';
 import { Button } from '@/components/ui/button';
 import type { BookingStatus } from '@/lib/booking/types';
-import { cancelBooking, rescheduleBooking } from '@/lib/public-booking/client-api';
+import { formatCents } from '@/lib/money/format';
+import { cancelBooking, rescheduleBooking, resumeCheckout } from '@/lib/public-booking/client-api';
+import type { ManagedPayment } from '@/lib/public-booking/manage';
 import type { BookingDetails, PublicSlot, PublicStaff } from '@/lib/public-booking/types';
 import { AddToCalendarButton } from './add-to-calendar';
 import { BookingSummary } from './booking-summary';
+import { DepositNotice } from './deposit-notice';
 import { SlotSuggestions } from './slot-suggestions';
 import { TimePicker } from './time-picker';
 
@@ -19,6 +22,10 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
 	cancelled: 'Cancelled',
 	no_show: 'Missed',
 };
+
+// The webhook usually lands within seconds of Stripe's redirect; poll briefly, then stop.
+const POLL_INTERVAL_MS = 2000;
+const POLL_ATTEMPTS = 15;
 
 export interface ManageBookingProps {
 	token: string;
@@ -32,12 +39,19 @@ export interface ManageBookingProps {
 	serviceId: string;
 	staff: PublicStaff[];
 	staffId: string;
+	payment: ManagedPayment | null;
+	/** What cancelling now would refund; null when no deposit has been paid. */
+	refundIfCancelled: number | null;
+	/** Shop-local end of the hold, for a booking awaiting its deposit. */
+	holdUntil: string | null;
+	/** Set when the client has just come back from Stripe Checkout. */
+	checkoutReturn: 'success' | 'cancelled' | null;
 }
 
 type Mode = 'view' | 'cancel' | 'reschedule';
 
 export function ManageBooking(props: ManageBookingProps) {
-	const { token, reference, status, booking, shop } = props;
+	const { token, reference, status, booking, shop, payment } = props;
 	const router = useRouter();
 	const [mode, setMode] = useState<Mode>('view');
 	const [busy, setBusy] = useState(false);
@@ -48,7 +62,36 @@ export function ManageBooking(props: ManageBookingProps) {
 		props.staff.some((s) => s.id === props.staffId) ? props.staffId : 'any',
 	);
 	const [slot, setSlot] = useState<PublicSlot | null>(null);
+	const [stillWaiting, setStillWaiting] = useState(false);
 	const statusRef = useRef<HTMLParagraphElement>(null);
+	const confirming = status === 'pending' && props.checkoutReturn === 'success';
+
+	useEffect(() => {
+		if (!confirming) return;
+		let attempts = 0;
+		const timer = setInterval(() => {
+			attempts += 1;
+			if (attempts > POLL_ATTEMPTS) {
+				clearInterval(timer);
+				setStillWaiting(true);
+				return;
+			}
+			router.refresh();
+		}, POLL_INTERVAL_MS);
+		return () => clearInterval(timer);
+	}, [confirming, router]);
+
+	async function payDeposit() {
+		setBusy(true);
+		setError(null);
+		const result = await resumeCheckout(token);
+		if (result.ok) {
+			window.location.assign(result.data.checkoutUrl);
+			return;
+		}
+		setBusy(false);
+		setError(result.error.message);
+	}
 
 	function done(message: string) {
 		setMode('view');
@@ -118,6 +161,64 @@ export function ManageBooking(props: ManageBookingProps) {
 				) : null}
 			</div>
 
+			{status === 'pending' && mode === 'view' ? (
+				<section aria-labelledby="pay-title" className="grid gap-2 rounded-lg border p-4">
+					<h2 id="pay-title" className="font-semibold">
+						{confirming ? 'Confirming your payment…' : 'Pay the deposit to confirm'}
+					</h2>
+					{confirming ? (
+						<p className="text-sm text-muted-foreground" aria-live="polite">
+							{stillWaiting
+								? "It's taking longer than usual. Refresh this page in a minute; you won't be charged twice."
+								: 'This usually takes a few seconds.'}
+						</p>
+					) : (
+						<>
+							<p className="text-sm text-muted-foreground">
+								{props.checkoutReturn === 'cancelled' ? 'Payment not finished. ' : null}
+								{props.holdUntil
+									? `Your time is held until ${props.holdUntil}. Nothing has been charged yet.`
+									: 'Nothing has been charged yet.'}
+							</p>
+							<FormError message={error ?? undefined} />
+							<Button
+								type="button"
+								size="lg"
+								className="h-11 justify-self-start"
+								disabled={busy}
+								onClick={payDeposit}
+							>
+								{busy
+									? 'Opening secure payment…'
+									: `Pay ${formatCents(booking.depositCents, booking.currency)} deposit`}
+							</Button>
+						</>
+					)}
+				</section>
+			) : null}
+
+			{payment && payment.state !== 'expired' ? (
+				<DepositNotice
+					depositCents={payment.amountCents}
+					priceCents={booking.priceCents}
+					currency={booking.currency}
+					policy={payment.policy}
+					paid={payment.state !== 'awaiting_payment'}
+				/>
+			) : null}
+			{payment && payment.refundedCents > 0 ? (
+				<p className="text-sm">
+					<span className="font-medium">
+						Refunded {formatCents(payment.refundedCents, booking.currency)}.
+					</span>{' '}
+					<span className="text-muted-foreground">
+						It can take 5–10 business days to appear on your card.
+					</span>
+				</p>
+			) : payment?.state === 'refund_pending' ? (
+				<p className="text-sm font-medium">Your deposit refund is on its way.</p>
+			) : null}
+
 			{status === 'confirmed' || status === 'pending' ? (
 				<div className="flex flex-wrap gap-2">
 					<AddToCalendarButton booking={booking} reference={reference} />
@@ -184,6 +285,17 @@ export function ManageBooking(props: ManageBookingProps) {
 					<h2 id="cancel-title" className="text-lg font-semibold">
 						Cancel this booking?
 					</h2>
+					{status === 'pending' ? (
+						<p className="text-sm text-muted-foreground">Nothing has been charged.</p>
+					) : props.refundIfCancelled !== null && payment ? (
+						<p className="text-sm">
+							{props.refundIfCancelled >= payment.amountCents
+								? `Your ${formatCents(payment.amountCents, booking.currency)} deposit will be refunded.`
+								: props.refundIfCancelled > 0
+									? `${formatCents(props.refundIfCancelled, booking.currency)} of your deposit will be refunded.`
+									: `It's past the free cancellation time, so the ${formatCents(payment.amountCents, booking.currency)} deposit won't be refunded.`}
+						</p>
+					) : null}
 					<FormError message={error ?? undefined} />
 					<div className="flex flex-wrap gap-2">
 						<Button

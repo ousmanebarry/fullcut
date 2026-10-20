@@ -79,6 +79,8 @@ export const bookingBodySchema = z.object({
 		.pipe(z.email({ error: 'Enter a valid email or leave it blank.' }).optional()),
 	notes: optionalText(MAX_NOTES_LENGTH, `Keep notes under ${MAX_NOTES_LENGTH} characters.`),
 	marketingOptIn: z.boolean().default(false),
+	/** The deposit shown to the client; the booking is refused if the real one differs. */
+	expectedDepositCents: z.number().int().min(0).max(100_000).default(0),
 	/** Honeypot: hidden from people, filled by naive bots. */
 	website: z.string().max(200).optional(),
 });

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { getSiteUrl } from '@/lib/env';
+import { getPaymentGateway } from '@/lib/payments/gateway';
 import { createPublicBooking, parseClientPhone } from '@/lib/public-booking/booking';
 import { loadBookingShop } from '@/lib/public-booking/data';
 import { manageUrl } from '@/lib/public-booking/links';
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest, ctx: RouteContext<'/api/public/
 	);
 	if (!phoneLimit.allowed) return rateLimited(phoneLimit.retryAfterSeconds);
 
+	const siteUrl = getSiteUrl();
 	const result = await createPublicBooking(
 		db,
 		shop,
@@ -52,13 +54,15 @@ export async function POST(request: NextRequest, ctx: RouteContext<'/api/public/
 			source: sourceFromParam(request.nextUrl.searchParams.get('src')),
 		},
 		Date.now() as Instant,
+		{ gateway: getPaymentGateway(), siteUrl },
 	);
 	if (!result.ok) return failureResponse(result.error);
 
 	const created: BookingCreated = {
 		reference: result.value.reference,
-		manageUrl: manageUrl(getSiteUrl(), result.value.token),
+		manageUrl: manageUrl(siteUrl, result.value.token),
 		booking: result.value.details,
+		checkoutUrl: result.value.checkoutUrl,
 	};
 	return Response.json(created, { status: 201, headers: { 'Cache-Control': 'no-store' } });
 }

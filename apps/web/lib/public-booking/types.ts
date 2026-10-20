@@ -1,12 +1,15 @@
 // Shapes returned to the browser by the public booking page and APIs. Nothing here may carry
 // shop ids, client data or other bookings.
 import type { StartRejection } from '@/lib/booking/validate-requested-start';
+import type { CancellationPolicy } from '@/lib/payments/policy';
 
 export interface PublicService {
 	id: string;
 	name: string;
 	durationMinutes: number;
 	priceCents: number;
+	/** Paid online when booking; 0 means no deposit. */
+	depositCents: number;
 }
 
 export interface PublicStaff {
@@ -26,6 +29,7 @@ export interface PublicShop {
 	country: 'CA' | 'US';
 	services: PublicService[];
 	staff: PublicStaff[];
+	cancellationPolicy: CancellationPolicy;
 }
 
 export type DayPeriod = 'morning' | 'afternoon' | 'evening';
@@ -64,6 +68,8 @@ export interface BookingDetails {
 	label: string;
 	durationMinutes: number;
 	priceCents: number;
+	/** Deposit paid (or due) online; 0 when none. */
+	depositCents: number;
 	currency: string;
 	timezone: string;
 }
@@ -72,6 +78,8 @@ export interface BookingCreated {
 	reference: string;
 	manageUrl: string;
 	booking: BookingDetails;
+	/** Set when a deposit is due: the client is sent here to pay before the booking is confirmed. */
+	checkoutUrl: string | null;
 }
 
 export type PublicApiError =
@@ -87,4 +95,6 @@ export type PublicApiError =
 	| { error: 'too_many_bookings'; message: string }
 	| { error: 'rate_limited'; message: string; retryAfterSeconds: number }
 	| { error: 'cancel_window_passed'; message: string }
-	| { error: 'not_active'; message: string };
+	| { error: 'not_active'; message: string }
+	| { error: 'deposit_changed'; message: string; depositCents: number }
+	| { error: 'payment_unavailable'; message: string };

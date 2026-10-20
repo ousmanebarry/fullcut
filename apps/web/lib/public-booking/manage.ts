@@ -1,5 +1,11 @@
 import { transitionBooking } from '@/lib/booking/transition-booking';
 import type { BookingStatus, Result } from '@/lib/booking/types';
+import {
+	paymentState,
+	refundAmount,
+	type CancellationPolicy,
+	type PaymentState,
+} from '@/lib/payments/policy';
 import type { Db } from '@/lib/shop/settings';
 import { addMinutes, instantFromIso, instantToIso, type Instant } from '@/lib/time';
 import { candidatesForStart, staffIdsFor, suggestionsNear } from './availability';
@@ -21,6 +27,16 @@ export interface ManagedBooking {
 	staffName: string;
 	service: BookableService;
 	priceCents: number;
+	depositCents: number;
+	payment: ManagedPayment | null;
+}
+
+export interface ManagedPayment {
+	amountCents: number;
+	state: PaymentState;
+	refundedCents: number;
+	/** The policy as it was when the client booked. */
+	policy: CancellationPolicy;
 }
 
 export interface ManagePolicy {
@@ -49,18 +65,20 @@ export async function findBookingByToken(
 
 	const { data: booking, error } = await db
 		.from('bookings')
-		.select('id, status, starts_at, ends_at, staff_id, service_id, price_cents, pending_expires_at')
+		.select(
+			'id, status, starts_at, ends_at, staff_id, service_id, price_cents, deposit_cents, pending_expires_at',
+		)
 		.eq('id', link.booking_id)
 		.eq('shop_id', link.shop_id)
 		.maybeSingle();
 	if (error) throw error;
 	if (!booking) return null;
 
-	const [shop, service, staff] = await Promise.all([
+	const [shop, service, staff, payment] = await Promise.all([
 		loadShopById(db, link.shop_id),
 		db
 			.from('services')
-			.select('id, name, duration_minutes, buffer_minutes, price_cents')
+			.select('id, name, duration_minutes, buffer_minutes, price_cents, deposit_cents')
 			.eq('shop_id', link.shop_id)
 			.eq('id', booking.service_id)
 			.single(),
@@ -70,9 +88,18 @@ export async function findBookingByToken(
 			.eq('shop_id', link.shop_id)
 			.eq('id', booking.staff_id)
 			.single(),
+		db
+			.from('payments')
+			.select(
+				'status, amount_cents, refund_due_cents, refunded_cents, free_cancel_hours, late_cancel_keeps_deposit, no_show_keeps_deposit',
+			)
+			.eq('shop_id', link.shop_id)
+			.eq('booking_id', booking.id)
+			.maybeSingle(),
 	]);
 	if (service.error) throw service.error;
 	if (staff.error) throw staff.error;
+	if (payment.error) throw payment.error;
 	if (!shop) return null;
 
 	return {
@@ -93,8 +120,27 @@ export async function findBookingByToken(
 			durationMinutes: service.data.duration_minutes,
 			bufferMinutes: service.data.buffer_minutes,
 			priceCents: service.data.price_cents,
+			depositCents: service.data.deposit_cents,
 		},
 		priceCents: booking.price_cents,
+		depositCents: booking.deposit_cents,
+		payment: payment.data
+			? {
+					amountCents: payment.data.amount_cents,
+					state: paymentState({
+						status: payment.data.status,
+						amountCents: payment.data.amount_cents,
+						refundDueCents: payment.data.refund_due_cents,
+						refundedCents: payment.data.refunded_cents,
+					}),
+					refundedCents: payment.data.refunded_cents,
+					policy: {
+						freeCancelHours: payment.data.free_cancel_hours,
+						lateCancelKeepsDeposit: payment.data.late_cancel_keeps_deposit,
+						noShowKeepsDeposit: payment.data.no_show_keeps_deposit,
+					},
+				}
+			: null,
 	};
 }
 
@@ -117,7 +163,20 @@ export function managedDetails(booking: ManagedBooking): BookingDetails {
 		startsAt: booking.startsAt,
 		endsAt: booking.endsAt,
 		priceCents: booking.priceCents,
+		depositCents: booking.depositCents,
 	});
+}
+
+/** What cancelling online right now would refund; null when there is no paid deposit. */
+export function refundIfCancelledNow(booking: ManagedBooking, now: Instant): number | null {
+	const { payment } = booking;
+	if (!payment || payment.state !== 'paid') return null;
+	return refundAmount(
+		payment.policy,
+		{ startsAt: booking.startsAt, paidCents: payment.amountCents },
+		now,
+		'client',
+	);
 }
 
 type CancelError = Extract<BookingFailure, { kind: 'not_active' | 'cancel_window_passed' }>;
@@ -225,6 +284,7 @@ export async function rescheduleManagedBooking(
 				startsAt: candidate.times.startsAt,
 				endsAt: candidate.times.endsAt,
 				priceCents: booking.priceCents,
+				depositCents: booking.depositCents,
 			}),
 		};
 	}

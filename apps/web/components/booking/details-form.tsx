@@ -5,6 +5,8 @@ import { FieldShell, FormError, describedBy } from '@/components/forms/fields';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { formatCents } from '@/lib/money/format';
+import { HOLD_MINUTES } from '@/lib/payments/policy';
 import { createBooking } from '@/lib/public-booking/client-api';
 import type {
 	BookingCreated,
@@ -13,6 +15,7 @@ import type {
 	PublicSlot,
 } from '@/lib/public-booking/types';
 import { BookingSummary, type SummaryItem } from './booking-summary';
+import { DepositNotice } from './deposit-notice';
 import { SlotSuggestions } from './slot-suggestions';
 
 type PhoneLib = typeof import('libphonenumber-js/min');
@@ -23,6 +26,8 @@ export interface DetailsFormProps {
 	staffChoice: string;
 	slot: PublicSlot;
 	summary: SummaryItem;
+	/** Deposit shown on the page; the server refuses the booking if it has changed. */
+	depositCents: number;
 	onSlotChange: (slot: PublicSlot) => void;
 	onBooked: (created: BookingCreated) => void;
 }
@@ -51,6 +56,7 @@ export function DetailsForm({
 	staffChoice,
 	slot,
 	summary,
+	depositCents,
 	onSlotChange,
 	onBooked,
 }: DetailsFormProps) {
@@ -58,6 +64,8 @@ export function DetailsForm({
 	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 	const [apiError, setApiError] = useState<PublicApiError | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+	const [redirecting, setRedirecting] = useState(false);
+	const [deposit, setDeposit] = useState(depositCents);
 	const phoneLib = useRef<PhoneLib | null>(null);
 	const errorRef = useRef<HTMLDivElement>(null);
 
@@ -124,16 +132,25 @@ export function DetailsForm({
 				email: values.email || undefined,
 				notes: values.notes || undefined,
 				marketingOptIn: values.marketingOptIn,
+				expectedDepositCents: deposit,
 				website: values.website,
 			},
 			source,
 		);
+
+		if (result.ok && result.data.checkoutUrl) {
+			// The slot is held while the client pays on Stripe's page; they come back to their booking page.
+			setRedirecting(true);
+			window.location.assign(result.data.checkoutUrl);
+			return;
+		}
 		setSubmitting(false);
 
 		if (result.ok) {
 			onBooked(result.data);
 			return;
 		}
+		if (result.error.error === 'deposit_changed') setDeposit(result.error.depositCents);
 		if (result.error.error === 'invalid_request' && result.error.fieldErrors) {
 			setFieldErrors(result.error.fieldErrors);
 		}
@@ -254,9 +271,30 @@ export function DetailsForm({
 				<BookingSummary item={summary} />
 			</div>
 
+			{deposit > 0 ? (
+				<DepositNotice
+					depositCents={deposit}
+					priceCents={summary.priceCents}
+					currency={summary.currency}
+					policy={shop.cancellationPolicy}
+				/>
+			) : null}
+
 			<Button type="submit" size="lg" className="h-12 text-base" disabled={submitting}>
-				{submitting ? 'Booking…' : 'Confirm booking'}
+				{redirecting
+					? 'Opening secure payment…'
+					: submitting
+						? 'Booking…'
+						: deposit > 0
+							? `Pay ${formatCents(deposit, summary.currency)} deposit`
+							: 'Confirm booking'}
 			</Button>
+			{deposit > 0 ? (
+				<p className="text-xs text-muted-foreground">
+					Your time is held for {HOLD_MINUTES} minutes while you pay. If you don&apos;t finish,
+					it&apos;s released and nothing is charged.
+				</p>
+			) : null}
 		</form>
 	);
 }

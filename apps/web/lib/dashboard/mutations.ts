@@ -154,7 +154,7 @@ async function loadService(
 ): Promise<BookableService | null> {
 	let query = db
 		.from('services')
-		.select('id, name, duration_minutes, buffer_minutes, price_cents')
+		.select('id, name, duration_minutes, buffer_minutes, price_cents, deposit_cents')
 		.eq('shop_id', actor.shopId)
 		.eq('id', serviceId);
 	if (activeOnly) query = query.eq('active', true);
@@ -167,6 +167,7 @@ async function loadService(
 				durationMinutes: data.duration_minutes,
 				bufferMinutes: data.buffer_minutes,
 				priceCents: data.price_cents,
+				depositCents: data.deposit_cents,
 			}
 		: null;
 }

@@ -1,18 +1,29 @@
 import type { StartRejection } from '@/lib/booking/validate-requested-start';
 import type { Result } from '@/lib/booking/types';
 import { countryForCurrency, normalizePhone } from '@/lib/contact/phone';
+import { startDepositCheckout } from '@/lib/payments/checkout';
+import type { PaymentGateway } from '@/lib/payments/gateway';
+import { HOLD_MINUTES, platformFeeCents } from '@/lib/payments/policy';
 import type { Db } from '@/lib/shop/settings';
-import { formatLongDateTime, instantToIso, localDateOf, plusDays, type Instant } from '@/lib/time';
+import {
+	addMinutes,
+	formatLongDateTime,
+	instantToIso,
+	localDateOf,
+	plusDays,
+	type Instant,
+} from '@/lib/time';
 import { candidatesForStart, dateWindow, staffIdsFor, suggestionsNear } from './availability';
 import {
 	loadActiveServices,
 	loadActiveStaff,
 	loadSchedulingContext,
+	serviceDeposit,
 	type BookableService,
 	type BookableStaff,
 	type BookingShop,
 } from './data';
-import { bookingReference, hashToken, issueToken, linkExpiry } from './links';
+import { bookingReference, hashToken, issueToken, linkExpiry, manageUrl } from './links';
 import type { BookingBody } from './schemas';
 import type { BookingDetails, PublicSlot } from './types';
 
@@ -23,11 +34,21 @@ export type BookingFailure =
 	| { kind: 'taken'; suggestions: PublicSlot[] }
 	| { kind: 'too_many' }
 	| { kind: 'not_active' }
-	| { kind: 'cancel_window_passed' };
+	| { kind: 'cancel_window_passed' }
+	| { kind: 'deposit_changed'; depositCents: number }
+	| { kind: 'payment_unavailable' };
 
 type CreateBookingError = Extract<
 	BookingFailure,
-	{ kind: 'not_found' | 'unavailable' | 'taken' | 'too_many' }
+	{
+		kind:
+			| 'not_found'
+			| 'unavailable'
+			| 'taken'
+			| 'too_many'
+			| 'deposit_changed'
+			| 'payment_unavailable';
+	}
 >;
 
 export interface CreatedBooking {
@@ -35,6 +56,13 @@ export interface CreatedBooking {
 	reference: string;
 	token: string;
 	details: BookingDetails;
+	/** Where to pay the deposit; null when none is due and the booking is already confirmed. */
+	checkoutUrl: string | null;
+}
+
+export interface BookingPayments {
+	gateway: PaymentGateway | null;
+	siteUrl: string;
 }
 
 export interface CreateBookingInput extends Omit<BookingBody, 'website'> {
@@ -54,14 +82,16 @@ export function parseClientPhone(
 }
 
 /**
- * Creates a confirmed booking following the booking-engine order: server-loaded service and staff,
- * server-computed times, a friendly pre-check, then the atomic DB write (23P01 → taken).
+ * Creates a booking following the booking-engine order: server-loaded service and staff,
+ * server-computed times, a friendly pre-check, then the atomic DB write (23P01 → taken). When a deposit
+ * is due the booking is a `pending` hold and the client is sent to Stripe Checkout to pay it.
  */
 export async function createPublicBooking(
 	db: Db,
 	shop: BookingShop,
 	input: CreateBookingInput,
 	now: Instant,
+	payments: BookingPayments,
 ): Promise<Result<CreatedBooking, CreateBookingError>> {
 	const [services, staff] = await Promise.all([
 		loadActiveServices(db, shop.id),
@@ -70,6 +100,14 @@ export async function createPublicBooking(
 	const service = services.find((s) => s.id === input.serviceId);
 	const staffIds = staffIdsFor(input.staffId, staff);
 	if (!service || !staffIds || staffIds.length === 0) return fail({ kind: 'not_found' });
+
+	// The client must have seen the exact deposit before we take it.
+	const depositCents = serviceDeposit(shop, service, payments.gateway !== null);
+	if (depositCents !== input.expectedDepositCents) {
+		return fail({ kind: 'deposit_changed', depositCents });
+	}
+	const holdUntil = depositCents > 0 ? addMinutes(now, HOLD_MINUTES) : null;
+	const feeCents = depositCents > 0 ? platformFeeCents() : 0;
 
 	const ctx = await loadDayContext(db, shop, service, staffIds, input.startsAt, now);
 	const picked = candidatesForStart(ctx, staffIds, input.startsAt);
@@ -97,28 +135,56 @@ export async function createPublicBooking(
 				p_marketing_opt_in: input.marketingOptIn,
 				p_token_hash: hashToken(token),
 				p_link_expires_at: instantToIso(linkExpiry(candidate.times.startsAt)),
+				p_deposit_cents: depositCents,
+				p_platform_fee_cents: feeCents,
+				// Ignored by the RPC when there is no deposit.
+				p_pending_expires_at: instantToIso(holdUntil ?? now),
 			})
 			.single();
 
 		if (!error) {
+			const details = bookingDetails(shop, {
+				serviceName: service.name,
+				staffName: staffName(staff, candidate.staffId),
+				startsAt: candidate.times.startsAt,
+				endsAt: candidate.times.endsAt,
+				priceCents: service.priceCents,
+				depositCents,
+			});
+			let checkoutUrl: string | null = null;
+			if (holdUntil && payments.gateway) {
+				try {
+					checkoutUrl = await startDepositCheckout(db, payments.gateway, {
+						shopId: shop.id,
+						bookingId: data.booking_id,
+						amountCents: depositCents,
+						platformFeeCents: feeCents,
+						currency: shop.currency,
+						description: `Deposit: ${service.name} at ${shop.name}, ${details.label}`,
+						expiresAt: holdUntil,
+						manageUrl: manageUrl(payments.siteUrl, token),
+						email: input.email ?? null,
+					});
+				} catch (cause) {
+					console.error('Could not start deposit checkout', cause);
+					return fail({ kind: 'payment_unavailable' });
+				}
+			}
 			return {
 				ok: true,
 				value: {
 					bookingId: data.booking_id,
 					reference: bookingReference(data.booking_id),
 					token,
-					details: bookingDetails(shop, {
-						serviceName: service.name,
-						staffName: staffName(staff, candidate.staffId),
-						startsAt: candidate.times.startsAt,
-						endsAt: candidate.times.endsAt,
-						priceCents: service.priceCents,
-					}),
+					details,
+					checkoutUrl,
 				},
 			};
 		}
 		if (error.code === '23P01') continue;
 		if (error.code === 'FC001') return fail({ kind: 'too_many' });
+		// Stripe stopped accepting charges for the shop since the page loaded.
+		if (error.code === 'FC002') return fail({ kind: 'deposit_changed', depositCents: 0 });
 		if (error.code === '23503') return fail({ kind: 'not_found' });
 		throw error;
 	}
@@ -156,6 +222,7 @@ export function bookingDetails(
 		startsAt: Instant;
 		endsAt: Instant;
 		priceCents: number;
+		depositCents: number;
 	},
 ): BookingDetails {
 	return {
@@ -168,6 +235,7 @@ export function bookingDetails(
 		label: formatLongDateTime(booking.startsAt, shop.timezone),
 		durationMinutes: Math.round((booking.endsAt - booking.startsAt) / 60_000),
 		priceCents: booking.priceCents,
+		depositCents: booking.depositCents,
 		currency: shop.currency,
 		timezone: shop.timezone,
 	};

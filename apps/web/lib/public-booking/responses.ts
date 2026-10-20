@@ -112,6 +112,26 @@ export function failureResponse(failure: BookingFailure): Response {
 				},
 				422,
 			);
+		case 'deposit_changed':
+			return apiError(
+				{
+					error: 'deposit_changed',
+					message:
+						failure.depositCents > 0
+							? 'The deposit for this service has changed. Please check it and confirm again.'
+							: 'This shop no longer takes a deposit online. Please check and confirm again.',
+					depositCents: failure.depositCents,
+				},
+				409,
+			);
+		case 'payment_unavailable':
+			return apiError(
+				{
+					error: 'payment_unavailable',
+					message: "We couldn't start the payment, so nothing was booked. Please try again.",
+				},
+				503,
+			);
 	}
 }
 

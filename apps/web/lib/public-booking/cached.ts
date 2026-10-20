@@ -1,5 +1,6 @@
 import 'server-only';
 import { cacheLife, cacheTag } from 'next/cache';
+import { paymentsAvailable } from '@/lib/payments/gateway';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPublicShop } from './data';
 import type { PublicShop } from './types';
@@ -14,7 +15,7 @@ export async function getCachedPublicShop(slug: string): Promise<PublicShop | nu
 	'use cache';
 	cacheLife('minutes');
 	cacheTag(publicShopTag.slug(slug));
-	const result = await getPublicShop(createAdminClient(), slug);
+	const result = await getPublicShop(createAdminClient(), slug, paymentsAvailable());
 	if (!result) return null;
 	cacheTag(publicShopTag.id(result.shopId));
 	return result.shop;

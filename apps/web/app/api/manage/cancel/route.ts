@@ -1,3 +1,5 @@
+import { settleCancelledBooking } from '@/lib/payments/cancellation';
+import { getPaymentGateway } from '@/lib/payments/gateway';
 import { cancelManagedBooking, findBookingByToken } from '@/lib/public-booking/manage';
 import { clientIp, hitRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/public-booking/rate-limit';
 import {
@@ -27,5 +29,11 @@ export async function POST(request: Request) {
 
 	const result = await cancelManagedBooking(db, booking, now);
 	if (!result.ok) return failureResponse(result.error);
+	await settleCancelledBooking(
+		db,
+		getPaymentGateway(),
+		{ shopId: booking.shop.id, bookingId: booking.bookingId },
+		now,
+	);
 	return Response.json({ status: 'cancelled' }, { headers: { 'Cache-Control': 'no-store' } });
 }

@@ -3,7 +3,12 @@ import { connection } from 'next/server';
 import { Suspense } from 'react';
 import { ManageBooking } from '@/components/booking/manage-booking';
 import { loadActiveStaff } from '@/lib/public-booking/data';
-import { findBookingByToken, managedDetails, managePolicy } from '@/lib/public-booking/manage';
+import {
+	findBookingByToken,
+	managedDetails,
+	managePolicy,
+	refundIfCancelledNow,
+} from '@/lib/public-booking/manage';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatLongDateTime, type Instant } from '@/lib/time';
 
@@ -12,11 +17,11 @@ export const metadata: Metadata = {
 	robots: { index: false, follow: false },
 };
 
-export default function ManageBookingPage({ params }: PageProps<'/b/[token]'>) {
+export default function ManageBookingPage({ params, searchParams }: PageProps<'/b/[token]'>) {
 	return (
 		<main className="mx-auto grid w-full max-w-lg gap-6 px-4 py-6">
 			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading your booking…</p>}>
-				<ManagedBooking params={params} />
+				<ManagedBooking params={params} searchParams={searchParams} />
 			</Suspense>
 		</main>
 	);
@@ -30,11 +35,15 @@ async function loadManagePage(token: string) {
 	if (!booking) return null;
 	const policy = managePolicy(booking, now);
 	const staff = policy.canReschedule ? await loadActiveStaff(db, booking.shop.id) : [];
-	return { booking, policy, staff };
+	return { booking, policy, staff, refundIfCancelled: refundIfCancelledNow(booking, now) };
 }
 
-async function ManagedBooking({ params }: Pick<PageProps<'/b/[token]'>, 'params'>) {
+async function ManagedBooking({
+	params,
+	searchParams,
+}: Pick<PageProps<'/b/[token]'>, 'params' | 'searchParams'>) {
 	const { token } = await params;
+	const { checkout } = await searchParams;
 	const page = await loadManagePage(token);
 
 	if (!page) {
@@ -48,7 +57,7 @@ async function ManagedBooking({ params }: Pick<PageProps<'/b/[token]'>, 'params'
 		);
 	}
 
-	const { booking, policy, staff } = page;
+	const { booking, policy, staff, refundIfCancelled } = page;
 	return (
 		<ManageBooking
 			token={token}
@@ -67,6 +76,14 @@ async function ManagedBooking({ params }: Pick<PageProps<'/b/[token]'>, 'params'
 			serviceId={booking.service.id}
 			staff={staff}
 			staffId={booking.staffId}
+			payment={booking.payment}
+			refundIfCancelled={refundIfCancelled}
+			holdUntil={
+				booking.pendingExpiresAt
+					? formatLongDateTime(booking.pendingExpiresAt, booking.shop.timezone)
+					: null
+			}
+			checkoutReturn={checkout === 'success' || checkout === 'cancelled' ? checkout : null}
 		/>
 	);
 }
