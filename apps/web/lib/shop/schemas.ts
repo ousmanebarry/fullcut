@@ -70,6 +70,13 @@ export const serviceSchema = z.object({
 	durationMinutes: minutesSchema(5, 480, 'duration'),
 	bufferMinutes: minutesSchema(0, 120, 'buffer'),
 	price: dollarsToCentsSchema,
+	/** Taken only when the shop's deposit mode is per service; blank means none. */
+	deposit: z
+		.string()
+		.trim()
+		.transform((value) => value || '0')
+		.pipe(dollarsToCentsSchema)
+		.optional(),
 });
 export type ServiceInput = z.output<typeof serviceSchema>;
 

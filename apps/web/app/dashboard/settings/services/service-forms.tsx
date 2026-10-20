@@ -14,6 +14,7 @@ interface ServiceValues {
 	durationMinutes: string;
 	bufferMinutes: string;
 	price: string;
+	deposit: string;
 }
 
 function ServiceFields({
@@ -66,6 +67,17 @@ function ServiceFields({
 				error={errors?.price}
 				className="sm:col-span-2"
 			/>
+			<TextField
+				name="deposit"
+				id={`${idPrefix}-deposit`}
+				label={`Deposit (${currency})`}
+				hint="Used when deposits are set per service in Payments."
+				inputMode="decimal"
+				placeholder="0.00"
+				defaultValue={value('deposit')}
+				error={errors?.deposit}
+				className="sm:col-span-2"
+			/>
 		</>
 	);
 }
@@ -80,7 +92,13 @@ export function AddServiceForm({ currency }: { currency: string }) {
 				idPrefix="new-service"
 				currency={currency}
 				state={state}
-				defaults={{ name: '', durationMinutes: '30', bufferMinutes: '0', price: '' }}
+				defaults={{
+					name: '',
+					durationMinutes: '30',
+					bufferMinutes: '0',
+					price: '',
+					deposit: '',
+				}}
 			/>
 			<SubmitButton pendingLabel="Adding…" className="sm:col-span-4 sm:justify-self-start">
 				Add service
@@ -95,6 +113,7 @@ export interface ServiceRowData {
 	duration_minutes: number;
 	buffer_minutes: number;
 	price_cents: number;
+	deposit_cents: number;
 	active: boolean;
 }
 
@@ -162,6 +181,7 @@ export function ServiceRow({
 						durationMinutes: String(service.duration_minutes),
 						bufferMinutes: String(service.buffer_minutes),
 						price: centsToDollarInput(service.price_cents),
+						deposit: service.deposit_cents ? centsToDollarInput(service.deposit_cents) : '',
 					}}
 				/>
 				<SubmitButton variant="outline" className="sm:col-span-4 sm:justify-self-start">

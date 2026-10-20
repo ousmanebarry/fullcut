@@ -44,6 +44,12 @@ const SECTIONS: (SettingsSection & { ownerOnly: boolean })[] = [
 		ownerOnly: true,
 	},
 	{
+		href: '/dashboard/settings/payments',
+		label: 'Payments',
+		description: 'Stripe, deposits and cancellation policy',
+		ownerOnly: true,
+	},
+	{
 		href: '/dashboard/settings/messages',
 		label: 'Text messages',
 		description: 'Confirmations, reminders and your sign-off',

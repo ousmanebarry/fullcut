@@ -24,7 +24,9 @@ export async function listServices(ctx: ShopContext) {
 	const db = await createClient();
 	const { data, error } = await db
 		.from('services')
-		.select('id, name, duration_minutes, buffer_minutes, price_cents, active, sort_order')
+		.select(
+			'id, name, duration_minutes, buffer_minutes, price_cents, deposit_cents, active, sort_order',
+		)
 		.eq('shop_id', ctx.shop.id)
 		.order('sort_order')
 		.order('created_at');

@@ -14,6 +14,7 @@ function parseService(formData: FormData) {
 		durationMinutes: textField(formData, 'durationMinutes'),
 		bufferMinutes: textField(formData, 'bufferMinutes'),
 		price: textField(formData, 'price'),
+		deposit: textField(formData, 'deposit'),
 	});
 }
 

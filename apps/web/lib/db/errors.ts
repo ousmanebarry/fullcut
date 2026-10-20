@@ -40,6 +40,14 @@ const CONSTRAINT_MESSAGES: Record<string, UserFacingError> = {
 		message: 'Duration must be more than 0.',
 	},
 	services_price_nonnegative: { field: 'price', message: 'Price cannot be negative.' },
+	services_price_not_below_deposit: {
+		field: 'deposit',
+		message: "The deposit can't be more than the price.",
+	},
+	shops_deposit_default_cents_valid: {
+		field: 'depositAmount',
+		message: 'Choose a deposit up to $1,000.',
+	},
 	availability_rules_time_order: { message: 'Start must be before end.' },
 	time_off_time_order: { field: 'endDate', message: 'End must be after start.' },
 };

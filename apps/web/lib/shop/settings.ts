@@ -173,6 +173,7 @@ export async function createService(
 			duration_minutes: input.durationMinutes,
 			buffer_minutes: input.bufferMinutes,
 			price_cents: input.price,
+			deposit_cents: input.deposit,
 			sort_order: (last?.sort_order ?? -1) + 1,
 		})
 		.select('id');
@@ -193,6 +194,7 @@ export async function updateService(
 			duration_minutes: patch.durationMinutes,
 			buffer_minutes: patch.bufferMinutes,
 			price_cents: patch.price,
+			deposit_cents: patch.deposit,
 			active: patch.active,
 		})
 		.eq('shop_id', actor.shopId)

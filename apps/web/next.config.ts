@@ -38,7 +38,8 @@ const csp = [
 	"manifest-src 'self'",
 	"object-src 'none'",
 	"base-uri 'self'",
-	"form-action 'self'",
+	// Server actions redirect to Stripe-hosted onboarding (form-action also governs those redirects).
+	"form-action 'self' https://accounts.stripe.com https://connect.stripe.com https://checkout.stripe.com",
 	"frame-ancestors 'none'",
 	...(vercelEnv ? ['upgrade-insecure-requests'] : []),
 ]
