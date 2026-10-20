@@ -16,6 +16,7 @@ import {
 	type StaffOption,
 } from '@/lib/dashboard/types';
 import { StatusBadge } from './booking-list';
+import { BookingMessages } from './booking-messages';
 import { OutcomeButtons, undoOutcome } from './outcome-buttons';
 import { useNow } from './use-now';
 import { WhenFields, type When } from './when-fields';
@@ -88,6 +89,11 @@ export function BookingDetails({
 				<dt className="text-muted-foreground">Booked</dt>
 				<dd>{booking.createdLabel}</dd>
 			</dl>
+
+			<BookingMessages
+				bookingId={booking.id}
+				version={`${booking.status}:${booking.startsAtMs}:${booking.staffId}`}
+			/>
 
 			{mode === 'edit' ? (
 				<EditForm

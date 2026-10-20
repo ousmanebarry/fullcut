@@ -12,6 +12,7 @@ const NAV = [
 	{ href: '/dashboard', label: 'Today' },
 	{ href: '/dashboard/calendar', label: 'Calendar' },
 	{ href: '/dashboard/clients', label: 'Clients' },
+	{ href: '/dashboard/inbox', label: 'Inbox' },
 	{ href: '/dashboard/settings', label: 'Settings' },
 ];
 

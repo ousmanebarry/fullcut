@@ -163,6 +163,25 @@ export const bookingRulesSchema = z.object({
 
 export const staffFormSchema = z.object({ displayName: staffNameSchema });
 
+export const REMINDER_LEAD_HOURS = [3, 6, 12, 24, 48, 72] as const;
+
+export const messageSettingsSchema = z.object({
+	confirmationEnabled: z.boolean(),
+	reminderEnabled: z.boolean(),
+	confirmRequestEnabled: z.boolean(),
+	rescheduledEnabled: z.boolean(),
+	cancelledEnabled: z.boolean(),
+	reminderLeadHours: z.coerce
+		.number({ error: 'Choose when reminders go out.' })
+		.int()
+		.min(3, { error: 'Send reminders at least 3 hours before.' })
+		.max(72, { error: 'Send reminders at most 72 hours before.' }),
+	signOff: optionalText(40).refine((value) => value === null || !/[\r\n]/.test(value), {
+		error: 'Keep the sign-off on one line.',
+	}),
+});
+export type MessageSettingsInput = z.output<typeof messageSettingsSchema>;
+
 export const timeOffFormSchema = z
 	.object({
 		staffId: z.uuid({ error: 'Choose a staff member.' }),

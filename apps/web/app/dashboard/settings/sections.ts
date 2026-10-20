@@ -44,6 +44,12 @@ const SECTIONS: (SettingsSection & { ownerOnly: boolean })[] = [
 		ownerOnly: true,
 	},
 	{
+		href: '/dashboard/settings/messages',
+		label: 'Text messages',
+		description: 'Confirmations, reminders and your sign-off',
+		ownerOnly: true,
+	},
+	{
 		href: '/dashboard/settings/export',
 		label: 'Export data',
 		description: 'Download all your shop data as spreadsheets',

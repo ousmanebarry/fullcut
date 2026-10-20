@@ -25,6 +25,8 @@ import {
 } from '@/lib/dashboard/schemas';
 import type { ActionResult, ClientMatch, DashboardSlot } from '@/lib/dashboard/types';
 import { fieldErrorsFrom } from '@/lib/forms';
+import { bookingMessageHistory } from '@/lib/messaging/queries';
+import type { BookingMessageHistory } from '@/lib/messaging/types';
 import { loadActiveServices, toBookingShop } from '@/lib/public-booking/data';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -176,4 +178,13 @@ export async function searchClientsAction(query: unknown): Promise<ClientMatch[]
 	if (!parsed.success) return [];
 	const { shop, db } = await bookingContext();
 	return searchClients(db, shop.id, parsed.data);
+}
+
+export async function bookingMessagesAction(
+	bookingId: unknown,
+): Promise<BookingMessageHistory | null> {
+	const id = idSchema.safeParse(bookingId);
+	if (!id.success) return null;
+	const { shop, db } = await bookingContext();
+	return bookingMessageHistory(db, shop.id, id.data, shop.timezone);
 }
