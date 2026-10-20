@@ -124,6 +124,13 @@ export function formatLocalTime(instant: Instant, zone: TimeZone): string {
 	return local.toFormat(ambiguous ? 'h:mm a ZZZZ' : 'h:mm a');
 }
 
+/** e.g. `Tue Nov 3 at 10:00 AM` for SMS; adds the zone abbreviation only when the wall time occurs twice. */
+export function formatMessageDateTime(instant: Instant, zone: TimeZone): string {
+	const local = DateTime.fromMillis(instant, { zone, locale: 'en-US' });
+	const ambiguous = local.getPossibleOffsets().length > 1;
+	return local.toFormat(ambiguous ? "ccc LLL d 'at' h:mm a ZZZZ" : "ccc LLL d 'at' h:mm a");
+}
+
 /** e.g. `Tuesday, October 20, 2026 at 9:00 AM EDT`. */
 export function formatLongDateTime(instant: Instant, zone: TimeZone): string {
 	return DateTime.fromMillis(instant, { zone, locale: 'en-US' }).toFormat(

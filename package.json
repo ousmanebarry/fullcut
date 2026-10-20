@@ -7,6 +7,7 @@
 	},
 	"scripts": {
 		"dev": "pnpm --filter web dev",
+		"jobs:dev": "pnpm --filter web jobs:dev",
 		"lint": "pnpm --filter web lint",
 		"typecheck": "pnpm --filter web typecheck",
 		"test": "pnpm --filter web test",
