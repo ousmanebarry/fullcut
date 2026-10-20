@@ -2,6 +2,7 @@
 
 import { refresh } from 'next/cache';
 import { z } from 'zod';
+import { isOwner } from '@/lib/auth/roles';
 import { requireShopMember, toActor } from '@/lib/auth/session';
 import {
 	changeBookingStatus,
@@ -27,6 +28,11 @@ import type { ActionResult, ClientMatch, DashboardSlot } from '@/lib/dashboard/t
 import { fieldErrorsFrom } from '@/lib/forms';
 import { bookingMessageHistory } from '@/lib/messaging/queries';
 import type { BookingMessageHistory } from '@/lib/messaging/types';
+import { settleCancelledBooking } from '@/lib/payments/cancellation';
+import { getPaymentGateway } from '@/lib/payments/gateway';
+import { loadBookingPayment } from '@/lib/payments/queries';
+import { requestFullRefund, sendDueRefunds } from '@/lib/payments/refunds';
+import type { BookingPaymentView } from '@/lib/payments/types';
 import { loadActiveServices, toBookingShop } from '@/lib/public-booking/data';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -108,7 +114,15 @@ export async function cancelBookingAction(input: unknown): Promise<ActionResult>
 		now,
 		parsed.data.reason,
 	);
-	return result.ok ? done('Booking cancelled.') : failed(result.error);
+	if (!result.ok) return failed(result.error);
+	// Shop cancellations always refund the deposit in full.
+	await settleCancelledBooking(
+		createAdminClient(),
+		getPaymentGateway(),
+		{ shopId: shop.id, bookingId: parsed.data.bookingId },
+		now,
+	);
+	return done('Booking cancelled.');
 }
 
 export async function bulkMarkAction(input: unknown): Promise<ActionResult> {
@@ -187,4 +201,33 @@ export async function bookingMessagesAction(
 	if (!id.success) return null;
 	const { shop, db } = await bookingContext();
 	return bookingMessageHistory(db, shop.id, id.data, shop.timezone);
+}
+
+export async function bookingPaymentAction(bookingId: unknown): Promise<BookingPaymentView | null> {
+	const id = idSchema.safeParse(bookingId);
+	if (!id.success) return null;
+	const { shop, db } = await bookingContext();
+	return loadBookingPayment(db, shop.id, id.data, shop.timezone);
+}
+
+/** Owner-only: refunds whatever is left of the booking's deposit. */
+export async function refundDepositAction(bookingId: unknown): Promise<ActionResult> {
+	const id = idSchema.safeParse(bookingId);
+	if (!id.success) return INVALID;
+	const { actor, shop, now } = await bookingContext();
+	if (!isOwner(actor)) return { ok: false, message: 'Only the shop owner can refund deposits.' };
+	const gateway = getPaymentGateway();
+	if (!gateway) return { ok: false, message: "Payments aren't available here." };
+
+	const admin = createAdminClient();
+	const scope = { shopId: shop.id, bookingId: id.data };
+	if (!(await requestFullRefund(admin, scope, now))) {
+		return { ok: false, message: 'There is no paid deposit to refund.' };
+	}
+	const run = await sendDueRefunds(admin, gateway, scope);
+	if (run.failed > 0) {
+		refresh();
+		return { ok: false, message: "Stripe didn't accept the refund yet. It will be retried." };
+	}
+	return done('Deposit refunded.');
 }

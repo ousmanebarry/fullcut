@@ -2,7 +2,10 @@ import { getJobsSecret, getMessagingMode, getSiteUrl } from '@/lib/env';
 import { getMessageSender } from '@/lib/messaging/sender';
 import { secretsMatch, STATUS_CALLBACK_PATH, twilioWebhookUrl } from '@/lib/messaging/webhooks';
 import { runMessageBatch } from '@/lib/messaging/worker';
+import { getPaymentGateway } from '@/lib/payments/gateway';
+import { runPaymentJobs } from '@/lib/payments/jobs';
 import { createAdminClient } from '@/lib/supabase/admin';
+import type { Instant } from '@/lib/time';
 
 // Called every minute by pg_cron + pg_net (docs/adr/0008-background-jobs-and-messaging.md).
 export const maxDuration = 60;
@@ -16,12 +19,14 @@ export async function POST(request: Request) {
 		return Response.json({ error: 'unauthorized' }, { status: 401, headers: NO_STORE });
 	}
 
-	const messages = await runMessageBatch(createAdminClient(), {
+	const db = createAdminClient();
+	const payments = await runPaymentJobs(db, getPaymentGateway(), Date.now() as Instant);
+	const messages = await runMessageBatch(db, {
 		sender: getMessageSender(),
 		siteUrl: getSiteUrl(),
 		statusCallbackUrl:
 			getMessagingMode() === 'twilio' ? twilioWebhookUrl(STATUS_CALLBACK_PATH) : null,
 		budgetMs: 40_000,
 	});
-	return Response.json({ messages }, { headers: NO_STORE });
+	return Response.json({ payments, messages }, { headers: NO_STORE });
 }

@@ -17,6 +17,7 @@ import {
 } from '@/lib/dashboard/types';
 import { StatusBadge } from './booking-list';
 import { BookingMessages } from './booking-messages';
+import { BookingPayment } from './booking-payment';
 import { OutcomeButtons, undoOutcome } from './outcome-buttons';
 import { useNow } from './use-now';
 import { WhenFields, type When } from './when-fields';
@@ -89,6 +90,13 @@ export function BookingDetails({
 				<dt className="text-muted-foreground">Booked</dt>
 				<dd>{booking.createdLabel}</dd>
 			</dl>
+
+			<BookingPayment
+				bookingId={booking.id}
+				status={booking.status}
+				isOwner={isOwner}
+				version={booking.status}
+			/>
 
 			<BookingMessages
 				bookingId={booking.id}

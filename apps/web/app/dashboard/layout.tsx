@@ -13,8 +13,9 @@ const NAV = [
 	{ href: '/dashboard/calendar', label: 'Calendar' },
 	{ href: '/dashboard/clients', label: 'Clients' },
 	{ href: '/dashboard/inbox', label: 'Inbox' },
-	{ href: '/dashboard/settings', label: 'Settings' },
 ];
+
+const navLinkClass = 'rounded-md px-2 py-1.5 text-sm hover:bg-muted';
 
 export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>) {
 	return (
@@ -29,14 +30,16 @@ export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>)
 					</Suspense>
 					<nav aria-label="Main" className="ml-auto flex flex-wrap items-center justify-end gap-1">
 						{NAV.map((item) => (
-							<Link
-								key={item.href}
-								href={item.href}
-								className="rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-							>
+							<Link key={item.href} href={item.href} className={navLinkClass}>
 								{item.label}
 							</Link>
 						))}
+						<Suspense fallback={null}>
+							<OwnerNav />
+						</Suspense>
+						<Link href="/dashboard/settings" className={navLinkClass}>
+							Settings
+						</Link>
 						<form action={signOut}>
 							<Button type="submit" variant="ghost">
 								Sign out
@@ -61,6 +64,15 @@ export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>)
 async function ShopName() {
 	const { shop } = await requireShopMember();
 	return <span className="truncate text-sm text-muted-foreground">{shop.name}</span>;
+}
+
+async function OwnerNav() {
+	const { role } = await requireShopMember();
+	return role === 'owner' ? (
+		<Link href="/dashboard/payments" className={navLinkClass}>
+			Payments
+		</Link>
+	) : null;
 }
 
 async function LiveUpdates() {
