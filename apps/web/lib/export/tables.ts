@@ -365,6 +365,82 @@ const activity = source({
 	],
 });
 
+const textMessages = source({
+	file: 'text_messages.csv',
+	table: 'scheduled_messages',
+	fetch: async (ctx: ExportContext, cursor: Cursor | null) =>
+		unwrap(
+			await keyset(
+				ctx.db
+					.from('scheduled_messages')
+					.select(
+						'id, booking_id, client_id, type, status, skip_reason, send_at, sent_at, delivery_status, delivered_at, error_code, body, created_at',
+					)
+					.eq('shop_id', ctx.shopId),
+				'created_at',
+				cursor,
+			)
+				.order('created_at')
+				.order('id')
+				.limit(EXPORT_PAGE_SIZE),
+		),
+	cursor: byCreated,
+	columns: ({ ctx, local }) => [
+		{ header: 'message_id', value: (r) => r.id },
+		{ header: 'booking_id', value: (r) => r.booking_id },
+		{ header: 'client_id', value: (r) => r.client_id },
+		{ header: 'type', value: (r) => r.type },
+		{ header: 'status', value: (r) => r.status },
+		{ header: 'skip_reason', value: (r) => r.skip_reason },
+		{ header: 'send_at', value: (r) => local(r.send_at) },
+		{ header: 'sent_at', value: (r) => local(r.sent_at) },
+		{ header: 'delivery_status', value: (r) => r.delivery_status },
+		{ header: 'delivered_at', value: (r) => local(r.delivered_at) },
+		{ header: 'error_code', value: (r) => r.error_code },
+		{ header: 'text', value: (r) => r.body, text: true },
+		{ header: 'created_at', value: (r) => local(r.created_at) },
+		{ header: 'timezone', value: () => ctx.timezone },
+	],
+});
+
+const textReplies = source({
+	file: 'text_replies.csv',
+	table: 'inbound_messages',
+	fetch: async (ctx: ExportContext, cursor: Cursor | null) =>
+		unwrap(
+			await keyset(
+				ctx.db
+					.from('inbound_messages')
+					.select(
+						'id, client_id, booking_id, from_phone, body, kind, handled_at, handled_by, created_at',
+					)
+					.eq('shop_id', ctx.shopId),
+				'created_at',
+				cursor,
+			)
+				.order('created_at')
+				.order('id')
+				.limit(EXPORT_PAGE_SIZE),
+		),
+	cursor: byCreated,
+	columns: ({ ctx, local }) => [
+		{ header: 'reply_id', value: (r) => r.id },
+		{ header: 'received_at', value: (r) => local(r.created_at) },
+		{ header: 'timezone', value: () => ctx.timezone },
+		{ header: 'client_id', value: (r) => r.client_id },
+		{ header: 'booking_id', value: (r) => r.booking_id },
+		{ header: 'from_phone', value: (r) => r.from_phone },
+		{ header: 'text', value: (r) => r.body, text: true },
+		{ header: 'kind', value: (r) => r.kind },
+		{ header: 'handled_at', value: (r) => local(r.handled_at) },
+		{
+			header: 'handled_by',
+			value: (r) => (r.handled_by ? ctx.memberNames.get(r.handled_by) : null),
+			text: true,
+		},
+	],
+});
+
 export const EXPORT_SOURCES: readonly ExportSource[] = [
 	clients,
 	clientNotes,
@@ -374,6 +450,8 @@ export const EXPORT_SOURCES: readonly ExportSource[] = [
 	availability,
 	timeOff,
 	activity,
+	textMessages,
+	textReplies,
 ];
 
 /** Tenant tables deliberately left out of the export, with the reason. */
