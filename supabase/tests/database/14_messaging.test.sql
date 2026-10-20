@@ -143,6 +143,10 @@ delete from private.demo_config;
 
 -- Worker claim -------------------------------------------------------------------------
 
+-- Claim takes the oldest due rows first, so park everything outside the test shops (e.g. seed data).
+update public.scheduled_messages set status = 'cancelled'
+where status = 'queued' and shop_id not in (tests.id('shop_a'), tests.id('shop_b'));
+
 select tests.insert_booking(tests.id('staff_a2'), '2030-04-02 15:00Z', 30, 0, 'confirmed', tests.id('claim_me'));
 
 select is(
