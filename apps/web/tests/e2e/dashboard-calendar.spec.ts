@@ -53,6 +53,14 @@ test.describe('dashboard calendar', () => {
 		shop = await createTestShop(['Alex']);
 		await signIn(page, await createTestOwner(shop));
 
+		// Sideways overflow makes mobile Chrome zoom out, and taps then miss their targets.
+		expect(
+			await page.evaluate(
+				() => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+			),
+			'the dashboard fits the screen width',
+		).toBe(true);
+
 		await openCalendar(page, torontoDate(1));
 		await addBooking(page, {
 			source: 'Phone',

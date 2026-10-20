@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>)
 					<Suspense fallback={null}>
 						<ShopName />
 					</Suspense>
-					<nav aria-label="Main" className="ml-auto flex items-center gap-1">
+					<nav aria-label="Main" className="ml-auto flex flex-wrap items-center justify-end gap-1">
 						{NAV.map((item) => (
 							<Link
 								key={item.href}
