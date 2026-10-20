@@ -35,7 +35,7 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | One-click migration                 | Imports clients, services and history from competitor exports.                         |
 | Branded booking page                | The shop controls it. No marketplace, no competitor listings.                          |
 
-> **Status:** in development and deployed. The web app (public booking pages, dashboard, client book and export), the Supabase database and the deploy pipeline are in place, and the dashboard installs as a PWA. The ML service, Stripe and Twilio are planned and not built yet.
+> **Status:** in development and deployed. The web app (public booking pages, dashboard, client book and export), the Supabase database, SMS, Stripe deposits (test mode) and the deploy pipeline are in place, and the dashboard installs as a PWA. The ML service is planned and not built yet.
 
 ## Tech stack
 
@@ -44,7 +44,7 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | Web app  | Next.js (App Router), TypeScript, Tailwind, shadcn | Present |
 | Tests    | Vitest (unit), Playwright (e2e)                    | Present |
 | Database | Supabase (Postgres, Auth, row-level security)      | Present |
-| Payments | Stripe Connect                                     | Planned |
+| Payments | Stripe Connect (deposits, test mode)               | Present |
 | SMS      | Twilio (Messaging Service, two-way replies)        | Present |
 | ML       | Python, FastAPI, scikit-learn / LightGBM           | Planned |
 | Hosting  | Vercel (web), Supabase cloud (database, auth)      | Present |
@@ -66,6 +66,8 @@ Open <http://localhost:3000>.
 For local development, `apps/web/.env.local` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`. Take them from `pnpm exec supabase status` (`API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY`). The other variables are optional locally. Never commit real values.
 
 Texts are only logged (never sent) unless `MESSAGING_MODE=twilio`. To process queued texts locally, set `JOBS_SECRET` (32+ random characters) and run `pnpm jobs:dev` next to `pnpm dev`. See [Text messages](#text-messages-twilio).
+
+Deposits stay off until `STRIPE_SECRET_KEY` (a test-mode key) is set. See [Deposits](#deposits-stripe).
 
 ### Local database
 
@@ -142,7 +144,8 @@ flowchart TD
     db -->|"pg_net: POST /api/jobs/tick"| web
     web -->|"SMS"| twilio["Twilio"]
     twilio -->|"status + inbound webhooks"| web
-    web -.->|planned| stripe["Stripe"]
+    web -->|"Checkout, refunds, onboarding"| stripe["Stripe Connect"]
+    stripe -->|"webhooks"| web
     web -.->|planned| ml["ML scoring service"]
 ```
 
@@ -200,6 +203,26 @@ Booking changes queue texts in `scheduled_messages`; pg_cron calls `/api/jobs/ti
 4. In the Messaging Service, **Integration → Incoming messages → Send a webhook**: `https://<deployment-host>/api/webhooks/twilio/inbound` (POST). Delivery callbacks are set per message automatically.
 
 Check it works: `select * from net._http_response order by created desc limit 5;` should show 200s from the tick.
+
+### Deposits (Stripe)
+
+Each shop connects its own Stripe account (Settings → Payments) and deposits are charged directly to it, with no Fullcut fee ([ADR 0009](docs/adr/0009-payments-charge-model.md)). While a client pays, the slot is held for 30 minutes. Only test-mode keys work outside a production deploy, and the demo shop never takes payments.
+
+Locally:
+
+1. In a Stripe test-mode account, enable Connect and complete the platform profile and branding.
+2. Put `STRIPE_SECRET_KEY=sk_test_…` in `apps/web/.env.local`.
+3. Install the Stripe CLI, run `stripe login`, then keep this running next to `pnpm dev`:
+   ```bash
+   stripe listen --forward-to localhost:3000/api/webhooks/stripe --forward-connect-to localhost:3000/api/webhooks/stripe
+   ```
+   Copy the `whsec_…` it prints into `STRIPE_WEBHOOK_SECRET` and restart `pnpm dev`.
+4. Sign in as an owner, open **Settings → Payments → Connect Stripe** and finish Stripe's test onboarding. Turn on deposits there.
+5. Book on the shop's page and pay with `4242 4242 4242 4242`. Run `pnpm jobs:dev` to release abandoned holds and retry refunds.
+
+The deposit e2e spec (`tests/e2e/deposit.spec.ts`) also needs `E2E_STRIPE_ACCOUNT_ID` (a test connected account that can take charges) and `STRIPE_SECRET_KEY` in the test process; it is skipped otherwise.
+
+Per environment, in Stripe **Workbench → Webhooks**, add a destination for **Connected accounts** (snapshot events `checkout.session.completed`, `checkout.session.expired`, `charge.refunded`, `refund.updated`, `refund.failed`, `account.updated`) pointing at `https://<deployment-host>/api/webhooks/stripe`. Optionally add a thin-event destination for `v2.core.account[configuration.merchant].capability_status_updated` to the same URL. Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` (every destination's `whsec_…`, comma-separated) in Vercel as Sensitive, then redeploy.
 
 ### Installing the dashboard (PWA)
 

@@ -83,13 +83,13 @@ fullcut/
 │       │   ├── auth/callback/ # email-link (PKCE / token hash) handler
 │       │   ├── onboarding/   # first-run shop setup wizard
 │       │   ├── [shopSlug]/   # public booking page per shop
-│       │   ├── dashboard/    # authenticated owner/staff area (settings/ for shop setup)
-│       │   └── api/          # route handlers: public/, manage/, jobs/tick (pg_cron caller), webhooks/twilio/{status,inbound}
+│       │   ├── dashboard/    # authenticated owner/staff area (settings/ for shop setup, payments/ owner-only list)
+│       │   └── api/          # route handlers: public/, manage/{cancel,reschedule,checkout}, jobs/tick (pg_cron caller), webhooks/twilio/{status,inbound}, webhooks/stripe
 │       ├── proxy.ts          # session refresh + signed-in/out redirects (Next 16 "middleware")
 │       ├── next.config.ts    # security headers (CSP etc.)
 │       ├── public/           # sw.js (static-asset + offline-page cache only), offline.html
 │       ├── components/ui/    # shadcn/ui components
-│       ├── lib/              # domain logic (auth, booking engine, public booking, dashboard, clients, export, messaging, money, shop settings, supabase clients, time)
+│       ├── lib/              # domain logic (auth, booking engine, public booking, dashboard, clients, export, messaging, money, payments, shop settings, supabase clients, time)
 │       └── tests/            # unit/ (Vitest), db/ (Vitest against local Supabase), e2e/ (Playwright)
 ├── services/
 │   └── ml/                   # FastAPI scoring service + training pipeline
@@ -127,20 +127,22 @@ pnpm db:reset                # rebuild local DB from migrations + seed
 pnpm db:test                 # pgTAP tests (supabase/tests) + DB integration tests (apps/web/tests/db: concurrency, settings authz)
 pnpm db:types                # regenerate + format apps/web/lib/database.types.ts
 pnpm exec supabase migration new <name>
+
+# local Stripe webhooks (test mode); put the printed whsec_ in STRIPE_WEBHOOK_SECRET
+stripe listen --forward-to localhost:3000/api/webhooks/stripe --forward-connect-to localhost:3000/api/webhooks/stripe
 ```
 
 CI (`.github/workflows/ci.yml`) runs `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, a build and the client-bundle secret scan (`pnpm --filter web check:bundle`) on pull requests, plus a `database` job (`supabase start`, `db:reset`, `db:test`) and an `e2e` job (Playwright against `next build` + `next start`, with `DEMO_*` set so the demo spec runs).
 
 Deploys (`.github/workflows/deploy.yml`, on push to `main`): CI again → `supabase db push` to staging → approval → `supabase db push` to production → `vercel build` / `vercel deploy --prebuilt --prod`. Migrations ship before code, so they must work with the previous app version. See `docs/adr/0007-deployment-and-demo-shop.md` for headers, the PWA service worker rules and the demo shop.
 Background jobs and SMS (`docs/adr/0008-background-jobs-and-messaging.md`): a `bookings` trigger queues texts in `scheduled_messages`; pg_cron + pg_net POST `/api/jobs/tick` every minute (no-op until the `jobs_tick_url` / `jobs_secret` Vault secrets exist). `MESSAGING_MODE=log` (default) never contacts Twilio. Send-time rules live in `apps/web/lib/messaging/rules.ts`, templates in `templates.ts`. New periodic work belongs in the tick route, not a new cron job.
+Deposits (`docs/adr/0009-payments-charge-model.md`): direct charges on Accounts v2 connected accounts (full Dashboard, Stripe-paid fees and losses), $0 platform fee. Rules (`depositFor`, `refundAmount`, policy text) are pure functions in `apps/web/lib/payments/policy.ts`; every Stripe call goes through the `PaymentGateway` interface (`gateway.ts`) so tests use a fake. A deposit booking is a 30-minute `pending` hold plus a `payments` row created in one RPC; webhook state changes are SQL functions conditional on current state. Cancellations go through `settleCancelledBooking`; the tick releases lapsed holds and retries owed refunds. `STRIPE_SECRET_KEY` unset means no deposits; live keys are refused outside production.
 
 > Not available yet (`services/ml/` does not exist). Intended commands once it does:
 
 ```bash
 cd services/ml && uv run pytest        # ML tests
 cd services/ml && uv run fastapi dev   # run scoring service locally
-
-stripe listen --forward-to localhost:3000/api/webhooks/stripe   # local Stripe webhooks
 ```
 
 ---
