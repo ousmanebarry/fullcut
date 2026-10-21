@@ -16,7 +16,7 @@ Flat price. Zero commission. Your clients stay yours. And the app actively fills
 
 </div>
 
-<!-- Demo GIF (30–60 s) goes here once recorded: ![Fullcut demo](docs/media/demo.gif) -->
+![Fullcut demo](docs/media/demo.gif)
 
 ---
 
