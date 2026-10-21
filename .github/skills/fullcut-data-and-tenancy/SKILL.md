@@ -59,7 +59,6 @@ create table public.services (
   duration_minutes  int  not null check (duration_minutes > 0),
   buffer_minutes    int  not null default 0 check (buffer_minutes >= 0),
   price_cents       int  not null check (price_cents >= 0),
-  deposit_cents     int  not null default 0 check (deposit_cents >= 0),
   active            boolean not null default true
 );
 
@@ -87,11 +86,9 @@ create table public.bookings (
   starts_at           timestamptz not null,
   ends_at             timestamptz not null,
   blocked_until       timestamptz not null,        -- ends_at + buffer, computed by the app
-  status              text not null check (status in ('pending','confirmed','completed','cancelled','no_show')),
-  pending_expires_at  timestamptz,                 -- hold expiry while a deposit is being paid
+  status              text not null check (status in ('confirmed','completed','cancelled','no_show')),
   source              text not null default 'direct',
   price_cents         int  not null,
-  deposit_cents       int  not null default 0,
   risk_score          real check (risk_score between 0 and 1),
   risk_model_version  text,
   created_at          timestamptz not null default now(),
@@ -100,7 +97,7 @@ create table public.bookings (
   constraint bookings_no_overlap exclude using gist (
     staff_id with =,
     during   with &&
-  ) where (status in ('pending', 'confirmed'))
+  ) where (status = 'confirmed')
 );
 
 create table public.availability_rules (       -- weekly working hours, local wall-clock time
@@ -123,7 +120,7 @@ create table public.time_off (
   constraint time_off_time_order check (starts_at < ends_at)
 );
 
-create table public.webhook_events (            -- idempotency for Stripe/Twilio events
+create table public.webhook_events (            -- idempotency for provider (Twilio) events
   provider     text not null,
   event_id     text not null,
   received_at  timestamptz not null default now(),
@@ -134,7 +131,7 @@ create table public.webhook_events (            -- idempotency for Stripe/Twilio
 Notes:
 
 - `blocked_until` is computed in the app: `timestamptz + interval` is not immutable, so it cannot live in a generated column. The `tstzrange` constructor is immutable, so `during` can.
-- The exclusion constraint only covers `pending` and `confirmed`. Cancelled, completed and no-show bookings never block the calendar; an expired hold stops blocking as soon as its status changes (see `fullcut-booking-engine`).
+- The exclusion constraint only covers `confirmed`. Cancelled, completed and no-show bookings never block the calendar, so a cancelled slot is free for the waitlist refill immediately.
 - `[)` (half-open) ranges mean a booking ending at 10:00 and one starting at 10:00 do not overlap.
 - Concurrent inserts into an exclusion constraint can deadlock (`40P01`) instead of raising `23P01`. The `bookings_lock_staff` trigger takes a per-staff transaction advisory lock before each booking write, so concurrent writers for one staff queue up and losers always get `23P01`. Keep it when changing bookings.
 - `webhook_events` is written only by server code using the service role. Enable RLS on it with no policies so client roles cannot touch it.
@@ -169,7 +166,7 @@ create policy bookings_write_members on public.bookings
   with check (public.is_shop_member(shop_id));
 ```
 
-Owner-only actions (billing, deleting staff, changing deposit policy, exports) need an `is_shop_owner()` helper in the same style, checking `role = 'owner'`.
+Owner-only actions (billing, deleting staff, changing waitlist or confirmation settings, exports) need an `is_shop_owner()` helper in the same style, checking `role = 'owner'`.
 
 ## Public (anonymous) access
 

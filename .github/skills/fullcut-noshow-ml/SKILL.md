@@ -44,7 +44,8 @@ services/ml/
 ### Fairness rules (do not relax without asking the human)
 
 - Do **not** use: postal code, neighbourhood, distance from the shop, name, age, gender, or anything that is a proxy for them.
-- Cap friction: a client cannot be asked for a deposit by risk alone more than a configurable number of times in a row if they keep showing up; good behaviour must lower their score quickly.
+- Cap friction: a client cannot be required to confirm (confirm-or-release) by risk alone more than a configurable number of times in a row if they keep showing up; good behaviour must lower their score quickly.
+- Never release a booking automatically unless the owner opted in, and never without a final warning text first.
 - The owner can override any tier per booking and disable automated actions entirely.
 - Every score returns plain-language top factors ("3 no-shows in the last 6 visits", "booked 5 weeks ahead") so the owner understands it.
 
@@ -54,6 +55,7 @@ services/ml/
 - **Production:** train on Fullcut's own completed/no-show labels (pooled across shops, with shop-level base rate as a feature), once enough labelled bookings exist.
 - **Cold start:** shops with little history use a transparent heuristic (e.g. first visit + long lead time + online source → medium) until the model has enough data. The response says which method produced the score.
 - Synthetic data generators are fine for tests and demos, never for reported metrics.
+- Bookings released for not confirming are neither shows nor no-shows: exclude them from labels, and log how many high-risk bookings were released so the selection effect on later training data is visible.
 
 ### Evaluation (required before any model is used)
 
@@ -69,7 +71,7 @@ Tiers come from the score with shop-configurable thresholds (defaults e.g. low <
 
 - low → normal reminder
 - medium → "reply YES to confirm" text 24 h before
-- high → deposit request (if the shop enables it) and offer a standby spot to the waitlist
+- high → confirm-or-release (confirm request with a deadline; flag for the owner, or release the slot to the waitlist if the owner opted in) and suggest standby candidates from the waitlist
 
 ## 2. Scoring service contract
 
@@ -96,7 +98,7 @@ For each client with at least 3 completed visits at the shop:
 - Usual interval = median days between their visits (robust to one odd gap).
 - Due when days since last visit > usual interval × 1.2 (configurable) **and** they have no future booking.
 - Suggest 2–3 open slots that match their usual weekday and time of day.
-- Sending the nudge is a **marketing** message: requires opt-in, respects quiet hours and frequency caps (see `fullcut-payments-and-messaging`).
+- Sending the nudge is a **marketing** message: requires opt-in, respects quiet hours and frequency caps (see `fullcut-messaging`).
 - Measure it: rebooking rate within 14 days of a nudge vs. due clients not nudged (holdout group, if the owner agrees).
 
 ## 4. Learned service durations

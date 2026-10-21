@@ -16,23 +16,24 @@ It competes with Square Appointments, Booksy, Fresha, Vagaro and StyleSeat. Thos
 
 ### Differentiating features
 
-1. **No-show prediction** — every booking gets a risk score; only risky bookings get extra friction (confirmation text, deposit request, standby offer).
-2. **"Who's due" rebooking** — learns each client's visit rhythm and nudges them with open slots when they are overdue.
-3. **Honest source tracking** — every booking records where it came from (Instagram link, referral code, Google, returning client).
-4. **Learned service durations + gap-aware slots** — learns how long each stylist really takes per service and suggests times that avoid dead gaps.
-5. **Zero double bookings, guaranteed** — enforced at the database level.
-6. **One-click migration** — import clients, services and history from competitor exports.
-7. **Branded booking page** the shop controls — no marketplace, no competitor listings, full data export.
+1. **No-show prediction** — every booking gets a risk score; only risky bookings get extra friction (confirmation text, confirm-or-release, standby suggestions).
+2. **Waitlist refill** — when a slot frees up, matching waitlisted clients get a text and the first to tap books it.
+3. **"Who's due" rebooking** — learns each client's visit rhythm and nudges them with open slots when they are overdue.
+4. **Honest source tracking** — every booking records where it came from (Instagram link, referral code, Google, returning client).
+5. **Learned service durations + gap-aware slots** — learns how long each stylist really takes per service and suggests times that avoid dead gaps.
+6. **Zero double bookings, guaranteed** — enforced at the database level.
+7. **One-click migration** — import clients, services and history from competitor exports.
+8. **Branded booking page** the shop controls — no marketplace, no competitor listings, full data export.
 
 ---
 
 ## Product principles (non-negotiable)
 
 1. **No commission on clients. Ever.** Do not build marketplaces, competitor listings, "new client fees", or any logic that charges a shop based on where a client came from.
-2. **Honest pricing.** Any fee is shown before it is charged. The platform payment fee is disclosed in the UI and in receipts.
+2. **Honest pricing.** Any fee is shown before it is charged. Fullcut does not take payments from clients (no deposits, cards on file or refunds).
 3. **The shop owns its data.** A full CSV export of clients, services and bookings must always work. Never add features that lock data in.
-4. **Frictionless client booking.** No account required, no app download, mobile-first, three steps or fewer: service → time → confirm (plus deposit only when required).
-5. **Smart features assist; the owner decides.** Every automated action (deposit request, standby offer, rebooking nudge) can be turned off per shop and overridden per booking.
+4. **Frictionless client booking.** No account required, no app download, mobile-first, three steps or fewer: service → time → confirm.
+5. **Smart features assist; the owner decides.** Every automated action (confirm-or-release, waitlist offer, rebooking nudge) can be turned off per shop and overridden per booking.
 6. **ML is advisory.** If scoring fails or is slow, the booking still succeeds. Never block a client because of a model.
 
 If a request conflicts with these principles, stop and ask the human before implementing it.
@@ -50,9 +51,10 @@ If a request conflicts with these principles, stop and ask the human before impl
                              │
      ┌──────────────┬────────┴───────┬──────────────────┐
      ▼              ▼                ▼                  ▼
-  Postgres      Background jobs   ML service        Stripe / Twilio
-  (Supabase)    (reminders,       (Python,          (payments, SMS,
-                 retraining)       FastAPI)          webhooks back in)
+  Postgres      Background jobs   ML service        Twilio
+  (Supabase)    (reminders,       (Python,          (SMS, replies,
+                 waitlist offers,  FastAPI)          webhooks back in)
+                 retraining)
 ```
 
 | Concern                            | Choice                                                                |
@@ -61,7 +63,6 @@ If a request conflicts with these principles, stop and ask the human before impl
 | Owner/staff app                    | Same Next.js app, installable as a PWA                                |
 | Database + auth                    | Supabase (Postgres, Auth, row-level security)                         |
 | Background jobs                    | Supabase cron (pg_cron) or a job runner such as Inngest / Trigger.dev |
-| Payments                           | Stripe Connect (each shop has its own connected account)              |
 | SMS                                | Twilio (Messaging Service, two-way replies)                           |
 | ML                                 | Python service with FastAPI, scikit-learn / LightGBM                  |
 | Hosting                            | Vercel (web), Railway or Fly.io (ML service)                          |
@@ -139,8 +140,6 @@ Background jobs and SMS (`docs/adr/0008-background-jobs-and-messaging.md`): a `b
 ```bash
 cd services/ml && uv run pytest        # ML tests
 cd services/ml && uv run fastapi dev   # run scoring service locally
-
-stripe listen --forward-to localhost:3000/api/webhooks/stripe   # local Stripe webhooks
 ```
 
 ---
@@ -153,12 +152,12 @@ Breaking any of these is a serious bug. Tests must cover each one.
 2. **No double bookings.** A Postgres exclusion constraint on each staff member's blocked time range makes overlapping active bookings impossible. Application checks are for nice error messages only; the database is the source of truth. Catch SQLSTATE `23P01` and return a "slot just taken" response.
 3. **Time.** Store instants as `timestamptz` (UTC). Each shop has an IANA timezone (e.g. `America/Toronto`). Generate slots and render times in the shop's timezone. Availability rules (e.g. "Tue 09:00–17:00") are stored as local wall-clock times. Every slot-generation change needs DST-transition tests.
 4. **Money.** Integer cents plus an ISO currency code (default `CAD`). Never use floats for money. Format only at the UI edge.
-5. **Webhooks.** Verify signatures (Stripe, Twilio) using the raw request body. Process each provider event at most once (store processed event IDs). Handlers must be safe to retry.
+5. **Webhooks.** Verify signatures (Twilio) using the raw request body. Process each provider event at most once (store processed event IDs). Handlers must be safe to retry.
 6. **Contact data.** Phone numbers stored in E.164 format; emails trimmed and lowercased.
-7. **Secrets.** The Supabase service-role key, Stripe secret key and Twilio auth token are server-only. Never put them in `NEXT_PUBLIC_*` variables, client components or logs.
+7. **Secrets.** The Supabase service-role key and Twilio auth token are server-only. Never put them in `NEXT_PUBLIC_*` variables, client components or logs.
 8. **Messaging consent.** Transactional messages (confirmations, reminders for a booked appointment) are separate from marketing messages (rebooking nudges, promotions). Marketing messages require recorded opt-in consent and an unsubscribe path. Respect STOP replies immediately. Respect quiet hours in the shop's timezone.
 9. **ML never blocks.** Scoring is called with a short timeout; on failure the booking proceeds with `risk_score = null` and default (non-friction) handling.
-10. **Demo shop.** The shop where `public.is_demo_shop(shop_id)` is true is public and reset nightly: never send real SMS/email or take payments for it.
+10. **Demo shop.** The shop where `public.is_demo_shop(shop_id)` is true is public and reset nightly: never send real SMS/email for it.
 
 ---
 
@@ -189,13 +188,13 @@ Breaking any of these is a serious bug. Tests must cover each one.
 
 ## Testing expectations
 
-| Area               | Tests required                                                                                                                                                   |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Booking engine     | Unit tests for slot generation incl. DST days, buffers, time off, lead time; concurrency test proving two simultaneous bookings for one slot cannot both succeed |
-| Database           | RLS tests (cross-shop access denied), constraint tests                                                                                                           |
-| Payments/messaging | Webhook signature rejection, idempotent replays, consent and quiet-hours rules                                                                                   |
-| Booking flow       | Playwright e2e: book as a client on a mobile viewport, with and without deposit                                                                                  |
-| ML                 | Feature tests (no leakage), metrics regression test against a fixed holdout                                                                                      |
+| Area           | Tests required                                                                                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Booking engine | Unit tests for slot generation incl. DST days, buffers, time off, lead time; concurrency test proving two simultaneous bookings for one slot cannot both succeed |
+| Database       | RLS tests (cross-shop access denied), constraint tests                                                                                                           |
+| Messaging      | Webhook signature rejection, idempotent replays, consent and quiet-hours rules                                                                                   |
+| Booking flow   | Playwright e2e: book as a client on a mobile viewport; claim a waitlist offer                                                                                    |
+| ML             | Feature tests (no leakage), metrics regression test against a fixed holdout                                                                                      |
 
 Never use real customer data in tests, fixtures or seeds. Generate fake data.
 
@@ -205,13 +204,13 @@ Never use real customer data in tests, fixtures or seeds. Generate fake data.
 
 Skills live in `.github/skills/<skill-name>/SKILL.md`. Before working in an area, read its skill:
 
-| Area                                                      | Skill                            |
-| --------------------------------------------------------- | -------------------------------- |
-| Slots, availability, creating/changing bookings, statuses | `fullcut-booking-engine`         |
-| Schema, migrations, RLS, multi-tenancy, generated types   | `fullcut-data-and-tenancy`       |
-| Stripe Connect, deposits, Twilio SMS, webhooks, consent   | `fullcut-payments-and-messaging` |
-| No-show model, "who's due", learned durations, ML service | `fullcut-noshow-ml`              |
-| Importing data from Square, Vagaro, Fresha, Booksy        | `fullcut-client-import`          |
+| Area                                                                         | Skill                      |
+| ---------------------------------------------------------------------------- | -------------------------- |
+| Slots, availability, creating/changing bookings, statuses, waitlist matching | `fullcut-booking-engine`   |
+| Schema, migrations, RLS, multi-tenancy, generated types                      | `fullcut-data-and-tenancy` |
+| Twilio SMS, confirm-or-release, waitlist offers, webhooks, consent           | `fullcut-messaging`        |
+| No-show model, "who's due", learned durations, ML service                    | `fullcut-noshow-ml`        |
+| Importing data from Square, Vagaro, Fresha, Booksy                           | `fullcut-client-import`    |
 
 ---
 
@@ -226,29 +225,32 @@ Skills live in `.github/skills/<skill-name>/SKILL.md`. Before working in an area
 **Ask the human before:**
 
 - Changing pricing, fees, or anything about how Fullcut makes money
+- Collecting any payment from clients (deposits, cards on file)
 - Adding a heavy dependency or a new external service
 - Destructive migrations (dropping columns/tables, rewriting data)
-- Anything that would send real SMS or create real charges (use Stripe test mode and Twilio test credentials in development)
+- Anything that would send real SMS (use Twilio test credentials in development)
 - Relaxing an invariant above
 
 ---
 
 ## Glossary
 
-| Term          | Meaning                                                                                                           |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Shop          | A business account (tenant). Has a slug, timezone, currency.                                                      |
-| Staff         | A barber/stylist who takes bookings. Belongs to one shop.                                                         |
-| Member        | A login user with access to a shop (`owner` or `staff` role).                                                     |
-| Service       | Something bookable: name, duration, buffer, price, deposit policy.                                                |
-| Booking       | A client's appointment. Statuses: `pending` (awaiting deposit), `confirmed`, `completed`, `cancelled`, `no_show`. |
-| Blocked range | Time a booking occupies on the calendar: start until end plus buffer.                                             |
-| Deposit       | Upfront payment required for some bookings, per shop policy and risk tier.                                        |
-| Risk score    | Model estimate (0–1) that a booking will be a no-show.                                                            |
-| Risk tier     | `low` / `medium` / `high`, derived from the risk score with shop-configurable thresholds.                         |
-| Standby       | A waitlisted client offered a slot that is likely to open up.                                                     |
-| Due list      | Clients past their usual rebooking interval with no future booking.                                               |
-| Source        | Where a booking came from (link, referral code, Google, returning, import).                                       |
+| Term               | Meaning                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Shop               | A business account (tenant). Has a slug, timezone, currency.                                                              |
+| Staff              | A barber/stylist who takes bookings. Belongs to one shop.                                                                 |
+| Member             | A login user with access to a shop (`owner` or `staff` role).                                                             |
+| Service            | Something bookable: name, duration, buffer, price.                                                                        |
+| Booking            | A client's appointment. Statuses: `confirmed`, `completed`, `cancelled`, `no_show`.                                       |
+| Blocked range      | Time a booking occupies on the calendar: start until end plus buffer.                                                     |
+| Risk score         | Model estimate (0–1) that a booking will be a no-show.                                                                    |
+| Risk tier          | `low` / `medium` / `high`, derived from the risk score with shop-configurable thresholds.                                 |
+| Confirm-or-release | A risky booking must be confirmed by a deadline; if not, it's flagged, or released to the waitlist if the owner opted in. |
+| Waitlist entry     | A client asking to be texted when a matching slot opens (service, staff, dates, times).                                   |
+| Slot offer         | A text offering a freed slot to waitlisted clients; the first to tap books it.                                            |
+| Standby            | A waitlisted client suggested for a slot that is likely to open up (an unconfirmed risky booking).                        |
+| Due list           | Clients past their usual rebooking interval with no future booking.                                                       |
+| Source             | Where a booking came from (link, referral code, Google, returning, import).                                               |
 
 ---
 

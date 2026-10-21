@@ -1,9 +1,9 @@
 # Milestone 09 — Background jobs and SMS messaging
 
-**Goal:** Fullcut texts clients: booking confirmations, reminders, "reply YES to confirm", and cancel/reschedule links, with opt-outs and quiet hours handled correctly. This milestone also adds the background job system that later milestones (deposit holds, ML, rebooking nudges) depend on.
+**Goal:** Fullcut texts clients: booking confirmations, reminders, "reply YES to confirm", and cancel/reschedule links, with opt-outs and quiet hours handled correctly. This milestone also adds the background job system that later milestones (waitlist offers, ML, rebooking nudges) depend on.
 
 **Depends on:** 05, 06 (and 08 if testing webhooks against the deployed app)
-**Skills to read:** `fullcut-payments-and-messaging` (Twilio parts), `fullcut-data-and-tenancy`
+**Skills to read:** `fullcut-messaging`, `fullcut-data-and-tenancy`
 
 ## Manual steps for the human
 

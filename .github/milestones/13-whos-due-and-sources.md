@@ -1,9 +1,9 @@
 # Milestone 13 — "Who's due" rebooking, source tracking and analytics
 
-**Goal:** Fullcut brings regulars back before they drift away, shows the owner where clients come from, and makes the app's value visible in numbers ("this month: 4 no-shows prevented, 9 clients rebooked, ~$X saved").
+**Goal:** Fullcut brings regulars back before they drift away, shows the owner where clients come from, and makes the app's value visible in numbers ("this month: 4 no-shows prevented, 6 slots refilled, 9 clients rebooked, ~$X saved").
 
-**Depends on:** 07, 09, 12
-**Skills to read:** `fullcut-noshow-ml` (who's due), `fullcut-payments-and-messaging` (marketing consent)
+**Depends on:** 07, 09, 10, 12
+**Skills to read:** `fullcut-noshow-ml` (who's due), `fullcut-messaging` (marketing consent)
 
 ## In scope
 
@@ -49,7 +49,7 @@
 - Period selector (last 30 / 90 days, custom).
 - Cards: bookings, revenue (completed bookings' price), no-show rate, new vs returning clients.
 - Charts: bookings by source over time; no-show rate trend; top referrers.
-- Fullcut value panel: no-shows estimated prevented (risk-flagged bookings that confirmed/paid deposit vs expected rate — explain the estimate method), rebookings from nudges, revenue from them.
+- Fullcut value panel: no-shows estimated prevented (risk-flagged bookings that confirmed vs expected rate — explain the estimate method), slots refilled from the waitlist and their revenue (10's metric), rebookings from nudges and revenue from them.
 - All figures computed server-side with tests on the seed data; every number has a short "how is this calculated" tooltip.
 
 ## Tests

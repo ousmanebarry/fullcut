@@ -13,7 +13,7 @@
 
 ## Out of scope
 
-- Deposits (10), SMS confirmations (09), risk scoring (12)
+- Waitlist (10), SMS confirmations (09), risk scoring (12)
 - Marketing opt-in checkbox can be added now but nothing uses it until 13
 
 ## Tasks
@@ -47,7 +47,7 @@ Steps on one page, mobile-first:
 1. zod-validate the body; resolve shop by slug server-side.
 2. Recompute times with `computeBookingTimes`; run `validateRequestedStart` for friendly errors.
 3. Find-or-create client by `(shop_id, phone_e164)`; update name/email if empty.
-4. Insert with status `confirmed` (deposits come in 10) and `source` from a `?src=` param if present, else `direct`.
+4. Insert with status `confirmed` and `source` from a `?src=` param if present, else `direct`.
 5. On SQLSTATE `23P01` → 409 with fresh nearby slots.
 6. Return booking reference + manage link.
 

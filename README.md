@@ -25,17 +25,18 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 
 ### Differentiating features
 
-| Feature                             | What it does                                                                           |
-| ----------------------------------- | -------------------------------------------------------------------------------------- |
-| No-show prediction                  | Scores every booking; only risky ones get extra friction (confirmation text, deposit). |
-| "Who's due" rebooking               | Learns each client's visit rhythm and nudges overdue clients with open slots.          |
-| Honest source tracking              | Records where each booking came from (Instagram, referral, Google, returning client).  |
-| Learned durations + gap-aware slots | Learns how long each stylist really takes and suggests times that avoid dead gaps.     |
-| Zero double bookings                | Enforced by the database, not just the app.                                            |
-| One-click migration                 | Imports clients, services and history from competitor exports.                         |
-| Branded booking page                | The shop controls it. No marketplace, no competitor listings.                          |
+| Feature                             | What it does                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| No-show prediction                  | Scores every booking; only risky ones get extra friction (confirmation text, confirm-or-release). |
+| Waitlist refill                     | When a slot frees up, texts waitlisted clients; the first to tap books it.                        |
+| "Who's due" rebooking               | Learns each client's visit rhythm and nudges overdue clients with open slots.                     |
+| Honest source tracking              | Records where each booking came from (Instagram, referral, Google, returning client).             |
+| Learned durations + gap-aware slots | Learns how long each stylist really takes and suggests times that avoid dead gaps.                |
+| Zero double bookings                | Enforced by the database, not just the app.                                                       |
+| One-click migration                 | Imports clients, services and history from competitor exports.                                    |
+| Branded booking page                | The shop controls it. No marketplace, no competitor listings.                                     |
 
-> **Status:** in development and deployed. The web app (public booking pages, dashboard, client book and export), the Supabase database and the deploy pipeline are in place, and the dashboard installs as a PWA. The ML service, Stripe and Twilio are planned and not built yet.
+> **Status:** in development and deployed. The web app (public booking pages, dashboard, client book and export), the Supabase database and the deploy pipeline are in place, and the dashboard installs as a PWA. Text messages (Twilio) are in place; the waitlist and the ML service are planned and not built yet.
 
 ## Tech stack
 
@@ -44,7 +45,6 @@ Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established pro
 | Web app  | Next.js (App Router), TypeScript, Tailwind, shadcn | Present |
 | Tests    | Vitest (unit), Playwright (e2e)                    | Present |
 | Database | Supabase (Postgres, Auth, row-level security)      | Present |
-| Payments | Stripe Connect                                     | Planned |
 | SMS      | Twilio (Messaging Service, two-way replies)        | Present |
 | ML       | Python, FastAPI, scikit-learn / LightGBM           | Planned |
 | Hosting  | Vercel (web), Supabase cloud (database, auth)      | Present |
@@ -142,7 +142,6 @@ flowchart TD
     db -->|"pg_net: POST /api/jobs/tick"| web
     web -->|"SMS"| twilio["Twilio"]
     twilio -->|"status + inbound webhooks"| web
-    web -.->|planned| stripe["Stripe"]
     web -.->|planned| ml["ML scoring service"]
 ```
 

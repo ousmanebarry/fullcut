@@ -3,7 +3,7 @@
 **Goal:** a local Supabase database with Fullcut's core schema, tenant isolation enforced by RLS, double bookings made impossible by a constraint, fake seed data, generated types, and tests proving all of it.
 
 **Depends on:** 01 (scaffold)
-**Skills to read:** `fullcut-data-and-tenancy` (primary), `fullcut-booking-engine` (statuses and holds)
+**Skills to read:** `fullcut-data-and-tenancy` (primary), `fullcut-booking-engine` (statuses)
 
 ## In scope
 
@@ -15,7 +15,7 @@
 ## Out of scope
 
 - Any UI, auth screens or API routes
-- Stripe, Twilio, ML columns beyond those already in the skill's schema
+- Twilio and ML columns beyond those already in the skill's schema
 
 ## Tasks
 
@@ -29,7 +29,7 @@
 
 1. `supabase migration new core_schema`.
 2. Create, following the skill: `shops`, `shop_members`, `staff`, `services`, `clients`, `bookings`, `availability_rules`, `time_off`, `webhook_events`.
-3. Enable `btree_gist`; add the `bookings_no_overlap` exclusion constraint on `(staff_id, during)` for `pending`/`confirmed` only.
+3. Enable `btree_gist`; add the `bookings_no_overlap` exclusion constraint on `(staff_id, during)` for `confirmed` bookings only.
 4. Add `created_at` to every table and `updated_at` with a trigger where rows are edited (shops, staff, services, clients, bookings).
 5. Indexes: `bookings (shop_id, starts_at)`, `bookings (client_id, starts_at)`, `clients (shop_id, lower(name))`, `availability_rules (staff_id, weekday)`, `time_off (staff_id, starts_at)`.
 6. Integrity guard: a booking's `staff_id`, `service_id` and `client_id` must belong to the same `shop_id` as the booking. Enforce with composite foreign keys (`(shop_id, staff_id) references staff(shop_id, id)` etc., which need `unique (shop_id, id)` on the parent tables) or a trigger. Pick one and note it in an ADR.
