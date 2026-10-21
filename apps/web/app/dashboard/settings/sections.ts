@@ -50,6 +50,12 @@ const SECTIONS: (SettingsSection & { ownerOnly: boolean })[] = [
 		ownerOnly: true,
 	},
 	{
+		href: '/dashboard/settings/waitlist',
+		label: 'Waitlist',
+		description: 'Text waitlisted clients when a slot frees up',
+		ownerOnly: true,
+	},
+	{
 		href: '/dashboard/settings/export',
 		label: 'Export data',
 		description: 'Download all your shop data as spreadsheets',

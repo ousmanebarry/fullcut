@@ -33,6 +33,7 @@ export interface BookingShop {
 	timezone: TimeZone;
 	settings: ShopSchedulingSettings;
 	cancelCutoffHours: number;
+	waitlistEnabled: boolean;
 }
 
 export interface BookableService extends Service {
@@ -47,7 +48,7 @@ export interface BookableStaff {
 }
 
 const SHOP_COLUMNS =
-	'id, slug, name, about_text, address, phone, logo_url, currency, timezone, booking_page_enabled, slot_step_minutes, min_lead_minutes, max_horizon_days, cancel_cutoff_hours';
+	'id, slug, name, about_text, address, phone, logo_url, currency, timezone, booking_page_enabled, slot_step_minutes, min_lead_minutes, max_horizon_days, cancel_cutoff_hours, waitlist_enabled';
 
 type ShopRow = {
 	id: string;
@@ -64,6 +65,7 @@ type ShopRow = {
 	min_lead_minutes: number;
 	max_horizon_days: number;
 	cancel_cutoff_hours: number;
+	waitlist_enabled: boolean;
 };
 
 export function toBookingShop(row: ShopRow): BookingShop {
@@ -86,6 +88,7 @@ export function toBookingShop(row: ShopRow): BookingShop {
 			maxHorizonDays: row.max_horizon_days,
 		},
 		cancelCutoffHours: row.cancel_cutoff_hours,
+		waitlistEnabled: row.waitlist_enabled,
 	};
 }
 
@@ -165,6 +168,7 @@ export async function getPublicShop(
 			timezone: shop.timezone,
 			currency: shop.currency,
 			country: countryForCurrency(shop.currency) === 'US' ? 'US' : 'CA',
+			waitlistEnabled: shop.waitlistEnabled,
 			services: services.map(({ id, name, durationMinutes, priceCents }) => ({
 				id,
 				name,

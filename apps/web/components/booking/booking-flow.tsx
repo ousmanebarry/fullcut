@@ -9,14 +9,17 @@ import { AddToCalendarButton } from './add-to-calendar';
 import { BookingSummary } from './booking-summary';
 import { DetailsForm } from './details-form';
 import { TimePicker } from './time-picker';
+import { WaitlistForm } from './waitlist-form';
 
-type Step = 'service' | 'time' | 'details' | 'done';
+type Step = 'service' | 'time' | 'details' | 'done' | 'waitlist' | 'waitlisted';
 
 const STEP_TITLES: Record<Step, string> = {
 	service: 'Choose a service',
 	time: 'Pick a time',
 	details: 'Your details',
 	done: "You're booked",
+	waitlist: 'Join the waitlist',
+	waitlisted: "You're on the waitlist",
 };
 const STEP_NUMBER: Partial<Record<Step, number>> = { service: 1, time: 2, details: 3 };
 
@@ -58,20 +61,28 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 					tabIndex={-1}
 					className="flex items-center gap-2 text-xl font-semibold outline-none"
 				>
-					{step === 'done' ? <Check aria-hidden className="size-5" /> : null}
+					{step === 'done' || step === 'waitlisted' ? (
+						<Check aria-hidden className="size-5" />
+					) : null}
 					{STEP_TITLES[step]}
 				</h2>
 			</div>
 
-			{step !== 'service' && step !== 'done' ? (
+			{step !== 'service' && step !== 'done' && step !== 'waitlisted' ? (
 				<Button
 					type="button"
 					variant="ghost"
 					className="h-11 justify-self-start px-2"
-					onClick={() => setStep(step === 'details' ? 'time' : 'service')}
+					onClick={() =>
+						setStep(step === 'details' ? 'time' : step === 'waitlist' ? 'time' : 'service')
+					}
 				>
 					<ArrowLeft aria-hidden />
-					{step === 'details' ? 'Change time' : 'Change service'}
+					{step === 'details'
+						? 'Change time'
+						: step === 'waitlist'
+							? 'Back to times'
+							: 'Change service'}
 				</Button>
 			) : null}
 
@@ -130,7 +141,41 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 							setStep('details');
 						}}
 					/>
+					{shop.waitlistEnabled ? (
+						<div className="grid gap-1 rounded-lg border bg-muted/40 p-3">
+							<p className="text-sm font-medium">Can&apos;t find a time?</p>
+							<Button
+								type="button"
+								variant="outline"
+								className="h-11 justify-self-start"
+								onClick={() => setStep('waitlist')}
+							>
+								Join the waitlist
+							</Button>
+						</div>
+					) : null}
 				</>
+			) : null}
+
+			{step === 'waitlist' ? (
+				<WaitlistForm
+					shop={shop}
+					serviceId={serviceId}
+					staffChoice={staffChoice}
+					onJoined={() => setStep('waitlisted')}
+				/>
+			) : null}
+
+			{step === 'waitlisted' ? (
+				<div className="grid gap-3">
+					<p className="text-sm">
+						We&apos;ll text you when a spot opens that matches. The first person to tap the link
+						gets it. A confirmation text with a link to leave the waitlist is on its way.
+					</p>
+					<Button type="button" variant="link" className="justify-self-start px-0" onClick={reset}>
+						Back to booking
+					</Button>
+				</div>
 			) : null}
 
 			{step === 'details' && service && slot ? (

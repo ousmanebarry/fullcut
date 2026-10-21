@@ -96,6 +96,15 @@ const nextConfig: NextConfig = {
 					{ key: 'Cache-Control', value: 'private, no-store' },
 				],
 			},
+			{
+				// Waitlist view/leave (/wl) and offer claim (/w) links are secret in the same way.
+				source: '/:prefix(w|wl)/:token*',
+				headers: [
+					{ key: 'Referrer-Policy', value: 'no-referrer' },
+					{ key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+					{ key: 'Cache-Control', value: 'private, no-store' },
+				],
+			},
 		];
 	},
 };

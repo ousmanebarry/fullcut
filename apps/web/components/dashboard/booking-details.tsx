@@ -9,13 +9,14 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { formatCents } from '@/lib/money/format';
 import {
 	availableActions,
+	isRefill,
 	SOURCE_LABELS,
 	type DashboardBooking,
 	type DashboardSlot,
 	type ServiceOption,
 	type StaffOption,
 } from '@/lib/dashboard/types';
-import { StatusBadge } from './booking-list';
+import { RefillBadge, StatusBadge } from './booking-list';
 import { BookingMessages } from './booking-messages';
 import { OutcomeButtons, undoOutcome } from './outcome-buttons';
 import { useNow } from './use-now';
@@ -46,8 +47,9 @@ export function BookingDetails({
 		<div className="grid gap-5 px-4 pb-6">
 			<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
 				<dt className="text-muted-foreground">Status</dt>
-				<dd>
+				<dd className="flex flex-wrap items-center gap-2">
 					<StatusBadge status={booking.status} />
+					{isRefill(booking) ? <RefillBadge /> : null}
 				</dd>
 				<dt className="text-muted-foreground">Client</dt>
 				<dd className="flex flex-wrap items-center gap-2">

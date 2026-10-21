@@ -374,7 +374,7 @@ const textMessages = source({
 				ctx.db
 					.from('scheduled_messages')
 					.select(
-						'id, booking_id, client_id, type, status, skip_reason, send_at, sent_at, delivery_status, delivered_at, error_code, body, created_at',
+						'id, booking_id, waitlist_entry_id, slot_offer_id, client_id, type, status, skip_reason, send_at, sent_at, delivery_status, delivered_at, error_code, body, created_at',
 					)
 					.eq('shop_id', ctx.shopId),
 				'created_at',
@@ -388,6 +388,8 @@ const textMessages = source({
 	columns: ({ ctx, local }) => [
 		{ header: 'message_id', value: (r) => r.id },
 		{ header: 'booking_id', value: (r) => r.booking_id },
+		{ header: 'waitlist_entry_id', value: (r) => r.waitlist_entry_id },
+		{ header: 'slot_offer_id', value: (r) => r.slot_offer_id },
 		{ header: 'client_id', value: (r) => r.client_id },
 		{ header: 'type', value: (r) => r.type },
 		{ header: 'status', value: (r) => r.status },
@@ -441,6 +443,84 @@ const textReplies = source({
 	],
 });
 
+const waitlist = source({
+	file: 'waitlist.csv',
+	table: 'waitlist_entries',
+	fetch: async (ctx: ExportContext, cursor: Cursor | null) =>
+		unwrap(
+			await keyset(
+				ctx.db
+					.from('waitlist_entries')
+					.select(
+						'id, client_id, service_id, staff_id, earliest_date, latest_date, time_windows, status, offers_requested_at, request_method, created_at, client:clients!waitlist_entries_client_same_shop_fk(name), service:services!waitlist_entries_service_same_shop_fk(name), staff:staff!waitlist_entries_staff_same_shop_fk(display_name)',
+					)
+					.eq('shop_id', ctx.shopId),
+				'created_at',
+				cursor,
+			)
+				.order('created_at')
+				.order('id')
+				.limit(EXPORT_PAGE_SIZE),
+		),
+	cursor: byCreated,
+	columns: ({ ctx, local }) => [
+		{ header: 'entry_id', value: (r) => r.id },
+		{ header: 'client_id', value: (r) => r.client_id },
+		{ header: 'client_name', value: (r) => r.client.name, text: true },
+		{ header: 'service_id', value: (r) => r.service_id },
+		{ header: 'service_name', value: (r) => r.service.name, text: true },
+		{ header: 'staff_id', value: (r) => r.staff_id },
+		{ header: 'staff_name', value: (r) => r.staff?.display_name ?? null, text: true },
+		{ header: 'earliest_date', value: (r) => r.earliest_date },
+		{ header: 'latest_date', value: (r) => r.latest_date },
+		{ header: 'time_windows', value: (r) => JSON.stringify(r.time_windows) },
+		{ header: 'status', value: (r) => r.status },
+		{ header: 'request_method', value: (r) => r.request_method },
+		{ header: 'offers_requested_at', value: (r) => local(r.offers_requested_at) },
+		{ header: 'created_at', value: (r) => local(r.created_at) },
+		{ header: 'timezone', value: () => ctx.timezone },
+	],
+});
+
+const waitlistOffers = source({
+	file: 'waitlist_offers.csv',
+	table: 'slot_offers',
+	fetch: async (ctx: ExportContext, cursor: Cursor | null) =>
+		unwrap(
+			await keyset(
+				ctx.db
+					.from('slot_offers')
+					.select(
+						'id, waitlist_entry_id, staff_id, service_id, starts_at, ends_at, wave, status, sent_at, expires_at, booking_id, created_at, service:services!slot_offers_service_same_shop_fk(name), staff:staff!slot_offers_staff_same_shop_fk(display_name)',
+					)
+					.eq('shop_id', ctx.shopId),
+				'created_at',
+				cursor,
+			)
+				.order('created_at')
+				.order('id')
+				.limit(EXPORT_PAGE_SIZE),
+		),
+	cursor: byCreated,
+	columns: ({ ctx, local }) => [
+		{ header: 'offer_id', value: (r) => r.id },
+		{ header: 'entry_id', value: (r) => r.waitlist_entry_id },
+		{ header: 'service_id', value: (r) => r.service_id },
+		{ header: 'service_name', value: (r) => r.service.name, text: true },
+		{ header: 'staff_id', value: (r) => r.staff_id },
+		{ header: 'staff_name', value: (r) => r.staff.display_name, text: true },
+		{ header: 'slot_starts_at', value: (r) => local(r.starts_at) },
+		{ header: 'slot_ends_at', value: (r) => local(r.ends_at) },
+		{ header: 'wave', value: (r) => r.wave },
+		{ header: 'status', value: (r) => r.status },
+		{ header: 'offered_at', value: (r) => local(r.sent_at) },
+		{ header: 'expires_at', value: (r) => local(r.expires_at) },
+		{ header: 'booking_id', value: (r) => r.booking_id },
+		{ header: 'created_at', value: (r) => local(r.created_at) },
+		{ header: 'timezone', value: () => ctx.timezone },
+	],
+});
+
 export const EXPORT_SOURCES: readonly ExportSource[] = [
 	clients,
 	clientNotes,
@@ -452,10 +532,14 @@ export const EXPORT_SOURCES: readonly ExportSource[] = [
 	activity,
 	textMessages,
 	textReplies,
+	waitlist,
+	waitlistOffers,
 ];
 
 /** Tenant tables deliberately left out of the export, with the reason. */
 export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
 	booking_links: 'Hashes of secret manage-link tokens; useless outside Fullcut.',
 	shop_members: 'Login accounts, which belong to people rather than the shop.',
+	waitlist_links: 'Hashes of secret waitlist-link tokens; useless outside Fullcut.',
+	freed_slots: 'Internal job queue; the outcomes are in waitlist_offers.csv.',
 };

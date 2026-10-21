@@ -182,6 +182,29 @@ export const messageSettingsSchema = z.object({
 });
 export type MessageSettingsInput = z.output<typeof messageSettingsSchema>;
 
+export const WAITLIST_OFFER_MINUTES = [5, 10, 15, 20, 30, 45, 60] as const;
+export const WAITLIST_MIN_NOTICE_MINUTES = [15, 30, 60, 90, 120, 180, 240, 360, 720, 1440] as const;
+
+export const waitlistSettingsSchema = z.object({
+	enabled: z.boolean(),
+	waveSize: z.coerce
+		.number({ error: 'Enter how many clients to text at once.' })
+		.int({ error: 'Enter a whole number.' })
+		.min(1, { error: 'Text at least 1 client at a time.' })
+		.max(10, { error: 'Text at most 10 clients at a time.' }),
+	offerMinutes: z.coerce
+		.number({ error: 'Choose how long an offer stays open.' })
+		.int()
+		.min(5, { error: 'Keep offers open at least 5 minutes.' })
+		.max(120, { error: 'Keep offers open at most 2 hours.' }),
+	minNoticeMinutes: z.coerce
+		.number({ error: 'Choose the minimum notice.' })
+		.int()
+		.min(15, { error: 'Use at least 15 minutes notice.' })
+		.max(1440, { error: 'Use at most 24 hours notice.' }),
+});
+export type WaitlistSettingsInput = z.output<typeof waitlistSettingsSchema>;
+
 export const timeOffFormSchema = z
 	.object({
 		staffId: z.uuid({ error: 'Choose a staff member.' }),
