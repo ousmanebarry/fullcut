@@ -67,6 +67,8 @@ For local development, `apps/web/.env.local` needs `NEXT_PUBLIC_SUPABASE_URL`, `
 
 Texts are only logged (never sent) unless `MESSAGING_MODE=twilio`. To process queued texts locally, set `JOBS_SECRET` (32+ random characters) and run `pnpm jobs:dev` next to `pnpm dev`. See [Text messages](#text-messages-twilio).
 
+No-show risk scores need the scoring service in `services/ml` (`uv run uvicorn fullcut_ml.serve:create_app --factory`) and `ML_SERVICE_URL` + `ML_SHARED_SECRET` in `apps/web/.env.local`. Without them nothing is scored and bookings work as usual.
+
 ### Local database
 
 Requires Docker. The Supabase CLI is a dev dependency, so `pnpm install` provides it.

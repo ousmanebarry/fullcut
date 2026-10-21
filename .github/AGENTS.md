@@ -136,12 +136,19 @@ Deploys (`.github/workflows/deploy.yml`, on push to `main`): CI again → `supab
 Background jobs and SMS (`docs/adr/0008-background-jobs-and-messaging.md`): a `bookings` trigger queues texts in `scheduled_messages`; pg_cron + pg_net POST `/api/jobs/tick` every minute (no-op until the `jobs_tick_url` / `jobs_secret` Vault secrets exist). `MESSAGING_MODE=log` (default) never contacts Twilio. Send-time rules live in `apps/web/lib/messaging/rules.ts`, templates in `templates.ts`. New periodic work belongs in the tick route, not a new cron job.
 Waitlist refill (`docs/adr/0009-waitlist-refill.md`): a `bookings` trigger queues `freed_slots`; the tick runs `lib/waitlist/refill.ts` (pure matcher in `match.ts`) before the message worker. Claim links are `/w/<token>` (claims on POST only), view/leave links `/wl/<token>`.
 
-> Not available yet (`services/ml/` does not exist). Intended commands once it does:
+No-show model (`services/ml/`, Python 3.12 via `uv`; report in `docs/ml/noshow-prototype.md`):
 
 ```bash
-cd services/ml && uv run pytest        # ML tests
-cd services/ml && uv run fastapi dev   # run scoring service locally
+cd services/ml && uv sync --all-groups              # install (dev + notebook groups)
+cd services/ml && uv run pytest                     # ML tests (model regression test needs the CSV + an artifact)
+cd services/ml && uv run ruff format . && uv run ruff check .
+cd services/ml && uv run python -m fullcut_ml.train # needs data/raw/KaggleV2-May-2016.csv (git-ignored)
+cd services/ml && ML_SHARED_SECRET=<32+ chars> uv run uvicorn fullcut_ml.serve:create_app --factory --reload  # scoring service
+cd services/ml && uv run python -m fullcut_ml.retrain --csv data/bookings.csv  # export with sql/export_training_bookings.sql
 ```
+
+`fullcut_ml/features.py` is the only place features are defined; training and serving both call `build_features`. Datasets (`data/`) and model artifacts (`artifacts/`) are never committed. The scoring service (`serve.py`, `Dockerfile`) takes the booking plus the client's raw booking history and builds features itself; `/score` needs `Authorization: Bearer $ML_SHARED_SECRET`. It serves the transparent heuristic unless `ML_MODEL_ENABLED=true` and the shop has `ML_MIN_SHOP_HISTORY` labelled bookings; the Kaggle prototype must never be enabled for real shops.
+Risk scoring in the app (`docs/adr/0010-risk-scoring.md`): set `ML_SERVICE_URL` + `ML_SHARED_SECRET` in `apps/web/.env.local` to turn it on (unset = no scoring, app unchanged). Code in `apps/web/lib/risk/` (`plan.ts` and `fairness.ts` are pure); scores are written only by the service role via `apply_booking_risk`, and the `bookings_guard_risk` trigger blocks signed-in writes to risk/confirmation columns. The tick runs `runRiskBatch` (deadlines, then scoring) before the waitlist step. Owner settings at `/dashboard/settings/no-shows`; every action is off until `shops.risk_actions_enabled`.
 
 ---
 
