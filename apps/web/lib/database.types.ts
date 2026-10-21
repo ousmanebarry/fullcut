@@ -166,6 +166,8 @@ export type Database = {
 					client_confirmed_at: string | null;
 					client_id: string;
 					client_notes: string | null;
+					confirmation_due_at: string | null;
+					confirmation_status: string;
 					created_at: string;
 					deposit_cents: number;
 					during: unknown;
@@ -174,8 +176,15 @@ export type Database = {
 					outcome_marked_at: string | null;
 					pending_expires_at: string | null;
 					price_cents: number;
+					release_reason: string | null;
+					risk_factors: Json | null;
+					risk_method: string | null;
 					risk_model_version: string | null;
 					risk_score: number | null;
+					risk_scored_at: string | null;
+					risk_tier: string | null;
+					risk_trusted_at: string | null;
+					risk_trusted_by: string | null;
 					service_id: string;
 					shop_id: string;
 					slot_offer_id: string | null;
@@ -194,6 +203,8 @@ export type Database = {
 					client_confirmed_at?: string | null;
 					client_id: string;
 					client_notes?: string | null;
+					confirmation_due_at?: string | null;
+					confirmation_status?: string;
 					created_at?: string;
 					deposit_cents?: number;
 					during?: never;
@@ -202,8 +213,15 @@ export type Database = {
 					outcome_marked_at?: string | null;
 					pending_expires_at?: string | null;
 					price_cents: number;
+					release_reason?: string | null;
+					risk_factors?: Json | null;
+					risk_method?: string | null;
 					risk_model_version?: string | null;
 					risk_score?: number | null;
+					risk_scored_at?: string | null;
+					risk_tier?: string | null;
+					risk_trusted_at?: string | null;
+					risk_trusted_by?: string | null;
 					service_id: string;
 					shop_id: string;
 					slot_offer_id?: string | null;
@@ -221,6 +239,8 @@ export type Database = {
 					client_confirmed_at?: string | null;
 					client_id?: string;
 					client_notes?: string | null;
+					confirmation_due_at?: string | null;
+					confirmation_status?: string;
 					created_at?: string;
 					deposit_cents?: number;
 					during?: never;
@@ -229,8 +249,15 @@ export type Database = {
 					outcome_marked_at?: string | null;
 					pending_expires_at?: string | null;
 					price_cents?: number;
+					release_reason?: string | null;
+					risk_factors?: Json | null;
+					risk_method?: string | null;
 					risk_model_version?: string | null;
 					risk_score?: number | null;
+					risk_scored_at?: string | null;
+					risk_tier?: string | null;
+					risk_trusted_at?: string | null;
+					risk_trusted_by?: string | null;
 					service_id?: string;
 					shop_id?: string;
 					slot_offer_id?: string | null;
@@ -779,6 +806,20 @@ export type Database = {
 					min_lead_minutes: number;
 					name: string;
 					phone: string | null;
+					risk_actions_enabled: boolean;
+					risk_auto_release: boolean;
+					risk_confirm_cap: number;
+					risk_confirm_deadline_hours: number;
+					risk_high_confirm_request: boolean;
+					risk_high_extra_reminder: boolean;
+					risk_high_require_confirmation: boolean;
+					risk_high_suggest_standby: boolean;
+					risk_high_threshold: number;
+					risk_medium_confirm_request: boolean;
+					risk_medium_extra_reminder: boolean;
+					risk_medium_require_confirmation: boolean;
+					risk_medium_suggest_standby: boolean;
+					risk_medium_threshold: number;
 					slot_step_minutes: number;
 					slug: string;
 					sms_cancelled_enabled: boolean;
@@ -810,6 +851,20 @@ export type Database = {
 					min_lead_minutes?: number;
 					name: string;
 					phone?: string | null;
+					risk_actions_enabled?: boolean;
+					risk_auto_release?: boolean;
+					risk_confirm_cap?: number;
+					risk_confirm_deadline_hours?: number;
+					risk_high_confirm_request?: boolean;
+					risk_high_extra_reminder?: boolean;
+					risk_high_require_confirmation?: boolean;
+					risk_high_suggest_standby?: boolean;
+					risk_high_threshold?: number;
+					risk_medium_confirm_request?: boolean;
+					risk_medium_extra_reminder?: boolean;
+					risk_medium_require_confirmation?: boolean;
+					risk_medium_suggest_standby?: boolean;
+					risk_medium_threshold?: number;
 					slot_step_minutes?: number;
 					slug: string;
 					sms_cancelled_enabled?: boolean;
@@ -840,6 +895,20 @@ export type Database = {
 					min_lead_minutes?: number;
 					name?: string;
 					phone?: string | null;
+					risk_actions_enabled?: boolean;
+					risk_auto_release?: boolean;
+					risk_confirm_cap?: number;
+					risk_confirm_deadline_hours?: number;
+					risk_high_confirm_request?: boolean;
+					risk_high_extra_reminder?: boolean;
+					risk_high_require_confirmation?: boolean;
+					risk_high_suggest_standby?: boolean;
+					risk_high_threshold?: number;
+					risk_medium_confirm_request?: boolean;
+					risk_medium_extra_reminder?: boolean;
+					risk_medium_require_confirmation?: boolean;
+					risk_medium_suggest_standby?: boolean;
+					risk_medium_threshold?: number;
 					slot_step_minutes?: number;
 					slug?: string;
 					sms_cancelled_enabled?: boolean;
@@ -1248,6 +1317,28 @@ export type Database = {
 				Returns: string;
 			};
 			anonymise_client: { Args: { p_client_id: string }; Returns: undefined };
+			apply_booking_risk: {
+				Args: {
+					p_booking_id: string;
+					p_confirm_request_at?: string;
+					p_confirmation_due_at?: string;
+					p_extra_reminder_at?: string;
+					p_factors: Json;
+					p_final_warning_at?: string;
+					p_method?: string;
+					p_model_version?: string;
+					p_score?: number;
+					p_starts_at: string;
+					p_tier: string;
+				};
+				Returns: string;
+			};
+			bookings_due_for_scoring: {
+				Args: { p_limit: number };
+				Returns: {
+					booking_id: string;
+				}[];
+			};
 			claim_due_freed_slots: {
 				Args: { p_limit: number };
 				Returns: {
@@ -1400,6 +1491,13 @@ export type Database = {
 				Returns: string;
 			};
 			onboard_shop: { Args: { p_payload: Json; p_user_id: string }; Returns: string };
+			process_confirmation_deadlines: {
+				Args: { p_limit: number };
+				Returns: {
+					booking_id: string;
+					outcome: string;
+				}[];
+			};
 			reorder_services: {
 				Args: { p_service_ids: string[]; p_shop_id: string };
 				Returns: undefined;
@@ -1408,6 +1506,7 @@ export type Database = {
 				Args: { p_rules: Json; p_staff_id: string };
 				Returns: undefined;
 			};
+			set_booking_trust: { Args: { p_booking_id: string; p_trusted: boolean }; Returns: undefined };
 		};
 		Enums: {
 			[_ in never]: never;
