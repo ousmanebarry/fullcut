@@ -20,7 +20,7 @@ Fullcut goes live on Vercel (web) and Supabase cloud (database, auth). Schema ch
   - `private.reset_demo_shop()` deletes the demo shop (cascading to all its data) and rebuilds it with fake data relative to today. pg_cron runs it nightly at 08:00 UTC.
   - Visitors may change bookings, clients, notes, staff and services. Triggers raise `demo_shop_locked` for signed-in changes to the shop row (slug, booking page) and memberships, so the public demo link cannot be hijacked.
   - "Open the demo dashboard" calls a server action that restores the demo user's email and password through the admin API before signing in, so a visitor who changes them locks nobody out. It is rate limited per IP (10/hour). The password lives only in a server env var and is never shown.
-  - `public.is_demo_shop(shop_id)` lets later features opt out for the demo (Milestone 09 must never send SMS for the demo shop; Milestone 10 must never take payments).
+  - `public.is_demo_shop(shop_id)` lets later features opt out for the demo (Milestone 09 must never send SMS for the demo shop).
 
 ## Consequences
 

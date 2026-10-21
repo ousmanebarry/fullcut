@@ -13,7 +13,7 @@
 
 ## Out of scope
 
-- Client profiles (07), payments (10), risk badges (12)
+- Client profiles (07), waitlist (10), risk badges (12)
 
 ## Tasks
 

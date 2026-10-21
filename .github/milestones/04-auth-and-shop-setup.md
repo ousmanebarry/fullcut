@@ -13,7 +13,7 @@
 
 ## Out of scope
 
-- Calendar and bookings UI (06), payments setup (10), messaging settings (09)
+- Calendar and bookings UI (06), waitlist settings (10), messaging settings (09)
 
 ## Tasks
 

@@ -1,6 +1,6 @@
 # Milestone 08 — Deploy, PWA and CI/CD
 
-**Goal:** Fullcut runs on the internet with a real URL, deploys automatically, and the dashboard installs on a phone or iPad like an app. Deploying now (before payments and ML) gives you a live demo early and catches production-only problems while the app is small.
+**Goal:** Fullcut runs on the internet with a real URL, deploys automatically, and the dashboard installs on a phone or iPad like an app. Deploying now (before messaging and ML) gives you a live demo early and catches production-only problems while the app is small.
 
 **Depends on:** 07
 **Skills to read:** `fullcut-data-and-tenancy`
@@ -46,7 +46,7 @@
 ### 8.5 Observability and security
 
 - Error monitoring (e.g. Sentry) for web; scrub personal data (names, phones, emails) from events.
-- Security headers: CSP (allow Supabase, Stripe later), `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy`, HSTS.
+- Security headers: CSP (allow Supabase), `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy`, HSTS.
 - Check that no server secrets are in the client bundle (search build output for key prefixes).
 
 ### 8.6 CI/CD polish

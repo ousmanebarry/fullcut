@@ -53,8 +53,8 @@ Inputs: settings, service, staff list, rules, time off, existing active bookings
 
 ### 3.6 Status machine (`transitionBooking`)
 
-- States: `pending`, `confirmed`, `completed`, `cancelled`, `no_show`.
-- Events: `depositPaid`, `holdExpired`, `cancel`, `markCompleted`, `markNoShow`, `confirmWithoutDeposit`.
+- States: `confirmed`, `completed`, `cancelled`, `no_show`.
+- Events: `cancel`, `markCompleted`, `markNoShow`.
 - Return the new state or a typed error for invalid transitions. `completed`/`no_show` only allowed after the appointment's start time (pass `now`).
 
 ### 3.7 Validation helper (`validateRequestedStart`)

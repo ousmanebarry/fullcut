@@ -5,7 +5,7 @@
 
 ## Context
 
-Fullcut must text clients (confirmations, reminders, reschedule/cancel notices, "reply YES") at the right time, never twice, never to someone who replied STOP, and never at night. Later milestones (deposit holds, ML scoring, rebooking nudges) need the same "run due work every minute" mechanism. The web app runs on Vercel and the database on Supabase (free plans for now).
+Fullcut must text clients (confirmations, reminders, reschedule/cancel notices, "reply YES") at the right time, never twice, never to someone who replied STOP, and never at night. Later milestones (waitlist offers, ML scoring, rebooking nudges) need the same "run due work every minute" mechanism. The web app runs on Vercel and the database on Supabase (free plans for now).
 
 Options compared (limits checked 2026-10-19):
 
@@ -19,7 +19,7 @@ Options compared (limits checked 2026-10-19):
 ## Decision
 
 - **Runner:** pg_cron runs `private.trigger_jobs_tick()` every minute. It reads `jobs_tick_url` and `jobs_secret` from Supabase Vault and, when both exist, POSTs to `/api/jobs/tick` with `Authorization: Bearer <secret>` via pg_net. Without the secrets it does nothing, so local databases and CI never call out. The route compares the secret in constant time and rejects everything else with 401. Locally, `pnpm jobs:dev` posts to the dev server every 15 s.
-- **Outbox:** `scheduled_messages` is the queue. An `after insert or update` trigger on `bookings` (`private.enqueue_booking_messages`) writes rows in the same transaction as the booking change, so every writer (public RPC, staff RPC, manage links, dashboard, future Stripe webhook) is covered and a rolled-back booking never leaves a message behind.
+- **Outbox:** `scheduled_messages` is the queue. An `after insert or update` trigger on `bookings` (`private.enqueue_booking_messages`) writes rows in the same transaction as the booking change, so every writer (public RPC, staff RPC, manage links, dashboard, future waitlist claims) is covered and a rolled-back booking never leaves a message behind.
   - New confirmed booking, or `pending` → `confirmed`: `confirmation` now (not for walk-ins) and `reminder` at start − lead hours (skipped when that moment has already passed).
   - Start time or staff changed: queued reminders/confirm requests are cancelled, `rescheduled` and a new reminder are queued.
   - Cancelled: everything queued is cancelled; `cancelled` is queued only when `bookings.cancelled_by = 'shop'`.

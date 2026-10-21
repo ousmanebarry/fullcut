@@ -1,6 +1,6 @@
 ---
 name: fullcut-booking-engine
-description: Use when working on Fullcut's scheduling logic — generating available slots, staff hours and time off, buffers, creating, holding, rescheduling or cancelling bookings, booking statuses, double-booking handling, or timezone and DST behaviour.
+description: Use when working on Fullcut's scheduling logic — generating available slots, staff hours and time off, buffers, creating, rescheduling or cancelling bookings, booking statuses, waitlist matching and slot refill, double-booking handling, or timezone and DST behaviour.
 ---
 
 # Fullcut: booking engine
@@ -11,7 +11,7 @@ Domain code lives in `apps/web/lib/booking/` as pure functions with no database 
 
 ## Slot generation
 
-Inputs: shop timezone, the service (duration, buffer), the staff member(s), a date range, availability rules, time off, and existing active bookings (`pending` + `confirmed`).
+Inputs: shop timezone, the service (duration, buffer), the staff member(s), a date range, availability rules, time off, and existing active bookings (`confirmed`).
 
 Algorithm per staff member per local date:
 
@@ -45,24 +45,31 @@ Always on the server, in this order:
 ## Statuses
 
 ```
-pending ──(deposit paid)──────────► confirmed ──(appointment done)──► completed
-   │                                    │
-   └─(hold expired / abandoned)─► cancelled ◄──(client or shop cancels)
-                                        │
-                                        └──(client didn't show)──► no_show
+confirmed ──(appointment done)──► completed
+    │
+    ├──(client or shop cancels, or released)──► cancelled
+    │
+    └──(client didn't show)──► no_show
 ```
 
-- `pending`: a deposit is required and checkout is in progress. Has `pending_expires_at` (e.g. 15 minutes). It blocks the slot so nobody else takes it mid-payment.
-- `confirmed`: no deposit required, or deposit paid.
+- `confirmed`: every new booking starts here. There are no holds: Fullcut takes no deposits, so nothing waits on a payment.
 - `completed` / `no_show`: set by staff after the appointment time. These labels are the training data for the no-show model, so the dashboard should make marking them one tap and remind staff of unmarked past bookings.
-- Expired holds: a scheduled job sets `status = 'cancelled'` on `pending` bookings past `pending_expires_at`. Additionally, before inserting a new booking, cancel any expired `pending` bookings for that staff member in the same transaction so a stale hold never blocks a real client.
+- Whether the client has confirmed (`confirmation_status`, milestone 12) is a separate field, not a status. An unconfirmed booking still blocks its slot; a release is an ordinary cancel by the shop.
 - Only allowed transitions are permitted; enforce them in one function (`transitionBooking(booking, event)`), not scattered across handlers.
 
 ## Rescheduling and cancelling
 
 - Reschedule = update `starts_at`, `ends_at`, `blocked_until` in a single statement; the exclusion constraint protects it the same way as an insert. Handle `23P01` the same way.
 - Cancellations by clients go through a signed, single-use link sent in the confirmation message; no account needed.
-- Shop cancellation policy (e.g. deposit kept if cancelled within 24 h) is applied by `fullcut-payments-and-messaging` logic; the booking engine only reports when the cancellation happened relative to the appointment.
+- Cancelling never costs the client money. The shop's cancel cutoff only decides whether the client can still cancel online; after it they're asked to call the shop.
+
+## Waitlist and slot refill
+
+When an active booking is cancelled, rescheduled away or released, the freed time is offered to the shop's waitlist (milestone 10).
+
+- Matching is pure code in `apps/web/lib/waitlist/` that reuses `generateSlots` / `validateRequestedStart` for the freed staff and window, so an offer is always a slot the booking page would also show. The offered service must fit the freed gap.
+- An entry matches on service, staff (or "any"), and the slot's shop-local date and time windows (DST-safe via `lib/time`). Order: specific-staff entries first, then oldest entry first.
+- Claiming an offer inserts through the normal booking path, so `bookings_no_overlap` settles races: one claimant gets the booking, the others get "taken" and stay on the waitlist. Never hold or reserve a slot for an offer.
 
 ## Learned durations (later feature)
 
@@ -77,5 +84,6 @@ Each completed booking can record actual start and finish (from staff tapping "s
 - Service longer than any free gap returns no slots.
 - Half-open ranges: back-to-back bookings (10:00–10:30 and 10:30–11:00) are both allowed.
 - **Concurrency:** two simultaneous insert attempts for the same staff and time against a real local database; exactly one succeeds, the other gets 409.
-- Expired `pending` hold no longer blocks a new booking.
 - Invalid status transitions are rejected.
+- Waitlist matcher: staff preference, oldest first, time windows on DST days, service longer than the freed gap is never offered.
+- Two concurrent claims of the same offered slot: exactly one booking.

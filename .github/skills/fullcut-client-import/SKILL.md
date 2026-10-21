@@ -39,7 +39,7 @@ upload ─► parse (CSV) ─► detect platform by header signature
 - Emails: trim, lowercase, basic validation.
 - Money: parse to integer cents in the shop's currency; reject ambiguous formats instead of guessing.
 - Dates/times: parse in the **shop's timezone** unless the export clearly includes an offset; store as `timestamptz`.
-- Imported booking statuses map to Fullcut's (`completed`, `no_show`, `cancelled`); unmappable statuses are skipped and reported. Imported past bookings never become `pending` or `confirmed`.
+- Imported booking statuses map to Fullcut's (`completed`, `no_show`, `cancelled`); unmappable statuses are skipped and reported. Imported past bookings never become `confirmed`.
 
 ## Deduplication
 
