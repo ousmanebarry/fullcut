@@ -69,7 +69,7 @@ If a request conflicts with these principles, stop and ask the human before impl
 
 ---
 
-## Repository layout (planned)
+## Repository layout
 
 ```
 fullcut/
@@ -99,7 +99,9 @@ fullcut/
 │   ├── tests/                # database tests (RLS, constraints)
 │   └── seed.sql              # fake demo data only
 └── docs/
-    └── adr/                  # architecture decision records
+    ├── adr/                  # architecture decision records
+    ├── ml/                   # no-show model report + metrics
+    └── case-study.md         # portfolio case study; keep every number traceable to code or metrics
 ```
 
 Update this section if the real layout differs.
@@ -127,6 +129,8 @@ pnpm db:stop
 pnpm db:reset                # rebuild local DB from migrations + seed
 pnpm db:test                 # pgTAP tests (supabase/tests) + DB integration tests (apps/web/tests/db: concurrency, settings authz)
 pnpm db:types                # regenerate + format apps/web/lib/database.types.ts
+pnpm audit                   # audit production dependencies
+pnpm --filter web screenshots # refresh landing-page screenshots from the local demo shop (dev server + ML service running)
 pnpm exec supabase migration new <name>
 ```
 

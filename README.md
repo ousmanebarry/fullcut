@@ -6,130 +6,74 @@
 
 Flat price. Zero commission. Your clients stay yours. And the app actively fills your chair.
 
+**[Live demo → fullcut.ca](https://fullcut.ca)** (one click, no sign-up; the demo shop resets every night)
+
 ![Node](https://img.shields.io/badge/node-%E2%89%A524-339933?logo=node.js&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-12-F69220?logo=pnpm&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 
 </div>
 
+<!-- Demo GIF (30–60 s) goes here once recorded: ![Fullcut demo](docs/media/demo.gif) -->
+
 ---
 
-## Why Fullcut
+Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established professionals new-client commissions, add-on fees, and list them in marketplaces next to their competitors. Fullcut is the opposite: a branded booking page the shop controls, no commission ever, a full data export, and features that work to keep the chair full: it spots bookings likely to be missed, asks only those clients to confirm, and texts the waitlist when a slot frees up.
 
-Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established professionals new-client commissions, add-on fees and marketplace listings next to their competitors. Fullcut is the opposite:
+The case study, with the problem, the hardest engineering problems and the results, is in [docs/case-study.md](docs/case-study.md).
 
-- **No commission on clients, ever.** Fees are shown before they are charged.
-- **The shop owns its data.** Full CSV export of clients, services and bookings, always.
-- **Frictionless for clients.** No account, no app download, mobile-first, three steps or fewer.
+## What it does
 
-### Differentiating features
+| Feature                         | What it does                                                                                                                      | Status  |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| Branded booking page            | Service → time → confirm, no account or app. No marketplace, no competitor listings.                                              | Shipped |
+| Zero double bookings            | Enforced by a Postgres exclusion constraint, not just the app.                                                                    | Shipped |
+| Dashboard (PWA)                 | Calendar, today view, outcomes, clients, inbox. Installs on iPhone, iPad and Android.                                             | Shipped |
+| Text messages                   | Confirmations and reminders by SMS (Twilio), with quiet hours, STOP handling and two-way replies.                                 | Shipped |
+| Waitlist refill                 | When a slot frees up, matching waitlisted clients get a text; the first to tap books it.                                          | Shipped |
+| No-show prediction              | Scores every booking; only risky ones get extra friction (confirmation request, confirm-or-release, standby suggestions). Opt-in. | Shipped |
+| Data ownership                  | Full CSV export of clients, services and bookings; client anonymisation and merge.                                                | Shipped |
+| "Who's due" rebooking           | Learns each client's visit rhythm and nudges overdue clients with open slots.                                                     | Planned |
+| Honest source tracking          | Reports where bookings came from (Instagram, referral, Google, returning). The source is already recorded on every booking.       | Planned |
+| One-click migration             | Imports clients, services and history from competitor exports.                                                                    | Planned |
+| Learned durations + smart slots | Learns how long each stylist really takes and suggests times that avoid dead gaps.                                                | Planned |
 
-| Feature                             | What it does                                                                                      |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------- |
-| No-show prediction                  | Scores every booking; only risky ones get extra friction (confirmation text, confirm-or-release). |
-| Waitlist refill                     | When a slot frees up, texts waitlisted clients; the first to tap books it.                        |
-| "Who's due" rebooking               | Learns each client's visit rhythm and nudges overdue clients with open slots.                     |
-| Honest source tracking              | Records where each booking came from (Instagram, referral, Google, returning client).             |
-| Learned durations + gap-aware slots | Learns how long each stylist really takes and suggests times that avoid dead gaps.                |
-| Zero double bookings                | Enforced by the database, not just the app.                                                       |
-| One-click migration                 | Imports clients, services and history from competitor exports.                                    |
-| Branded booking page                | The shop controls it. No marketplace, no competitor listings.                                     |
+## Engineering highlights
 
-> **Status:** in development and deployed. The web app (public booking pages, dashboard, client book and export), the Supabase database and the deploy pipeline are in place, and the dashboard installs as a PWA. Text messages (Twilio) are in place; the waitlist and the ML service are planned and not built yet.
+- **Double bookings are impossible, not just unlikely.** A `bookings_no_overlap` exclusion constraint on each staff member's blocked time range ([core_schema.sql](supabase/migrations/20261019011748_core_schema.sql#L120)). Concurrent inserts on an exclusion constraint can deadlock, so a per-staff advisory lock trigger serialises them ([bookings_staff_write_lock.sql](supabase/migrations/20261019013909_bookings_staff_write_lock.sql)). A test fires 10 simultaneous transactions at the same slot and asserts exactly one wins ([booking-concurrency.test.ts](apps/web/tests/db/booking-concurrency.test.ts)); the API turns SQLSTATE `23P01` into "that time was just taken" with the nearest open times.
+- **Tenant isolation in the database.** Every tenant table has `shop_id`, row-level security and member-only policies; same-shop references use composite foreign keys so a booking can't point at another shop's client ([ADR 0002](docs/adr/0002-cross-shop-integrity-composite-fks.md)). pgTAP tests prove another shop can't read or write each table ([02_rls_tenant_tables.test.sql](supabase/tests/database/02_rls_tenant_tables.test.sql)), and a test fails if a new tenant table is missing from the data export ([export-coverage.test.ts](apps/web/tests/db/export-coverage.test.ts)).
+- **DST-safe scheduling.** Instants are stored in UTC, working hours as shop-local wall-clock times, and only one module touches the time library ([ADR 0003](docs/adr/0003-time-library.md)). Slot generation is a pure function with spring-forward and fall-back tests ([generate-slots.test.ts](apps/web/tests/unit/booking/generate-slots.test.ts#L263)) and property-based tests ([properties.test.ts](apps/web/tests/unit/booking/properties.test.ts)).
+- **Idempotent, verified webhooks.** Twilio signatures are checked against the raw body, and each event ID is recorded once so retries are no-ops ([webhooks.ts](apps/web/lib/messaging/webhooks.ts#L35)).
+- **Outbox worker.** A trigger queues texts in `scheduled_messages` in the same transaction as the booking change; `pg_cron` ticks the app every minute, and the worker claims rows with `FOR UPDATE SKIP LOCKED` so overlapping ticks never send twice ([messaging.sql](supabase/migrations/20261020022610_messaging.sql#L244), [ADR 0008](docs/adr/0008-background-jobs-and-messaging.md)).
+- **Race-free waitlist claims.** When several clients tap the same offer, a single SQL function decides the winner and books the slot atomically ([waitlist_refill.sql](supabase/migrations/20261020160000_waitlist_refill.sql#L357), [ADR 0009](docs/adr/0009-waitlist-refill.md)).
+- **ML pipeline with honest evaluation.** One feature module shared by training and serving ([features.py](services/ml/fullcut_ml/features.py#L54)), a time-based split (never random) ([train.py](services/ml/fullcut_ml/train.py#L64)), a leakage test, and a regression test that fails if model quality drops.
+- **ML never blocks a booking, and stays fair.** Scoring has a 300 ms budget and runs after the response; on failure the booking proceeds unscored ([ADR 0010](docs/adr/0010-risk-scoring.md)). Age, gender and location are dropped at the adapter, every action is opt-in per shop, owners can trust a client with one tap, and clients who keep confirming and showing up stop being asked ([fairness.ts](apps/web/lib/risk/fairness.ts)).
+- **Public endpoints are rate limited** per IP and per phone with hashed keys ([rate-limit.ts](apps/web/lib/public-booking/rate-limit.ts), [ADR 0005](docs/adr/0005-public-booking-links-and-rate-limits.md)); security headers and CSP in [next.config.ts](apps/web/next.config.ts); CI scans the client bundle for server secrets.
 
-## Tech stack
+### Tests
 
-| Layer    | Choice                                             | Status  |
-| -------- | -------------------------------------------------- | ------- |
-| Web app  | Next.js (App Router), TypeScript, Tailwind, shadcn | Present |
-| Tests    | Vitest (unit), Playwright (e2e)                    | Present |
-| Database | Supabase (Postgres, Auth, row-level security)      | Present |
-| SMS      | Twilio (Messaging Service, two-way replies)        | Present |
-| ML       | Python, FastAPI, scikit-learn / LightGBM           | Planned |
-| Hosting  | Vercel (web), Supabase cloud (database, auth)      | Present |
-| Hosting  | Railway or Fly.io (ML)                             | Planned |
+| Suite                                    | Count                         | Command         |
+| ---------------------------------------- | ----------------------------- | --------------- |
+| Unit (Vitest)                            | 500 tests in 29 files         | `pnpm test`     |
+| Database (pgTAP: RLS, constraints, RPCs) | 462 tests in 18 files         | `pnpm db:test`  |
+| DB integration (Vitest, real Postgres)   | 110 tests in 12 files         | `pnpm db:test`  |
+| End-to-end (Playwright, incl. axe)       | 22 tests × desktop and mobile | `pnpm test:e2e` |
+| ML (pytest)                              | 54 tests                      | `uv run pytest` |
 
-## Getting started
+## No-show model results
 
-**Requirements:** Node 24 (see `.nvmrc`) and pnpm 12 (pinned in `package.json`; `corepack enable` will pick it up).
+Prototype trained on the public Kaggle "Medical Appointment No Shows" dataset (110,522 clinic bookings), not on salon data. Time-based split; the test week (26,451 bookings) was never used for training or model choice. Full report: [docs/ml/noshow-prototype.md](docs/ml/noshow-prototype.md); raw numbers: [noshow-prototype-metrics.json](docs/ml/noshow-prototype-metrics.json).
 
-```bash
-pnpm install
-pnpm db:start
-cp .env.example apps/web/.env.local   # then fill in the Supabase values below
-pnpm dev
-```
+| Model                               | ROC AUC   | PR AUC    | Top-20% precision | Top-20% recall |
+| ----------------------------------- | --------- | --------- | ----------------- | -------------- |
+| Random                              | 0.500     | 0.185     | 18.5%             | 20.0%          |
+| Baseline (client's no-show history) | 0.557     | 0.220     | 21.5%             | 23.3%          |
+| **Logistic regression** (selected)  | **0.707** | **0.302** | **31.3%**         | **33.9%**      |
+| LightGBM                            | 0.702     | 0.296     | 30.8%             | 33.3%          |
 
-Open <http://localhost:3000>.
-
-For local development, `apps/web/.env.local` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`. Take them from `pnpm exec supabase status` (`API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY`). The other variables are optional locally. Never commit real values.
-
-Texts are only logged (never sent) unless `MESSAGING_MODE=twilio`. To process queued texts locally, set `JOBS_SECRET` (32+ random characters) and run `pnpm jobs:dev` next to `pnpm dev`. See [Text messages](#text-messages-twilio).
-
-No-show risk scores need the scoring service in `services/ml` (`uv run uvicorn fullcut_ml.serve:create_app --factory`) and `ML_SERVICE_URL` + `ML_SHARED_SECRET` in `apps/web/.env.local`. Without them nothing is scored and bookings work as usual.
-
-### Local database
-
-Requires Docker. The Supabase CLI is a dev dependency, so `pnpm install` provides it.
-
-```bash
-pnpm db:start   # Postgres, Auth and Studio (http://127.0.0.1:55323)
-pnpm db:reset   # rebuild from migrations + seed
-pnpm db:test    # database tests + concurrency test
-```
-
-Local ports use 553xx instead of Supabase's default 543xx, because Windows/Hyper-V often reserves the 543xx range. Run `pnpm exec supabase status` for the local URL and keys.
-
-The seed creates two shops with fake data and one owner login each. **These credentials exist only in your local database:**
-
-| Shop         | Email                            | Password               |
-| ------------ | -------------------------------- | ---------------------- |
-| Demo Barbers | `owner@demo-barbers.example.com` | `demo-owner-password`  |
-| Other Shop   | `owner@other-shop.example.com`   | `other-owner-password` |
-
-## Commands
-
-Run everything from the repository root.
-
-| Command             | Purpose                                     |
-| ------------------- | ------------------------------------------- |
-| `pnpm dev`          | Run the web app locally                     |
-| `pnpm jobs:dev`     | Tick `/api/jobs/tick` every 15 s locally    |
-| `pnpm lint`         | ESLint (warnings fail)                      |
-| `pnpm typecheck`    | `next typegen` then `tsc --noEmit`          |
-| `pnpm test`         | Vitest unit tests                           |
-| `pnpm test:e2e`     | Playwright e2e on desktop and mobile Chrome |
-| `pnpm format`       | Format the repo with Prettier               |
-| `pnpm format:check` | Check formatting without writing            |
-| `pnpm db:start`     | Start local Supabase (Docker)               |
-| `pnpm db:stop`      | Stop local Supabase                         |
-| `pnpm db:reset`     | Rebuild local DB from migrations and seed   |
-| `pnpm db:test`      | pgTAP database tests + concurrency test     |
-| `pnpm db:types`     | Regenerate `apps/web/lib/database.types.ts` |
-
-`pnpm --filter web check:bundle` scans the last build's browser bundle for server secrets (run `pnpm --filter web build` first).
-
-One-time setup for e2e: `pnpm --filter web exec playwright install chromium`.
-
-Add a shadcn/ui component: `pnpm --filter web exec shadcn add <component>`.
-
-## Project layout
-
-```
-fullcut/
-├── apps/
-│   └── web/            Next.js app: booking pages and shop dashboard
-│       ├── app/        routes and layouts
-│       ├── components/ UI (shadcn/ui in components/ui)
-│       ├── lib/        domain logic as plain, testable functions
-│       └── tests/      unit/ (Vitest), e2e/ (Playwright), db/ (DB integration)
-├── supabase/           migrations, seed.sql, database tests (pgTAP)
-├── docs/adr/           architecture decision records
-└── .github/            CI workflow, AGENTS.md and agent skills
-```
-
-`services/ml/` will be added when the ML service is built.
+Caveat: most of the lift comes from same-day bookings. For bookings made at least a day ahead, top-20% recall is 24.3% against the baseline's 22%. Because of this, shops are scored by a transparent heuristic until they have enough of their own labelled bookings; the Kaggle model is never enabled for real shops.
 
 ## Architecture
 
@@ -142,9 +86,90 @@ flowchart TD
     db -->|"Realtime (bookings)"| web
     cron["pg_cron<br/>demo reset, job tick every minute"] --> db
     db -->|"pg_net: POST /api/jobs/tick"| web
+    web -->|"POST /score<br/>(300 ms budget, advisory)"| ml["ML scoring service<br/>FastAPI"]
     web -->|"SMS"| twilio["Twilio"]
     twilio -->|"status + inbound webhooks"| web
-    web -.->|planned| ml["ML scoring service"]
+```
+
+| Layer    | Choice                                                       | Why                                                                                                                                                                 |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web app  | Next.js (App Router), TypeScript strict, Tailwind, shadcn/ui | One app serves the public booking pages and the dashboard; server components keep secrets on the server ([ADR 0001](docs/adr/0001-monorepo-and-web-toolchain.md)).  |
+| Database | Supabase (Postgres, Auth, RLS, Realtime)                     | Invariants live in the database: exclusion constraints, RLS, composite FKs. Realtime keeps the calendar live ([ADR 0004](docs/adr/0004-auth-and-authorization.md)). |
+| Jobs     | pg_cron + pg_net calling a route handler                     | No extra job service; queues are tables in the same transaction as the change ([ADR 0008](docs/adr/0008-background-jobs-and-messaging.md)).                         |
+| SMS      | Twilio Messaging Service                                     | Two-way replies (YES / STOP) and delivery callbacks.                                                                                                                |
+| Time     | Luxon behind one module                                      | IANA zones and DST handled by a library, never by offsets ([ADR 0003](docs/adr/0003-time-library.md)).                                                              |
+| ML       | Python 3.12, scikit-learn, LightGBM, FastAPI, uv             | The standard ML tooling; a separate service so a slow model can't slow the app ([ADR 0010](docs/adr/0010-risk-scoring.md)).                                         |
+| Tests    | Vitest, pgTAP, Playwright + axe, pytest                      | Each layer tested where its logic lives.                                                                                                                            |
+| Hosting  | Vercel (web), Supabase cloud                                 | Previews per pull request against a staging database ([ADR 0007](docs/adr/0007-deployment-and-demo-shop.md)).                                                       |
+
+## Getting started
+
+**Requirements:** Node 24, pnpm 12 (via corepack), Docker. Optional for risk scores: [uv](https://docs.astral.sh/uv/).
+
+```bash
+corepack enable
+pnpm install
+pnpm db:start                              # Postgres, Auth, Studio; applies migrations + seed
+cp .env.example apps/web/.env.local        # fill the Supabase values from the next command
+pnpm exec supabase status                  # API_URL, PUBLISHABLE_KEY, SECRET_KEY
+pnpm dev                                   # http://localhost:3000
+```
+
+Sign in at <http://localhost:3000/login> with a seed login (local database only):
+
+| Shop         | Email                            | Password               |
+| ------------ | -------------------------------- | ---------------------- |
+| Demo Barbers | `owner@demo-barbers.example.com` | `demo-owner-password`  |
+| Other Shop   | `owner@other-shop.example.com`   | `other-owner-password` |
+
+`apps/web/.env.local` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`; everything else is optional locally. Never commit real values.
+
+- **Texts** are only logged unless `MESSAGING_MODE=twilio`. To process queued texts locally, set `JOBS_SECRET` (32+ characters) and run `pnpm jobs:dev` next to `pnpm dev`.
+- **Risk scores** need the scoring service and `ML_SERVICE_URL` + `ML_SHARED_SECRET` in `apps/web/.env.local`:
+  ```bash
+  cd services/ml && uv sync && ML_SHARED_SECRET=<same 32+ chars> uv run uvicorn fullcut_ml.serve:create_app --factory
+  ```
+  Without them nothing is scored and bookings work as usual.
+
+Local Supabase ports are 553xx instead of 543xx, because Windows/Hyper-V often reserves the 543xx range.
+
+## Commands
+
+Run everything from the repository root.
+
+| Command                         | Purpose                                                       |
+| ------------------------------- | ------------------------------------------------------------- |
+| `pnpm dev`                      | Run the web app locally                                       |
+| `pnpm jobs:dev`                 | Tick `/api/jobs/tick` every 15 s locally                      |
+| `pnpm lint`                     | ESLint (warnings fail)                                        |
+| `pnpm typecheck`                | `next typegen` then `tsc --noEmit`                            |
+| `pnpm test`                     | Vitest unit tests                                             |
+| `pnpm test:e2e`                 | Playwright e2e (with axe checks) on desktop and mobile Chrome |
+| `pnpm format` / `format:check`  | Prettier                                                      |
+| `pnpm audit`                    | Audit production dependencies                                 |
+| `pnpm db:start` / `db:stop`     | Start / stop local Supabase (Docker)                          |
+| `pnpm db:reset`                 | Rebuild local DB from migrations and seed                     |
+| `pnpm db:test`                  | pgTAP database tests + DB integration tests                   |
+| `pnpm db:types`                 | Regenerate `apps/web/lib/database.types.ts`                   |
+| `pnpm --filter web screenshots` | Refresh the landing-page screenshots from the local demo shop |
+
+`pnpm --filter web check:bundle` scans the last build's browser bundle for server secrets (run `pnpm --filter web build` first). One-time setup for e2e: `pnpm --filter web exec playwright install chromium`. [supabase/snippets/perf-large-shop.sql](supabase/snippets/perf-large-shop.sql) loads ~850k bookings into a rolled-back transaction and prints query plans for the dashboard's hot queries.
+
+ML service (from `services/ml`): `uv run pytest`, `uv run ruff check .`, `uv run python -m fullcut_ml.train` (needs the Kaggle CSV in `data/raw/`, never committed).
+
+## Project layout
+
+```
+fullcut/
+├── apps/web/           Next.js app: booking pages and shop dashboard
+│   ├── app/            routes and layouts
+│   ├── components/     UI (shadcn/ui in components/ui)
+│   ├── lib/            domain logic as plain, testable functions
+│   └── tests/          unit/ (Vitest), db/ (against local Postgres), e2e/ (Playwright)
+├── services/ml/        no-show model: features, training, FastAPI scoring service
+├── supabase/           migrations, seed.sql, pgTAP tests, snippets
+├── docs/               ADRs, ML report, case study
+└── .github/            CI/CD workflows, AGENTS.md, agent skills and milestones
 ```
 
 ## Environments
@@ -154,7 +179,7 @@ flowchart TD
 | Local       | `pnpm dev` on <http://localhost:3000> | Supabase in Docker          | `supabase/seed.sql` (fake) |
 | CI          | `next build` + `next start` for e2e   | Supabase in Docker          | `supabase/seed.sql` (fake) |
 | Preview     | Vercel preview URL per pull request   | Staging Supabase project    | Test data only, never prod |
-| Production  | Your domain, deployed by `deploy.yml` | Production Supabase project | Real shops + the demo shop |
+| Production  | <https://fullcut.ca>                  | Production Supabase project | Real shops + the demo shop |
 
 ## Deployment
 
@@ -178,7 +203,7 @@ Security headers (CSP, HSTS, frame and referrer policies) live in [apps/web/next
 
 ### Demo shop
 
-Production has a shared, writable demo shop with fake data, rebuilt every night at 08:00 UTC. To set it up once:
+Production has a shared, writable demo shop with fake data, rebuilt every night at 08:00 UTC. Signed-in demo visitors get a short guided tour. To set it up once:
 
 1. In the production Supabase dashboard, **Authentication → Users → Add user**: an email such as `demo@<your-domain>`, any long password, **Auto Confirm User** on. Copy the user's UID.
 2. In the **SQL Editor**, run `select private.configure_demo_shop('<uid>', 'fullcut-demo');`. The second argument is the demo booking page slug.
@@ -215,12 +240,9 @@ The service worker only caches static files and an offline page; booking data al
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Editor     | ESLint fix on save; recommended extensions in `.vscode/extensions.json`                                                                                         |
 | Pre-commit | Husky + lint-staged: ESLint and Prettier on staged files                                                                                                        |
-| CI (PRs)   | Format check, lint, typecheck, unit tests, production build, bundle secret scan; separate jobs for database tests and Playwright e2e against a production build |
+| CI (PRs)   | Format check, lint, typecheck, unit tests, production build, bundle secret scan; separate jobs for database tests, Playwright e2e (with axe) and the ML service |
 | Deploy     | CI again, then staging migrations, then (after approval) production migrations and the Vercel deploy                                                            |
-
-### VS Code status bar buttons
-
-Install the recommended extensions when prompted. The Action Buttons extension adds coloured Dev, Lint, Types, Test and E2E buttons to the status bar. Add more in `.vscode/settings.json` under `actionButtons.commands`, ideally pointing at a `pnpm` script.
+| Weekly     | Dependabot updates for npm, uv and GitHub Actions                                                                                                               |
 
 ## Contributing
 
