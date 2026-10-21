@@ -13,6 +13,7 @@ import {
 } from '@/lib/public-booking/responses';
 import { bookingBodySchema, sourceFromParam } from '@/lib/public-booking/schemas';
 import type { BookingCreated } from '@/lib/public-booking/types';
+import { scoreAfterResponse } from '@/lib/risk/jobs';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Instant } from '@/lib/time';
 
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest, ctx: RouteContext<'/api/public/
 		Date.now() as Instant,
 	);
 	if (!result.ok) return failureResponse(result.error);
+	scoreAfterResponse(db, result.value.bookingId);
 
 	const created: BookingCreated = {
 		reference: result.value.reference,

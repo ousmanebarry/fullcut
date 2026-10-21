@@ -40,7 +40,7 @@ export interface RefillOptions {
 	budgetMs?: number;
 }
 
-interface WaitlistSettings {
+export interface WaitlistSettings {
 	enabled: boolean;
 	waveSize: number;
 	offerMinutes: number;
@@ -169,7 +169,10 @@ async function processFreedSlot(db: Db, row: FreedSlotRow, now: Instant): Promis
 	}
 }
 
-async function loadWaitlistSettings(db: Db, shopId: string): Promise<WaitlistSettings | null> {
+export async function loadWaitlistSettings(
+	db: Db,
+	shopId: string,
+): Promise<WaitlistSettings | null> {
 	const { data, error } = await db
 		.from('shops')
 		.select(
@@ -188,18 +191,24 @@ async function loadWaitlistSettings(db: Db, shopId: string): Promise<WaitlistSet
 	};
 }
 
-async function loadMatchInput(
+/**
+ * Everything matchWaitlist needs for one freed time. `freedSlotId` is null for a standby preview of a
+ * booking that still holds the time (`excludeBookingId`).
+ */
+export async function loadMatchInput(
 	db: Db,
 	shop: BookingShop,
 	settings: WaitlistSettings,
-	freedSlotId: string,
+	freedSlotId: string | null,
 	freed: FreedSlot,
 	now: Instant,
+	excludeBookingId?: string,
 ) {
 	const zone = shop.timezone;
 	const date: LocalDate = localDateOf(freed.startsAt, zone);
 	const day = dateWindow(date, date, zone);
 	const nowIso = instantToIso(now);
+	const sameDayOffers = `and(staff_id.eq.${freed.staffId},starts_at.gte.${instantToIso(day.start)},starts_at.lt.${instantToIso(day.end)})`;
 
 	const [entriesResult, services] = await Promise.all([
 		db
@@ -231,9 +240,7 @@ async function loadMatchInput(
 			.select('waitlist_entry_id, staff_id, starts_at, freed_slot_id')
 			.eq('shop_id', shop.id)
 			.in('waitlist_entry_id', entryIds)
-			.or(
-				`freed_slot_id.eq.${freedSlotId},and(staff_id.eq.${freed.staffId},starts_at.gte.${instantToIso(day.start)},starts_at.lt.${instantToIso(day.end)})`,
-			),
+			.or(freedSlotId ? `freed_slot_id.eq.${freedSlotId},${sameDayOffers}` : sameDayOffers),
 		db
 			.from('bookings')
 			.select('client_id, starts_at')
@@ -249,6 +256,7 @@ async function loadMatchInput(
 			[freed.staffId],
 			dateWindow(plusDays(date, -1), plusDays(date, 1), zone),
 			now,
+			excludeBookingId,
 		),
 	]);
 	for (const result of [openOffers, previous, upcoming]) if (result.error) throw result.error;

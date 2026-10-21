@@ -75,7 +75,7 @@ test('a staff-role member only reaches their own schedule settings', async ({ pa
 	await expect(sections.getByRole('link', { name: /Services/ })).toHaveCount(0);
 
 	await page.goto('/dashboard/settings/services');
-	await expect(page.getByText('This page could not be found.')).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: 'Not found' })).toBeVisible();
 
 	await page.goto('/dashboard/settings/hours');
 	await expect(page.getByRole('heading', { level: 2, name: 'Jordan Demo' })).toBeVisible();

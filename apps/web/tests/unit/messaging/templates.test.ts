@@ -19,6 +19,8 @@ const input: TemplateInput = {
 	timezone: timeZone('America/Toronto'),
 	manageUrl: `https://fullcut.app/b/${'x'.repeat(43)}`,
 	signOff: null,
+	// Mon Nov 2, 10:00 AM in Toronto.
+	confirmationDueAt: instantFromIso('2026-11-02T15:00:00Z'),
 };
 
 describe('templates', () => {
@@ -68,6 +70,26 @@ describe('templates', () => {
 	it('cancellation notices carry no link', () => {
 		expect(needsManageLink('cancelled')).toBe(false);
 		expect(renderMessage('cancelled', input)).not.toContain('https://');
+	});
+
+	it('final warning names the deadline in shop time', () => {
+		expect(needsManageLink('final_warning')).toBe(false);
+		expect(renderMessage('final_warning', input)).toMatchInlineSnapshot(
+			`"Demo Barbers: reply YES by Mon Nov 2 at 10:00 AM to keep your Skin Fade on Tue Nov 3 at 10:00 AM, or your spot may go to someone else."`,
+		);
+	});
+
+	it('extra reminder', () => {
+		expect(renderMessage('extra_reminder', input)).toMatchInlineSnapshot(
+			`"Demo Barbers: see you soon - Skin Fade with Sam, Tue Nov 3 at 10:00 AM. Need to change? https://fullcut.app/b/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"`,
+		);
+	});
+
+	it('release notice carries no link', () => {
+		expect(needsManageLink('released')).toBe(false);
+		expect(renderMessage('released', input)).toMatchInlineSnapshot(
+			`"Demo Barbers: we didn't hear back, so we released your Skin Fade on Tue Nov 3 at 10:00 AM. Reply if you still want to come."`,
+		);
 	});
 
 	it.each(MESSAGE_TYPES)('%s starts with the shop name and fits one GSM-7 segment', (type) => {

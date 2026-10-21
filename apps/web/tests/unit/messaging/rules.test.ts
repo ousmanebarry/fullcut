@@ -19,6 +19,8 @@ function ctx(overrides: {
 	optedOut?: boolean;
 	status?: SendContext['booking']['status'];
 	startsAt?: Instant;
+	confirmationStatus?: string;
+	confirmationDueAt?: Instant | null;
 }): SendContext {
 	const type = overrides.type ?? 'reminder';
 	return {
@@ -33,8 +35,15 @@ function ctx(overrides: {
 			smsOptedOut: overrides.optedOut ?? false,
 		},
 		booking: {
-			status: overrides.status ?? (type === 'cancelled' ? 'cancelled' : 'confirmed'),
+			status:
+				overrides.status ??
+				(type === 'cancelled' || type === 'released' ? 'cancelled' : 'confirmed'),
 			startsAt: overrides.startsAt ?? at('2026-10-22T15:00:00Z'),
+			confirmationStatus: overrides.confirmationStatus ?? 'requested',
+			confirmationDueAt:
+				overrides.confirmationDueAt === undefined
+					? at('2026-10-21T15:00:00Z')
+					: overrides.confirmationDueAt,
 		},
 	};
 }
@@ -146,6 +155,53 @@ describe('quiet hours (21:00–09:00 shop time)', () => {
 		expect(decideSend(ctx({ startsAt }), at('2026-10-21T03:00:00Z'))).toEqual({
 			action: 'defer',
 			until: at('2026-10-21T13:00:00Z'),
+		});
+	});
+});
+
+describe('confirm-or-release texts', () => {
+	it('skips confirmation texts once the client has confirmed', () => {
+		for (const type of ['confirm_request', 'final_warning'] as const) {
+			expect(decideSend(ctx({ type, confirmationStatus: 'confirmed' }), noon)).toEqual({
+				action: 'skip',
+				reason: 'already_confirmed',
+			});
+			expect(decideSend(ctx({ type, confirmationStatus: 'not_required' }), noon)).toEqual({
+				action: 'skip',
+				reason: 'booking_inactive',
+			});
+		}
+	});
+
+	it('never sends a final warning at or after its deadline', () => {
+		const due = at('2026-10-20T16:00:00Z');
+		expect(decideSend(ctx({ type: 'final_warning', confirmationDueAt: due }), noon)).toEqual({
+			action: 'skip',
+			reason: 'too_late',
+		});
+		expect(decideSend(ctx({ type: 'final_warning', confirmationDueAt: null }), noon)).toEqual({
+			action: 'skip',
+			reason: 'too_late',
+		});
+	});
+
+	it('quiet hours never push a final warning past its deadline', () => {
+		// 23:00 EDT; a deadline at 08:00 next morning comes before quiet hours end.
+		const night = at('2026-10-21T03:00:00Z');
+		const early = ctx({ type: 'final_warning', confirmationDueAt: at('2026-10-21T12:00:00Z') });
+		expect(decideSend(early, night)).toEqual({ action: 'skip', reason: 'too_late' });
+		const later = ctx({ type: 'final_warning', confirmationDueAt: at('2026-10-21T15:00:00Z') });
+		expect(decideSend(later, night)).toEqual({
+			action: 'defer',
+			until: at('2026-10-21T13:00:00Z'),
+		});
+	});
+
+	it('release notices need a cancelled booking', () => {
+		expect(decideSend(ctx({ type: 'released' }), noon)).toEqual({ action: 'send' });
+		expect(decideSend(ctx({ type: 'released', status: 'confirmed' }), noon)).toEqual({
+			action: 'skip',
+			reason: 'booking_inactive',
 		});
 	});
 });

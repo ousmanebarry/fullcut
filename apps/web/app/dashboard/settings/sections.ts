@@ -56,6 +56,12 @@ const SECTIONS: (SettingsSection & { ownerOnly: boolean })[] = [
 		ownerOnly: true,
 	},
 	{
+		href: '/dashboard/settings/no-shows',
+		label: 'No-show protection',
+		description: 'What happens for bookings likely to be missed',
+		ownerOnly: true,
+	},
+	{
 		href: '/dashboard/settings/export',
 		label: 'Export data',
 		description: 'Download all your shop data as spreadsheets',

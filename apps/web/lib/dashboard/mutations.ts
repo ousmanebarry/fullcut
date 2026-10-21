@@ -318,6 +318,41 @@ export async function extendManageLink(
 	if (error) throw error;
 }
 
+/** The client told the shop they're coming (by phone or in person). */
+export async function markClientConfirmed(
+	db: Db,
+	actor: Actor,
+	bookingId: string,
+): Promise<DashboardResult<null>> {
+	const { data, error } = await db
+		.from('bookings')
+		.update({ confirmation_status: 'confirmed' })
+		.eq('shop_id', actor.shopId)
+		.eq('id', bookingId)
+		.eq('status', 'confirmed')
+		.in('confirmation_status', ['requested', 'unconfirmed'])
+		.select('id');
+	if (error) return fail(toUserFacingError(error));
+	return data.length === 1 ? ok(null) : fail(BOOKING_CHANGED);
+}
+
+/** "Trust this client" for one booking: no confirmation texts and never released. Owner only. */
+export async function setBookingTrust(
+	db: Db,
+	actor: Actor,
+	bookingId: string,
+	trusted: boolean,
+): Promise<DashboardResult<null>> {
+	if (actor.role !== 'owner') return fail({ message: 'Only the shop owner can change this.' });
+	const { error } = await db.rpc('set_booking_trust', {
+		p_booking_id: bookingId,
+		p_trusted: trusted,
+	});
+	if (error?.code === 'P0002') return fail(BOOKING_NOT_FOUND);
+	if (error) return fail(toUserFacingError(error));
+	return ok(null);
+}
+
 /** Phone or walk-in booking: client picked, found by phone, or created; then the atomic RPC. */
 export async function createManualBooking(
 	db: Db,

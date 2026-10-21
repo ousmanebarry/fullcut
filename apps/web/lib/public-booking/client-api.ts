@@ -66,6 +66,10 @@ export function cancelBooking(token: string) {
 	return call<{ status: 'cancelled' }>('/api/manage/cancel', postJson({ token }));
 }
 
+export function confirmAttendance(token: string) {
+	return call<{ status: 'confirmed' }>('/api/manage/confirm', postJson({ token }));
+}
+
 export function rescheduleBooking(token: string, staffId: string, startsAt: string) {
 	return call<{ booking: BookingDetails }>(
 		'/api/manage/reschedule',

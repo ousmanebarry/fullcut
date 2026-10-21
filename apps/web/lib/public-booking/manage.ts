@@ -21,6 +21,8 @@ export interface ManagedBooking {
 	staffName: string;
 	service: BookableService;
 	priceCents: number;
+	/** Whether the shop is waiting for the client to confirm they're coming. */
+	awaitingConfirmation: boolean;
 }
 
 export interface ManagePolicy {
@@ -49,7 +51,9 @@ export async function findBookingByToken(
 
 	const { data: booking, error } = await db
 		.from('bookings')
-		.select('id, status, starts_at, ends_at, staff_id, service_id, price_cents, pending_expires_at')
+		.select(
+			'id, status, starts_at, ends_at, staff_id, service_id, price_cents, pending_expires_at, confirmation_status',
+		)
 		.eq('id', link.booking_id)
 		.eq('shop_id', link.shop_id)
 		.maybeSingle();
@@ -95,6 +99,10 @@ export async function findBookingByToken(
 			priceCents: service.data.price_cents,
 		},
 		priceCents: booking.price_cents,
+		awaitingConfirmation:
+			booking.status === 'confirmed' &&
+			(booking.confirmation_status === 'requested' ||
+				booking.confirmation_status === 'unconfirmed'),
 	};
 }
 
@@ -121,6 +129,38 @@ export function managedDetails(booking: ManagedBooking): BookingDetails {
 }
 
 type CancelError = Extract<BookingFailure, { kind: 'not_active' | 'cancel_window_passed' }>;
+
+/** "I'm coming": the same as replying YES to the confirmation request. */
+export async function confirmManagedBooking(
+	db: Db,
+	booking: ManagedBooking,
+	now: Instant,
+): Promise<Result<null, Extract<BookingFailure, { kind: 'not_active' }>>> {
+	if (booking.status !== 'confirmed' || now >= booking.startsAt) {
+		return { ok: false, error: { kind: 'not_active' } };
+	}
+	const { data, error } = await db
+		.from('bookings')
+		.update({ confirmation_status: 'confirmed', client_confirmed_at: instantToIso(now) })
+		.eq('id', booking.bookingId)
+		.eq('shop_id', booking.shop.id)
+		.eq('status', 'confirmed')
+		.in('confirmation_status', ['requested', 'unconfirmed'])
+		.select('id');
+	if (error) throw error;
+	// Already confirmed (or never asked) is fine too: the client is coming either way.
+	if (data.length === 0) {
+		const { error: stampError } = await db
+			.from('bookings')
+			.update({ client_confirmed_at: instantToIso(now) })
+			.eq('id', booking.bookingId)
+			.eq('shop_id', booking.shop.id)
+			.eq('status', 'confirmed')
+			.is('client_confirmed_at', null);
+		if (stampError) throw stampError;
+	}
+	return { ok: true, value: null };
+}
 
 export async function cancelManagedBooking(
 	db: Db,

@@ -8,6 +8,7 @@ import {
 	readJson,
 } from '@/lib/public-booking/responses';
 import { cancelBodySchema, rescheduleBodySchema } from '@/lib/public-booking/schemas';
+import { scoreAfterResponse } from '@/lib/risk/jobs';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Instant } from '@/lib/time';
 
@@ -35,5 +36,6 @@ export async function POST(request: Request) {
 		now,
 	);
 	if (!result.ok) return failureResponse(result.error);
+	scoreAfterResponse(db, booking.bookingId, true);
 	return Response.json({ booking: result.value }, { headers: { 'Cache-Control': 'no-store' } });
 }

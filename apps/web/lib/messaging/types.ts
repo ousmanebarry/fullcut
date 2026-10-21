@@ -6,6 +6,9 @@ export const MESSAGE_TYPES = [
 	'confirm_request',
 	'rescheduled',
 	'cancelled',
+	'final_warning',
+	'extra_reminder',
+	'released',
 ] as const;
 export type MessageType = (typeof MESSAGE_TYPES)[number];
 
@@ -33,7 +36,8 @@ export type SkipReason =
 	| 'too_late'
 	| 'entry_inactive'
 	| 'offer_closed'
-	| 'quiet_hours';
+	| 'quiet_hours'
+	| 'already_confirmed';
 
 export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
 	confirmation: 'Booking confirmation',
@@ -41,6 +45,9 @@ export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
 	confirm_request: 'Confirmation request',
 	rescheduled: 'Rescheduled notice',
 	cancelled: 'Cancellation notice',
+	final_warning: 'Final confirmation warning',
+	extra_reminder: 'Extra reminder',
+	released: 'Release notice',
 };
 
 export const SKIP_REASON_LABELS: Record<SkipReason, string> = {
@@ -54,6 +61,7 @@ export const SKIP_REASON_LABELS: Record<SkipReason, string> = {
 	entry_inactive: 'left the waitlist',
 	offer_closed: 'offer no longer open',
 	quiet_hours: 'quiet hours',
+	already_confirmed: 'client already confirmed',
 };
 
 export function isMessageType(value: string): value is MessageType {

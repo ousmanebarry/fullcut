@@ -7,12 +7,19 @@ import {
 	changeBookingStatus,
 	createManualBooking,
 	extendManageLink,
+	markClientConfirmed,
 	markOutcomes,
 	OUTCOME_EVENTS,
+	setBookingTrust,
 	updateBooking,
 	type DashboardError,
 } from '@/lib/dashboard/mutations';
-import { searchClients, staffFreeSlots, toDashboardSlot } from '@/lib/dashboard/queries';
+import {
+	loadBooking,
+	searchClients,
+	staffFreeSlots,
+	toDashboardSlot,
+} from '@/lib/dashboard/queries';
 import {
 	bulkOutcomeSchema,
 	cancelSchema,
@@ -28,9 +35,13 @@ import { fieldErrorsFrom } from '@/lib/forms';
 import { bookingMessageHistory } from '@/lib/messaging/queries';
 import type { BookingMessageHistory } from '@/lib/messaging/types';
 import { loadActiveServices, toBookingShop } from '@/lib/public-booking/data';
+import { scoreAfterResponse } from '@/lib/risk/jobs';
+import { toRiskSettings } from '@/lib/risk/settings';
+import { suggestsStandby } from '@/lib/risk/types';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import type { Instant } from '@/lib/time';
+import { standbyCandidates, type StandbyCandidate } from '@/lib/waitlist/standby';
 
 // Any shop member may manage bookings; the shop always comes from the session, never the request.
 async function bookingContext() {
@@ -142,6 +153,7 @@ export async function updateBookingAction(input: unknown): Promise<ActionResult>
 		parsed.data.bookingId,
 		result.value.startsAt,
 	);
+	scoreAfterResponse(createAdminClient(), parsed.data.bookingId, true);
 	return done('Booking updated.');
 }
 
@@ -150,7 +162,9 @@ export async function createBookingAction(input: unknown): Promise<ActionResult>
 	if (!parsed.success) return invalid(parsed.error);
 	const { actor, shop, db, now } = await bookingContext();
 	const result = await createManualBooking(db, actor, shop, parsed.data, now);
-	return result.ok ? done('Booking added.') : failed(result.error);
+	if (!result.ok) return failed(result.error);
+	scoreAfterResponse(createAdminClient(), result.value.bookingId);
+	return done('Booking added.');
 }
 
 export async function freeSlotsAction(input: unknown): Promise<DashboardSlot[]> {
@@ -187,4 +201,47 @@ export async function bookingMessagesAction(
 	if (!id.success) return null;
 	const { shop, db } = await bookingContext();
 	return bookingMessageHistory(db, shop.id, id.data, shop.timezone);
+}
+
+export async function markClientConfirmedAction(bookingId: unknown): Promise<ActionResult> {
+	const id = idSchema.safeParse(bookingId);
+	if (!id.success) return INVALID;
+	const { actor, db } = await bookingContext();
+	const result = await markClientConfirmed(db, actor, id.data);
+	return result.ok ? done('Marked as confirmed.') : failed(result.error);
+}
+
+export async function setBookingTrustAction(
+	bookingId: unknown,
+	trusted: unknown,
+): Promise<ActionResult> {
+	const id = idSchema.safeParse(bookingId);
+	if (!id.success || typeof trusted !== 'boolean') return INVALID;
+	const { actor, db } = await bookingContext();
+	const result = await setBookingTrust(db, actor, id.data, trusted);
+	if (!result.ok) return failed(result.error);
+	return done(trusted ? 'Client trusted for this booking.' : 'Trust removed.');
+}
+
+/** Standby clients for a risky or unconfirmed booking, when the shop wants them suggested. */
+export async function standbyAction(bookingId: unknown): Promise<StandbyCandidate[] | null> {
+	const id = idSchema.safeParse(bookingId);
+	if (!id.success) return null;
+	const ctx = await requireShopMember();
+	const shop = toBookingShop(ctx.shop);
+	const db = await createClient();
+	const booking = await loadBooking(db, shop, id.data);
+	if (!booking || booking.status !== 'confirmed') return null;
+	if (!suggestsStandby(booking, toRiskSettings(ctx.shop))) return null;
+	return standbyCandidates(
+		db,
+		shop,
+		{
+			id: booking.id,
+			staffId: booking.staffId,
+			startsAt: booking.startsAtMs as Instant,
+			blockedUntil: booking.blockedUntilMs as Instant,
+		},
+		Date.now() as Instant,
+	);
 }

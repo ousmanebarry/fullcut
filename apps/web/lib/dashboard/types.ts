@@ -1,5 +1,6 @@
 // Serialisable shapes shared by dashboard server code and client components (no Luxon here).
 import type { BookingStatus } from '@/lib/booking/types';
+import type { BookingRisk, ConfirmationStatus } from '@/lib/risk/types';
 
 export type Outcome = 'completed' | 'no_show';
 export type ManualSource = 'phone' | 'walk_in';
@@ -30,6 +31,11 @@ export interface DashboardBooking {
 	createdLabel: string;
 	/** End of the shop-local day the outcome was marked; undo is allowed before it. */
 	undoUntilMs: number | null;
+	/** null until the booking has been scored (or when scoring is off). */
+	risk: BookingRisk | null;
+	confirmation: ConfirmationStatus;
+	/** Deadline to confirm, formatted in shop time. */
+	confirmationDueLabel: string | null;
 }
 
 export interface DashboardSlot {

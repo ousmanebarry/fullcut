@@ -20,6 +20,7 @@
 		"db:types": "supabase gen types typescript --local > apps/web/lib/database.types.ts && prettier --write apps/web/lib/database.types.ts",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
+		"audit": "pnpm audit --prod --audit-level moderate",
 		"prepare": "husky"
 	},
 	"lint-staged": {

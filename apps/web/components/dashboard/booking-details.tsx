@@ -19,6 +19,7 @@ import {
 import { RefillBadge, StatusBadge } from './booking-list';
 import { BookingMessages } from './booking-messages';
 import { OutcomeButtons, undoOutcome } from './outcome-buttons';
+import { RiskSection } from './risk-panel';
 import { useNow } from './use-now';
 import { WhenFields, type When } from './when-fields';
 
@@ -92,9 +93,11 @@ export function BookingDetails({
 				<dd>{booking.createdLabel}</dd>
 			</dl>
 
+			<RiskSection booking={booking} isOwner={isOwner} />
+
 			<BookingMessages
 				bookingId={booking.id}
-				version={`${booking.status}:${booking.startsAtMs}:${booking.staffId}`}
+				version={`${booking.status}:${booking.startsAtMs}:${booking.staffId}:${booking.confirmation}`}
 			/>
 
 			{mode === 'edit' ? (

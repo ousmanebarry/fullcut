@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import pg from 'pg';
 
@@ -58,5 +59,35 @@ test.describe('public demo', () => {
 		await expect(
 			page.getByRole('heading', { level: 1, name: 'Fullcut Demo Barbers' }),
 		).toBeVisible();
+	});
+
+	test('a guided tour walks through the dashboard and can be restarted', async ({ page }) => {
+		await page.goto('/');
+		await page.getByRole('button', { name: 'Open the demo dashboard' }).click();
+		await expect(page).toHaveURL(/\/dashboard$/);
+
+		const steps = ['No-show risk', 'You decide what happens', 'Waitlist refill', 'Today'];
+		for (const [i, name] of steps.entries()) {
+			const tour = page.getByRole('dialog', { name });
+			await expect(tour).toBeVisible();
+			await expect(tour.getByRole('heading', { name })).toBeFocused();
+			if (i === 0) {
+				const { violations } = await new AxeBuilder({ page })
+					.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+					.analyze();
+				expect(violations.map((v) => v.id)).toEqual([]);
+			}
+			await tour.getByRole('button', { name: i === steps.length - 1 ? 'Done' : 'Next' }).click();
+		}
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+
+		await page.reload();
+		await expect(page.getByText(/resets\s+every night/)).toBeVisible();
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+
+		await page.getByRole('button', { name: 'Take the tour' }).click();
+		await expect(page.getByRole('dialog', { name: 'No-show risk' })).toBeVisible();
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('dialog')).toHaveCount(0);
 	});
 });

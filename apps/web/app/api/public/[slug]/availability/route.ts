@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { getAvailability } from '@/lib/public-booking/availability';
 import { loadBookingShop } from '@/lib/public-booking/data';
-import { invalidRequest, notFound } from '@/lib/public-booking/responses';
+import { clientIp, hitRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/public-booking/rate-limit';
+import { invalidRequest, notFound, rateLimited } from '@/lib/public-booking/responses';
 import { availabilityQuerySchema } from '@/lib/public-booking/schemas';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Instant } from '@/lib/time';
@@ -20,6 +21,16 @@ export async function GET(
 	if (!parsed.success) return invalidRequest(parsed.error);
 
 	const db = createAdminClient();
+	const ip = clientIp(request.headers);
+	if (ip) {
+		const limit = await hitRateLimit(
+			db,
+			rateLimitKey('availability-ip', ip),
+			RATE_LIMITS.availabilityPerIp,
+		);
+		if (!limit.allowed) return rateLimited(limit.retryAfterSeconds);
+	}
+
 	const shop = await loadBookingShop(db, slug);
 	if (!shop) return notFound();
 

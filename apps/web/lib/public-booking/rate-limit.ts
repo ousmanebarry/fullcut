@@ -10,6 +10,8 @@ export const RATE_LIMITS = {
 	bookingPerIp: { max: 10, windowSeconds: 3600 },
 	bookingPerPhone: { max: 5, windowSeconds: 3600 },
 	managePerIp: { max: 20, windowSeconds: 3600 },
+	// Generous: each day/staff/service change is a request, and salons share one Wi-Fi IP.
+	availabilityPerIp: { max: 600, windowSeconds: 3600 },
 	waitlistPerIp: { max: 10, windowSeconds: 3600 },
 	waitlistPerPhone: { max: 5, windowSeconds: 3600 },
 	demoSignInPerIp: { max: 10, windowSeconds: 3600 },

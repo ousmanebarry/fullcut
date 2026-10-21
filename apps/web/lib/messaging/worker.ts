@@ -51,7 +51,7 @@ export interface WorkerOptions {
 type Outcome = 'sent' | 'skipped' | 'deferred' | 'retried' | 'failed';
 export type BatchCounts = Record<Outcome, number>;
 
-const BOOKING_CONTEXT = `status, starts_at, client_id,
+const BOOKING_CONTEXT = `status, starts_at, client_id, confirmation_status, confirmation_due_at,
 	client:clients!bookings_client_same_shop_fk(phone_e164, sms_opted_out),
 	service:services!bookings_service_same_shop_fk(name),
 	staff:staff!bookings_staff_same_shop_fk(display_name),
@@ -395,6 +395,9 @@ async function loadContext(
 	const { shop } = data;
 	const zone = timeZone(shop.timezone);
 	const startsAt = instantFromIso(data.starts_at);
+	const confirmationDueAt = data.confirmation_due_at
+		? instantFromIso(data.confirmation_due_at)
+		: null;
 	return {
 		clientId: data.client_id,
 		send: {
@@ -408,10 +411,19 @@ async function loadContext(
 					confirm_request: shop.sms_confirm_request_enabled,
 					rescheduled: shop.sms_rescheduled_enabled,
 					cancelled: shop.sms_cancelled_enabled,
+					final_warning: shop.sms_confirm_request_enabled,
+					extra_reminder: shop.sms_reminder_enabled,
+					// A client whose booking was given away must always be told.
+					released: true,
 				},
 			},
 			client: { phoneE164: data.client.phone_e164, smsOptedOut: data.client.sms_opted_out },
-			booking: { status: data.status as BookingStatus, startsAt },
+			booking: {
+				status: data.status as BookingStatus,
+				startsAt,
+				confirmationStatus: data.confirmation_status,
+				confirmationDueAt,
+			},
 		},
 		template: {
 			shopName: shop.name,
@@ -420,6 +432,7 @@ async function loadContext(
 			startsAt,
 			timezone: zone,
 			signOff: shop.sms_sign_off,
+			confirmationDueAt,
 		},
 	};
 }
