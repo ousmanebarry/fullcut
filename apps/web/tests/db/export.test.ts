@@ -37,7 +37,8 @@ const TABLE_FOR_FILE = new Map(EXPORT_SOURCES.map((s) => [s.file, s.table]));
 const decoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 const admin = new pg.Client({ connectionString: dbUrl });
-const startedAt = new Date();
+// Taken from the database clock: the Docker clock can lag the host's by a second.
+let startedAt: Date;
 let owner: Db;
 let staff: Db;
 let seedShop: ExportShop;
@@ -107,6 +108,8 @@ async function countFor(table: string, shopId: string): Promise<number> {
 describe('data export', () => {
 	beforeAll(async () => {
 		await admin.connect();
+		const { rows } = await admin.query<{ now: Date }>('select now()');
+		startedAt = rows[0]?.now ?? new Date();
 		[owner, staff] = await Promise.all([
 			signIn(SEED.ownerEmail, SEED.ownerPassword),
 			signIn(SEED.staffEmail, SEED.staffPassword),

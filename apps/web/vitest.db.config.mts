@@ -12,5 +12,7 @@ export default defineConfig({
 	test: {
 		include: ['tests/db/**/*.test.ts'],
 		environment: 'node',
+		// The message and waitlist workers claim due rows database-wide; parallel files would steal each other's work.
+		fileParallelism: false,
 	},
 });
