@@ -67,6 +67,13 @@ export async function handleInbound(db: Db, sms: InboundSms, now: Instant): Prom
 				.eq('id', next.id)
 				.is('client_confirmed_at', null);
 			if (confirmError) throw confirmError;
+			const { error: statusError } = await db
+				.from('bookings')
+				.update({ confirmation_status: 'confirmed' })
+				.eq('shop_id', next.shop_id)
+				.eq('id', next.id)
+				.in('confirmation_status', ['requested', 'unconfirmed']);
+			if (statusError) throw statusError;
 			await record(
 				db,
 				sms,

@@ -12,6 +12,7 @@ import {
 } from '@/lib/dashboard/types';
 import { cn } from '@/lib/utils';
 import { OutcomeButtons, undoOutcome } from './outcome-buttons';
+import { ConfirmationBadge, RiskBadge } from './risk-panel';
 import { useNow } from './use-now';
 
 export function calendarHref(booking: Pick<DashboardBooking, 'date' | 'id'>) {
@@ -105,6 +106,10 @@ export function BookingList({
 								<PhoneIcon aria-hidden="true" />
 							</a>
 						) : null}
+						{booking.risk && booking.status === 'confirmed' && !unmarked ? (
+							<RiskBadge risk={booking.risk} />
+						) : null}
+						<ConfirmationBadge booking={booking} />
 						{unmarked ? (
 							<OutcomeButtons bookingId={booking.id} clientName={booking.clientName} />
 						) : (

@@ -205,6 +205,42 @@ export const waitlistSettingsSchema = z.object({
 });
 export type WaitlistSettingsInput = z.output<typeof waitlistSettingsSchema>;
 
+export const RISK_MEDIUM_THRESHOLDS = [0.1, 0.15, 0.2, 0.25] as const;
+export const RISK_HIGH_THRESHOLDS = [0.25, 0.3, 0.35, 0.4, 0.5] as const;
+export const RISK_DEADLINE_HOURS = [12, 24, 36, 48] as const;
+
+const tierActionsSchema = z.object({
+	confirmRequest: z.boolean(),
+	requireConfirmation: z.boolean(),
+	extraReminder: z.boolean(),
+	suggestStandby: z.boolean(),
+});
+
+export const riskSettingsSchema = z
+	.object({
+		actionsEnabled: z.boolean(),
+		mediumThreshold: z.coerce.number({ error: 'Choose a threshold.' }).gt(0).lt(1),
+		highThreshold: z.coerce.number({ error: 'Choose a threshold.' }).gt(0).lt(1),
+		medium: tierActionsSchema,
+		high: tierActionsSchema,
+		autoRelease: z.boolean(),
+		confirmCap: z.coerce
+			.number({ error: 'Enter a number.' })
+			.int({ error: 'Enter a whole number.' })
+			.min(1, { error: 'Use at least 1.' })
+			.max(10, { error: 'Use at most 10.' }),
+		deadlineHours: z.coerce
+			.number({ error: 'Choose a deadline.' })
+			.int()
+			.min(2, { error: 'Use at least 2 hours.' })
+			.max(72, { error: 'Use at most 72 hours.' }),
+	})
+	.refine((s) => s.mediumThreshold < s.highThreshold, {
+		error: 'The high-risk threshold must be above the medium one.',
+		path: ['highThreshold'],
+	});
+export type RiskSettingsInput = z.output<typeof riskSettingsSchema>;
+
 export const timeOffFormSchema = z
 	.object({
 		staffId: z.uuid({ error: 'Choose a staff member.' }),

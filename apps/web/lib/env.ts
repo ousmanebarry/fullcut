@@ -102,3 +102,19 @@ export function getJobsSecret(): string | null {
 	const secret = process.env.JOBS_SECRET;
 	return secret && secret.length >= 32 ? secret : null;
 }
+
+const mlSchema = z.object({
+	url: z.url(),
+	secret: z.string().min(32),
+});
+
+export type MlEnv = z.infer<typeof mlSchema>;
+
+/** Server-only. The no-show scoring service; null turns risk scoring off entirely. */
+export function getMlEnv(): MlEnv | null {
+	const parsed = mlSchema.safeParse({
+		url: process.env.ML_SERVICE_URL,
+		secret: process.env.ML_SHARED_SECRET,
+	});
+	return parsed.success ? parsed.data : null;
+}

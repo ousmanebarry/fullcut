@@ -21,7 +21,12 @@ export interface SendContext {
 	type: MessageType;
 	shop: { timezone: TimeZone; isDemo: boolean; enabled: Readonly<Record<MessageType, boolean>> };
 	client: { phoneE164: string | null; smsOptedOut: boolean };
-	booking: { status: BookingStatus; startsAt: Instant };
+	booking: {
+		status: BookingStatus;
+		startsAt: Instant;
+		confirmationStatus: string;
+		confirmationDueAt: Instant | null;
+	};
 }
 
 export type SendDecision =
@@ -76,12 +81,27 @@ export function decideSend(ctx: SendContext, now: Instant): SendDecision {
 	if (!client.phoneE164) return skip('no_phone');
 	if (!isValidPhoneNumber(client.phoneE164)) return skip('invalid_phone');
 
-	const expectedStatus: BookingStatus = type === 'cancelled' ? 'cancelled' : 'confirmed';
+	const expectedStatus: BookingStatus =
+		type === 'cancelled' || type === 'released' ? 'cancelled' : 'confirmed';
 	if (booking.status !== expectedStatus) return skip('booking_inactive');
 	if (now >= booking.startsAt) return skip('too_late');
+
+	// Asking to confirm only makes sense while a confirmation is still outstanding.
+	let latest = booking.startsAt;
+	if (type === 'confirm_request' || type === 'final_warning') {
+		if (booking.confirmationStatus === 'confirmed') return skip('already_confirmed');
+		if (booking.confirmationStatus !== 'requested') return skip('booking_inactive');
+	}
+	if (type === 'final_warning') {
+		// A warning that can't arrive before the deadline it names must never go out.
+		if (booking.confirmationDueAt === null || now >= booking.confirmationDueAt) {
+			return skip('too_late');
+		}
+		latest = booking.confirmationDueAt;
+	}
 
 	if (QUIET_HOURS_EXEMPT.has(type)) return { action: 'send' };
 	const until = quietHoursEnd(now, shop.timezone);
 	if (until === null) return { action: 'send' };
-	return until >= booking.startsAt ? skip('too_late') : { action: 'defer', until };
+	return until >= latest ? skip('too_late') : { action: 'defer', until };
 }

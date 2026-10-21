@@ -7,6 +7,8 @@ import type {
 	TimeOff,
 } from '@/lib/booking/types';
 import { clientSearchPattern } from '@/lib/clients/search';
+import type { Json } from '@/lib/database.types';
+import { isConfirmationStatus, isRiskTier, type BookingRisk } from '@/lib/risk/types';
 import { dateWindow, nearestSlots } from '@/lib/public-booking/availability';
 import {
 	loadSchedulingContext,
@@ -34,7 +36,7 @@ import {
 import type { ClientMatch, DashboardBooking, DashboardSlot } from './types';
 
 export const BOOKING_COLUMNS =
-	'id, status, source, starts_at, ends_at, blocked_until, price_cents, client_notes, cancel_reason, outcome_marked_at, created_at, staff_id, service_id, client_id, client:clients!bookings_client_same_shop_fk(name, phone_e164), service:services!bookings_service_same_shop_fk(name), staff:staff!bookings_staff_same_shop_fk(display_name)';
+	'id, status, source, starts_at, ends_at, blocked_until, price_cents, client_notes, cancel_reason, outcome_marked_at, created_at, staff_id, service_id, client_id, risk_score, risk_tier, risk_method, risk_factors, risk_trusted_at, confirmation_status, confirmation_due_at, client:clients!bookings_client_same_shop_fk(name, phone_e164), service:services!bookings_service_same_shop_fk(name), staff:staff!bookings_staff_same_shop_fk(display_name)';
 
 // Lower bound for range queries so (shop_id, starts_at) stays index-bounded; no service runs this long.
 const MAX_BOOKING_SPAN_MINUTES = 12 * 60;
@@ -78,10 +80,30 @@ type BookingRow = {
 	staff_id: string;
 	service_id: string;
 	client_id: string;
+	risk_score: number | null;
+	risk_tier: string | null;
+	risk_method: string | null;
+	risk_factors: Json | null;
+	risk_trusted_at: string | null;
+	confirmation_status: string;
+	confirmation_due_at: string | null;
 	client: { name: string; phone_e164: string | null };
 	service: { name: string };
 	staff: { display_name: string };
 };
+
+function toBookingRisk(row: BookingRow): BookingRisk | null {
+	if (!isRiskTier(row.risk_tier)) return null;
+	return {
+		tier: row.risk_tier,
+		score: row.risk_score,
+		method: row.risk_method === 'model' || row.risk_method === 'heuristic' ? row.risk_method : null,
+		factors: Array.isArray(row.risk_factors)
+			? row.risk_factors.filter((f): f is string => typeof f === 'string')
+			: [],
+		trusted: row.risk_trusted_at !== null,
+	};
+}
 
 export function toDashboardBooking(row: BookingRow, zone: TimeZone): DashboardBooking {
 	const startsAt = instantFromIso(row.starts_at);
@@ -113,6 +135,13 @@ export function toDashboardBooking(row: BookingRow, zone: TimeZone): DashboardBo
 		undoUntilMs: markedAt
 			? zonedToInstant(plusDays(localDateOf(markedAt, zone), 1), 0, zone)
 			: null,
+		risk: toBookingRisk(row),
+		confirmation: isConfirmationStatus(row.confirmation_status)
+			? row.confirmation_status
+			: 'not_required',
+		confirmationDueLabel: row.confirmation_due_at
+			? formatSlotLabel(instantFromIso(row.confirmation_due_at), zone)
+			: null,
 	};
 }
 
@@ -131,7 +160,9 @@ export async function loadBookings(
 		.lt('starts_at', instantToIso(window.end))
 		.gt('blocked_until', instantToIso(window.start));
 	if (options.staffIds) query = query.in('staff_id', [...options.staffIds]);
-	if (!options.includeCancelled) query = query.neq('status', 'cancelled');
+	// Released bookings stay visible so the owner can see what confirm-or-release did.
+	if (!options.includeCancelled)
+		query = query.or('status.neq.cancelled,release_reason.not.is.null');
 	const { data, error } = await query.order('starts_at').order('id');
 	if (error) throw error;
 	return data.map((row) => toDashboardBooking(row, shop.timezone));

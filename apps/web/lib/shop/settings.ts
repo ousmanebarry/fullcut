@@ -6,8 +6,14 @@ import type { Database } from '@/lib/database.types';
 import { toUserFacingError, type UserFacingError } from '@/lib/db/errors';
 import type { Instant } from '@/lib/time';
 import { instantToIso } from '@/lib/time';
+import { toRiskSettingsRow } from '@/lib/risk/settings';
 import { hoursToRules, type WeeklyHours } from './hours';
-import type { MessageSettingsInput, ServiceInput, WaitlistSettingsInput } from './schemas';
+import type {
+	MessageSettingsInput,
+	RiskSettingsInput,
+	ServiceInput,
+	WaitlistSettingsInput,
+} from './schemas';
 
 // Mutations behind the settings pages. Callers pass a user-scoped client (RLS applies) and an actor
 // derived on the server; every write is also filtered by the actor's shop_id.
@@ -135,6 +141,20 @@ export async function updateWaitlistSettings(
 			waitlist_offer_minutes: input.offerMinutes,
 			waitlist_min_notice_minutes: input.minNoticeMinutes,
 		})
+		.eq('id', actor.shopId)
+		.select('id');
+	return settle(error, data);
+}
+
+export async function updateRiskSettings(
+	db: Db,
+	actor: Actor,
+	input: RiskSettingsInput,
+): Promise<MutationResult> {
+	if (!isOwner(actor)) return fail(OWNER_ONLY);
+	const { data, error } = await db
+		.from('shops')
+		.update(toRiskSettingsRow(input))
 		.eq('id', actor.shopId)
 		.select('id');
 	return settle(error, data);

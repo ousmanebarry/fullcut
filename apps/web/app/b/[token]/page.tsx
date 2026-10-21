@@ -57,6 +57,7 @@ async function ManagedBooking({ params }: Pick<PageProps<'/b/[token]'>, 'params'
 			booking={managedDetails(booking)}
 			canCancel={policy.canCancel}
 			canReschedule={policy.canReschedule}
+			awaitingConfirmation={booking.awaitingConfirmation}
 			changeDeadline={formatLongDateTime(policy.changeDeadline, booking.shop.timezone)}
 			shop={{
 				slug: booking.shop.slug,

@@ -5,7 +5,11 @@ import { useRef, useState } from 'react';
 import { FormError } from '@/components/forms/fields';
 import { Button } from '@/components/ui/button';
 import type { BookingStatus } from '@/lib/booking/types';
-import { cancelBooking, rescheduleBooking } from '@/lib/public-booking/client-api';
+import {
+	cancelBooking,
+	confirmAttendance,
+	rescheduleBooking,
+} from '@/lib/public-booking/client-api';
 import type { BookingDetails, PublicSlot, PublicStaff } from '@/lib/public-booking/types';
 import { AddToCalendarButton } from './add-to-calendar';
 import { BookingSummary } from './booking-summary';
@@ -27,6 +31,8 @@ export interface ManageBookingProps {
 	booking: BookingDetails;
 	canCancel: boolean;
 	canReschedule: boolean;
+	/** The shop asked the client to confirm and is still waiting. */
+	awaitingConfirmation: boolean;
 	changeDeadline: string;
 	shop: { slug: string; name: string; phone: string | null; timezone: string };
 	serviceId: string;
@@ -65,6 +71,14 @@ export function ManageBooking(props: ManageBookingProps) {
 		const result = await cancelBooking(token);
 		setBusy(false);
 		if (result.ok) done('Your booking is cancelled.');
+		else setError(result.error.message);
+	}
+
+	async function confirmComing() {
+		setBusy(true);
+		const result = await confirmAttendance(token);
+		setBusy(false);
+		if (result.ok) done("Thanks, you're confirmed. See you then!");
 		else setError(result.error.message);
 	}
 
@@ -131,6 +145,31 @@ export function ManageBooking(props: ManageBookingProps) {
 				>
 					Book again
 				</a>
+			) : null}
+
+			{mode === 'view' && props.awaitingConfirmation && status === 'confirmed' && !notice ? (
+				<section
+					aria-labelledby="confirm-title"
+					className="grid gap-3 rounded-lg border border-primary/40 bg-primary/5 p-4"
+				>
+					<h2 id="confirm-title" className="text-base font-semibold">
+						{shop.name} asked you to confirm
+					</h2>
+					<p className="text-sm text-muted-foreground">
+						Let them know you&apos;re still coming. If you can&apos;t make it, cancel or reschedule
+						below so someone else can have the spot.
+					</p>
+					<FormError message={error ?? undefined} />
+					<Button
+						type="button"
+						size="lg"
+						className="h-11 justify-self-start"
+						disabled={busy}
+						onClick={confirmComing}
+					>
+						{busy ? 'Confirming…' : "I'm coming"}
+					</Button>
+				</section>
 			) : null}
 
 			{mode === 'view' && (props.canCancel || props.canReschedule) ? (

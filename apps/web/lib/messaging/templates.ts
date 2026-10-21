@@ -20,15 +20,21 @@ export interface TemplateInput {
 	timezone: TimeZone;
 	manageUrl: string | null;
 	signOff: string | null;
+	/** The confirmation deadline named in a final warning. */
+	confirmationDueAt: Instant | null;
 }
 
 /** Whether a message type carries a manage link (a fresh one is issued per send). */
 export function needsManageLink(type: MessageType): boolean {
-	return type !== 'cancelled';
+	// The final warning needs the room for its deadline; the request before it carried a link.
+	return type !== 'cancelled' && type !== 'released' && type !== 'final_warning';
 }
 
 export function renderMessage(type: MessageType, input: TemplateInput): string {
 	const when = formatMessageDateTime(input.startsAt, input.timezone);
+	const deadline = input.confirmationDueAt
+		? formatMessageDateTime(input.confirmationDueAt, input.timezone)
+		: 'soon';
 	const { shopName: shop, serviceName: service, staffName: staff, manageUrl: link } = input;
 	const lines: Record<MessageType, string> = {
 		confirmation: `${shop}: your ${service} with ${staff} is booked for ${when}.${link ? ` Manage: ${link}` : ''}`,
@@ -36,6 +42,9 @@ export function renderMessage(type: MessageType, input: TemplateInput): string {
 		confirm_request: `${shop}: reply YES to confirm your ${service}, ${when}.${link ? ` To change: ${link}` : ''}`,
 		rescheduled: `${shop}: your ${service} with ${staff} is now ${when}.${link ? ` Manage: ${link}` : ''}`,
 		cancelled: `${shop}: your ${service} on ${when} has been cancelled. Reply to this text with any questions.`,
+		final_warning: `${shop}: reply YES by ${deadline} to keep your ${service} on ${when}, or your spot may go to someone else.`,
+		extra_reminder: `${shop}: see you soon - ${service} with ${staff}, ${when}.${link ? ` Need to change? ${link}` : ''}`,
+		released: `${shop}: we didn't hear back, so we released your ${service} on ${when}. Reply if you still want to come.`,
 	};
 	const text = lines[type];
 	return input.signOff ? `${text}\n${input.signOff}` : text;

@@ -5,6 +5,7 @@ import { isRefill, needsOutcome, type DashboardBooking } from '@/lib/dashboard/t
 import { cn } from '@/lib/utils';
 import { RefillBadge } from './booking-list';
 import { OutcomeButtons } from './outcome-buttons';
+import { ConfirmationBadge } from './risk-panel';
 import { minuteToTime, useNow, zonedMinuteOfDay } from './use-now';
 
 const PX_PER_MIN = 1.4;
@@ -124,6 +125,17 @@ export function CalendarGrid({
 								const unmarked = now !== null && needsOutcome(booking, now);
 								const blockPx = Math.max(MIN_BLOCK_PX, block.heightMin * PX_PER_MIN);
 								const tall = blockPx >= TALL_BLOCK_PX;
+								const risky =
+									booking.status === 'confirmed' &&
+									booking.risk !== null &&
+									!booking.risk.trusted &&
+									(booking.risk.tier === 'high' || booking.risk.tier === 'medium');
+								const flags = [
+									isRefill(booking) ? 'refilled from waitlist' : null,
+									risky ? `${booking.risk?.tier} no-show risk` : null,
+									booking.confirmation === 'unconfirmed' ? 'unconfirmed' : null,
+									booking.confirmation === 'released' ? 'released' : null,
+								].filter(Boolean);
 								return (
 									<div
 										key={block.bookingId}
@@ -148,8 +160,19 @@ export function CalendarGrid({
 												type="button"
 												className="absolute inset-0 rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
 												onClick={() => onOpenBooking(booking.id)}
-												aria-label={`${booking.clientName}, ${booking.serviceName}, ${booking.timeLabel}${isRefill(booking) ? ', refilled from waitlist' : ''}`}
+												aria-label={`${booking.clientName}, ${booking.serviceName}, ${booking.timeLabel}${flags.length > 0 ? `, ${flags.join(', ')}` : ''}`}
 											/>
+											{risky ? (
+												<span
+													aria-hidden="true"
+													data-testid="risk-dot"
+													data-tier={booking.risk?.tier}
+													className={cn(
+														'pointer-events-none absolute top-1 left-0.5 size-1.5 rounded-full',
+														booking.risk?.tier === 'high' ? 'bg-red-500' : 'bg-amber-500',
+													)}
+												/>
+											) : null}
 											<div
 												className={cn(
 													'pointer-events-none relative px-1.5 py-0.5',
@@ -164,6 +187,12 @@ export function CalendarGrid({
 												) : null}
 												{tall && isRefill(booking) ? (
 													<RefillBadge className="mt-0.5 h-4 px-1.5 text-[10px]" />
+												) : null}
+												{tall ? (
+													<ConfirmationBadge
+														booking={booking}
+														className="mt-0.5 h-4 px-1.5 text-[10px]"
+													/>
 												) : null}
 											</div>
 											{unmarked ? (
