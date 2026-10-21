@@ -1,0 +1,436 @@
+{
+  "version": "2026-10-20-logreg-1",
+  "selected_model": "logreg",
+  "trained_at": "2026-10-21T02:52:38+00:00",
+  "shop_base_rate": 0.2094692438456211,
+  "data": {
+    "source": "KaggleV2-May-2016.csv",
+    "rows_read": 110527,
+    "dropped_scheduled_after_appointment": 5,
+    "labelled_rows": 110522,
+    "clients": 62299,
+    "fit": {
+      "rows": 63532,
+      "from": "2016-04-29",
+      "to": "2016-05-19",
+      "no_show_rate": 0.2094692438456211
+    },
+    "calibration": {
+      "rows": 20539,
+      "from": "2016-05-20",
+      "to": "2016-05-31",
+      "no_show_rate": 0.20078874336627878
+    },
+    "test": {
+      "rows": 26451,
+      "from": "2016-06-01",
+      "to": "2016-06-08",
+      "no_show_rate": 0.18456769120260103
+    }
+  },
+  "features": [
+    "lead_time_days",
+    "same_day",
+    "prior_bookings",
+    "prior_no_shows",
+    "prior_late_cancellations",
+    "smoothed_no_show_rate",
+    "last_visit_no_show",
+    "days_since_last_visit",
+    "first_visit",
+    "local_hour",
+    "price_cents",
+    "duration_minutes",
+    "sms_reminder_sent",
+    "confirm_requested",
+    "reminder_replied",
+    "shop_base_rate",
+    "weekday",
+    "source"
+  ],
+  "models": {
+    "baseline": {
+      "description": "client's smoothed historical no-show rate",
+      "test": {
+        "n": 26451,
+        "no_shows": 4882,
+        "base_rate": 0.18456769120260103,
+        "roc_auc": 0.5571015157494323,
+        "pr_auc": 0.2204526609324282,
+        "brier": 0.15009917901208056,
+        "top20_precision": 0.2147042147042147,
+        "top20_recall": 0.23269151986890618,
+        "top20_lift": 1.163281684379595
+      },
+      "test_slices": {
+        "first_visit": {
+          "n": 14440,
+          "no_shows": 2841,
+          "base_rate": 0.19674515235457063,
+          "roc_auc": 0.5,
+          "pr_auc": 0.19674515235457063,
+          "brier": 0.15819839988382006,
+          "top20_precision": 0.1703601108033241,
+          "top20_recall": 0.17317845828933473,
+          "top20_lift": 0.8658922914466738
+        },
+        "returning": {
+          "n": 12011,
+          "no_shows": 2041,
+          "base_rate": 0.16992756639746898,
+          "roc_auc": 0.5916235231908367,
+          "pr_auc": 0.240638759734649,
+          "brier": 0.14036204227176596,
+          "top20_precision": 0.2480233042030795,
+          "top20_recall": 0.2920137187653111,
+          "top20_lift": 1.4595825118976913
+        },
+        "booked_ahead": {
+          "n": 17346,
+          "no_shows": 4509,
+          "base_rate": 0.25994465582843307,
+          "roc_auc": 0.5361738417169971,
+          "pr_auc": 0.2813385108232554,
+          "brier": 0.19510285561750243,
+          "top20_precision": 0.2812680115273775,
+          "top20_recall": 0.21645597693501886,
+          "top20_lift": 1.0820303676988003
+        }
+      }
+    },
+    "logreg": {
+      "version": "2026-10-20-logreg-1",
+      "calibration_pr_auc": 0.33591836029635797,
+      "test_uncalibrated": {
+        "n": 26451,
+        "no_shows": 4882,
+        "base_rate": 0.18456769120260103,
+        "roc_auc": 0.7066965892774518,
+        "pr_auc": 0.3022035564154373,
+        "brier": 0.1389497418492547,
+        "top20_precision": 0.31317331317331315,
+        "top20_recall": 0.3394100778369521,
+        "top20_lift": 1.6967937949093213
+      },
+      "test": {
+        "n": 26451,
+        "no_shows": 4882,
+        "base_rate": 0.18456769120260103,
+        "roc_auc": 0.7066965892774518,
+        "pr_auc": 0.3022035564154373,
+        "brier": 0.13853291049168215,
+        "top20_precision": 0.31317331317331315,
+        "top20_recall": 0.3394100778369521,
+        "top20_lift": 1.6967937949093213
+      },
+      "test_slices": {
+        "first_visit": {
+          "n": 14440,
+          "no_shows": 2841,
+          "base_rate": 0.19674515235457063,
+          "roc_auc": 0.6917971572577579,
+          "pr_auc": 0.29997197860834013,
+          "brier": 0.1449985184931495,
+          "top20_precision": 0.310595567867036,
+          "top20_recall": 0.31573389651531153,
+          "top20_lift": 1.5786694825765577
+        },
+        "returning": {
+          "n": 12011,
+          "no_shows": 2041,
+          "base_rate": 0.16992756639746898,
+          "roc_auc": 0.7200154849654303,
+          "pr_auc": 0.3051402655965656,
+          "brier": 0.13075975425646547,
+          "top20_precision": 0.3116937161880982,
+          "top20_recall": 0.36697697207251345,
+          "top20_lift": 1.8342739956566623
+        },
+        "booked_ahead": {
+          "n": 17346,
+          "no_shows": 4509,
+          "base_rate": 0.25994465582843307,
+          "roc_auc": 0.5639468295800875,
+          "pr_auc": 0.30198497502442734,
+          "brier": 0.19225417685310173,
+          "top20_precision": 0.31556195965417866,
+          "top20_recall": 0.2428476380572189,
+          "top20_lift": 1.2139582506456825
+        }
+      }
+    },
+    "lgbm": {
+      "version": "2026-10-20-lgbm-1",
+      "calibration_pr_auc": 0.3319258355788795,
+      "test_uncalibrated": {
+        "n": 26451,
+        "no_shows": 4882,
+        "base_rate": 0.18456769120260103,
+        "roc_auc": 0.7021376989891096,
+        "pr_auc": 0.29629456927052206,
+        "brier": 0.13916722972741116,
+        "top20_precision": 0.3075033075033075,
+        "top20_recall": 0.3332650553052028,
+        "top20_lift": 1.6660733278922546
+      },
+      "test": {
+        "n": 26451,
+        "no_shows": 4882,
+        "base_rate": 0.18456769120260103,
+        "roc_auc": 0.7021376989891096,
+        "pr_auc": 0.29629456927052206,
+        "brier": 0.13846272643958457,
+        "top20_precision": 0.3075033075033075,
+        "top20_recall": 0.3332650553052028,
+        "top20_lift": 1.6660733278922546
+      },
+      "test_slices": {
+        "first_visit": {
+          "n": 14440,
+          "no_shows": 2841,
+          "base_rate": 0.19674515235457063,
+          "roc_auc": 0.6900641005507309,
+          "pr_auc": 0.29842566428058986,
+          "brier": 0.1452785998634344,
+          "top20_precision": 0.30367036011080334,
+          "top20_recall": 0.3086941217881028,
+          "top20_lift": 1.5434706089405141
+        },
+        "returning": {
+          "n": 12011,
+          "no_shows": 2041,
+          "base_rate": 0.16992756639746898,
+          "roc_auc": 0.7110305930039015,
+          "pr_auc": 0.29252883898033266,
+          "brier": 0.13026847015447998,
+          "top20_precision": 0.3091968372867249,
+          "top20_recall": 0.36403723664870163,
+          "top20_lift": 1.8195802119798399
+        },
+        "booked_ahead": {
+          "n": 17346,
+          "no_shows": 4509,
+          "base_rate": 0.25994465582843307,
+          "roc_auc": 0.5549407274620088,
+          "pr_auc": 0.2922870237212487,
+          "brier": 0.19192945695050342,
+          "top20_precision": 0.3112391930835735,
+          "top20_recall": 0.23952095808383234,
+          "top20_lift": 1.1973286855683447
+        }
+      }
+    }
+  },
+  "lgbm_gain_importance": {
+    "lead_time_days": 94258.0,
+    "same_day": 9582.8,
+    "days_since_last_visit": 8114.5,
+    "smoothed_no_show_rate": 4084.2,
+    "weekday": 3125.5,
+    "prior_bookings": 2011.9,
+    "sms_reminder_sent": 1897.1,
+    "prior_no_shows": 1303.8,
+    "last_visit_no_show": 341.3,
+    "first_visit": 8.4,
+    "prior_late_cancellations": 0.0,
+    "local_hour": 0.0,
+    "price_cents": 0.0,
+    "duration_minutes": 0.0,
+    "confirm_requested": 0.0,
+    "reminder_replied": 0.0,
+    "shop_base_rate": 0.0,
+    "source": 0.0
+  },
+  "calibration": {
+    "baseline": [
+      {
+        "predicted": 0.1258182220027347,
+        "observed": 0.12741514360313316
+      },
+      {
+        "predicted": 0.1743603936890341,
+        "observed": 0.15672645739910315
+      },
+      {
+        "predicted": 0.20922021035401667,
+        "observed": 0.19645163483107878
+      },
+      {
+        "predicted": 0.2693133623808132,
+        "observed": 0.19712793733681463
+      },
+      {
+        "predicted": 0.37561273376308474,
+        "observed": 0.26225234619395205
+      }
+    ],
+    "logreg (raw)": [
+      {
+        "predicted": 0.03699607591231643,
+        "observed": 0.03552532123960695
+      },
+      {
+        "predicted": 0.047560419819511465,
+        "observed": 0.027520435967302453
+      },
+      {
+        "predicted": 0.051764718559713055,
+        "observed": 0.025168815224063844
+      },
+      {
+        "predicted": 0.14631064168175306,
+        "observed": 0.13770864946889227
+      },
+      {
+        "predicted": 0.22273849379906321,
+        "observed": 0.20869565217391303
+      },
+      {
+        "predicted": 0.24928418862307836,
+        "observed": 0.2499054820415879
+      },
+      {
+        "predicted": 0.2775606660180768,
+        "observed": 0.2631379962192817
+      },
+      {
+        "predicted": 0.3093047679334367,
+        "observed": 0.2710775047258979
+      },
+      {
+        "predicted": 0.3362491464397478,
+        "observed": 0.3032136105860113
+      },
+      {
+        "predicted": 0.41282426565537605,
+        "observed": 0.32325141776937616
+      }
+    ],
+    "logreg (calibrated)": [
+      {
+        "predicted": 0.02904084075503003,
+        "observed": 0.03552532123960695
+      },
+      {
+        "predicted": 0.03801516552337229,
+        "observed": 0.027520435967302453
+      },
+      {
+        "predicted": 0.04164603168393553,
+        "observed": 0.025168815224063844
+      },
+      {
+        "predicted": 0.12952917584867696,
+        "observed": 0.13770864946889227
+      },
+      {
+        "predicted": 0.2032799123624588,
+        "observed": 0.20869565217391303
+      },
+      {
+        "predicted": 0.22993379417048854,
+        "observed": 0.2499054820415879
+      },
+      {
+        "predicted": 0.2586583606113709,
+        "observed": 0.2631379962192817
+      },
+      {
+        "predicted": 0.2912258760197882,
+        "observed": 0.2710775047258979
+      },
+      {
+        "predicted": 0.31912316506795757,
+        "observed": 0.3032136105860113
+      },
+      {
+        "predicted": 0.39971865672591356,
+        "observed": 0.32325141776937616
+      }
+    ],
+    "lgbm (raw)": [
+      {
+        "predicted": 0.026887557420842922,
+        "observed": 0.0342756183745583
+      },
+      {
+        "predicted": 0.04357099222345378,
+        "observed": 0.02337358784573432
+      },
+      {
+        "predicted": 0.056265653167205464,
+        "observed": 0.031114612051988972
+      },
+      {
+        "predicted": 0.1542179202307402,
+        "observed": 0.14291115311909264
+      },
+      {
+        "predicted": 0.21884251595294596,
+        "observed": 0.2215500945179584
+      },
+      {
+        "predicted": 0.25455872346258757,
+        "observed": 0.2502835538752363
+      },
+      {
+        "predicted": 0.28274491295923543,
+        "observed": 0.25245653817082386
+      },
+      {
+        "predicted": 0.30929480938064535,
+        "observed": 0.2745839636913767
+      },
+      {
+        "predicted": 0.34066876193164775,
+        "observed": 0.30120937263794406
+      },
+      {
+        "predicted": 0.3996161025371206,
+        "observed": 0.31354009077155826
+      }
+    ],
+    "lgbm (calibrated)": [
+      {
+        "predicted": 0.02316175408818555,
+        "observed": 0.0342756183745583
+      },
+      {
+        "predicted": 0.037790582201009185,
+        "observed": 0.02337358784573432
+      },
+      {
+        "predicted": 0.049040218216813536,
+        "observed": 0.031114612051988972
+      },
+      {
+        "predicted": 0.1377621473193341,
+        "observed": 0.14291115311909264
+      },
+      {
+        "predicted": 0.19758788777635622,
+        "observed": 0.2215500945179584
+      },
+      {
+        "predicted": 0.23122796081524366,
+        "observed": 0.2502835538752363
+      },
+      {
+        "predicted": 0.25801511977497676,
+        "observed": 0.25245653817082386
+      },
+      {
+        "predicted": 0.28343453838453037,
+        "observed": 0.2745839636913767
+      },
+      {
+        "predicted": 0.31371076803760833,
+        "observed": 0.30120937263794406
+      },
+      {
+        "predicted": 0.3714353048379263,
+        "observed": 0.31354009077155826
+      }
+    ]
+  }
+}
