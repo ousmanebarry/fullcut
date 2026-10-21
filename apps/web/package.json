@@ -13,7 +13,8 @@
 		"test:db": "vitest run --config vitest.db.config.mts",
 		"test:e2e": "playwright test",
 		"check:bundle": "node scripts/check-client-bundle.mjs",
-		"jobs:dev": "node scripts/jobs-dev.mjs"
+		"jobs:dev": "node scripts/jobs-dev.mjs",
+		"screenshots": "node scripts/screenshots.mjs"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.9.0",

@@ -13,9 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+	metadataBase: new URL(process.env.SITE_URL || 'https://fullcut.ca'),
 	title: 'Fullcut',
 	applicationName: 'Fullcut',
 	description: 'Booking for independent barbers and stylists. Flat price, zero commission.',
+	openGraph: {
+		type: 'website',
+		siteName: 'Fullcut',
+		title: 'Fullcut · Fill your chair. Keep your clients.',
+		description:
+			'Booking for independent barbers and stylists. Flat price, zero commission, your clients stay yours.',
+	},
+	twitter: { card: 'summary_large_image' },
 	appleWebApp: {
 		capable: true,
 		title: 'Fullcut',
