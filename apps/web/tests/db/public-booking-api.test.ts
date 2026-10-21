@@ -7,6 +7,7 @@ import { POST as rescheduleRoute } from '@/app/api/manage/reschedule/route';
 import { GET as availabilityRoute } from '@/app/api/public/[slug]/availability/route';
 import { POST as bookingsRoute } from '@/app/api/public/[slug]/bookings/route';
 import { hashToken } from '@/lib/public-booking/links';
+import { RATE_LIMITS, rateLimitKey } from '@/lib/public-booking/rate-limit';
 import type {
 	AvailabilityResponse,
 	BookingCreated,
@@ -212,6 +213,25 @@ describe('public booking API', () => {
 				404,
 			);
 			expect((await getAvailability(slug, query({ staffId: id.otherStaff }))).status).toBe(404);
+		});
+
+		it('rate limits per IP once the hourly bucket is full', async () => {
+			const ip = `test-${randomUUID()}`;
+			const { max, windowSeconds } = RATE_LIMITS.availabilityPerIp;
+			await admin.query(`select public.hit_rate_limit($1, $2, $3) from generate_series(1, $3)`, [
+				rateLimitKey('availability-ip', ip),
+				windowSeconds,
+				max,
+			]);
+			const url = `http://localhost/api/public/${slug}/availability?${new URLSearchParams(query())}`;
+			const res = await availabilityRoute(
+				new NextRequest(url, { headers: { 'x-forwarded-for': ip } }),
+				{
+					params: Promise.resolve({ slug }),
+				},
+			);
+			expect(res.status).toBe(429);
+			expect(res.headers.get('cache-control')).toBe('no-store');
 		});
 	});
 

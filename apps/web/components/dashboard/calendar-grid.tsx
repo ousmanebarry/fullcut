@@ -16,9 +16,9 @@ const TALL_BLOCK_PX = 44;
 const STATUS_CLASSES: Record<DashboardBooking['status'], string> = {
 	pending: 'border-dashed border-primary/50 bg-primary/5',
 	confirmed: 'border-primary/50 bg-primary/15',
-	completed: 'border-border bg-muted text-muted-foreground',
-	no_show: 'border-destructive/40 bg-destructive/10 text-destructive',
-	cancelled: 'border-border bg-background text-muted-foreground line-through',
+	completed: 'border-border bg-muted text-neutral-600 dark:text-muted-foreground',
+	no_show: 'border-destructive/40 bg-destructive/10 text-red-700 dark:text-destructive',
+	cancelled: 'border-border bg-background text-neutral-600 line-through dark:text-muted-foreground',
 };
 
 export function CalendarGrid({
@@ -181,7 +181,7 @@ export function CalendarGrid({
 											>
 												<p className="truncate font-medium">{booking.clientName}</p>
 												{tall ? (
-													<p className="truncate opacity-80">
+													<p className="truncate">
 														{booking.serviceName} · {booking.timeLabel}
 													</p>
 												) : null}
