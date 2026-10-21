@@ -85,7 +85,7 @@ fullcut/
 │       │   ├── onboarding/   # first-run shop setup wizard
 │       │   ├── [shopSlug]/   # public booking page per shop
 │       │   ├── dashboard/    # authenticated owner/staff area (settings/ for shop setup)
-│       │   └── api/          # route handlers: public/, manage/, jobs/tick (pg_cron caller), webhooks/twilio/{status,inbound}
+│       │   └── api/          # route handlers: public/, manage/, waitlist/{claim,leave}, jobs/tick (pg_cron caller), webhooks/twilio/{status,inbound}
 │       ├── proxy.ts          # session refresh + signed-in/out redirects (Next 16 "middleware")
 │       ├── next.config.ts    # security headers (CSP etc.)
 │       ├── public/           # sw.js (static-asset + offline-page cache only), offline.html
@@ -134,6 +134,7 @@ CI (`.github/workflows/ci.yml`) runs `pnpm format:check`, `pnpm lint`, `pnpm typ
 
 Deploys (`.github/workflows/deploy.yml`, on push to `main`): CI again → `supabase db push` to staging → approval → `supabase db push` to production → `vercel build` / `vercel deploy --prebuilt --prod`. Migrations ship before code, so they must work with the previous app version. See `docs/adr/0007-deployment-and-demo-shop.md` for headers, the PWA service worker rules and the demo shop.
 Background jobs and SMS (`docs/adr/0008-background-jobs-and-messaging.md`): a `bookings` trigger queues texts in `scheduled_messages`; pg_cron + pg_net POST `/api/jobs/tick` every minute (no-op until the `jobs_tick_url` / `jobs_secret` Vault secrets exist). `MESSAGING_MODE=log` (default) never contacts Twilio. Send-time rules live in `apps/web/lib/messaging/rules.ts`, templates in `templates.ts`. New periodic work belongs in the tick route, not a new cron job.
+Waitlist refill (`docs/adr/0009-waitlist-refill.md`): a `bookings` trigger queues `freed_slots`; the tick runs `lib/waitlist/refill.ts` (pure matcher in `match.ts`) before the message worker. Claim links are `/w/<token>` (claims on POST only), view/leave links `/wl/<token>`.
 
 > Not available yet (`services/ml/` does not exist). Intended commands once it does:
 

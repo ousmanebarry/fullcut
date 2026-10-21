@@ -34,6 +34,14 @@ export function StatusBadge({ status }: { status: DashboardBooking['status'] }) 
 	);
 }
 
+export function RefillBadge({ className }: { className?: string }) {
+	return (
+		<Badge variant="secondary" className={className} data-testid="refill-badge">
+			Refilled from waitlist
+		</Badge>
+	);
+}
+
 /** A day's bookings with one-tap outcome buttons once each appointment has ended. */
 export function BookingList({
 	bookings,

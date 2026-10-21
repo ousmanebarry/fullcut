@@ -3,6 +3,7 @@ import { getMessageSender } from '@/lib/messaging/sender';
 import { secretsMatch, STATUS_CALLBACK_PATH, twilioWebhookUrl } from '@/lib/messaging/webhooks';
 import { runMessageBatch } from '@/lib/messaging/worker';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { runWaitlistBatch } from '@/lib/waitlist/refill';
 
 // Called every minute by pg_cron + pg_net (docs/adr/0008-background-jobs-and-messaging.md).
 export const maxDuration = 60;
@@ -16,12 +17,15 @@ export async function POST(request: Request) {
 		return Response.json({ error: 'unauthorized' }, { status: 401, headers: NO_STORE });
 	}
 
-	const messages = await runMessageBatch(createAdminClient(), {
+	const db = createAdminClient();
+	// Offers first, so the texts they queue go out in this same tick.
+	const waitlist = await runWaitlistBatch(db, { budgetMs: 15_000 });
+	const messages = await runMessageBatch(db, {
 		sender: getMessageSender(),
 		siteUrl: getSiteUrl(),
 		statusCallbackUrl:
 			getMessagingMode() === 'twilio' ? twilioWebhookUrl(STATUS_CALLBACK_PATH) : null,
-		budgetMs: 40_000,
+		budgetMs: 30_000,
 	});
-	return Response.json({ messages }, { headers: NO_STORE });
+	return Response.json({ waitlist, messages }, { headers: NO_STORE });
 }

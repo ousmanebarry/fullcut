@@ -7,7 +7,7 @@ import { toUserFacingError, type UserFacingError } from '@/lib/db/errors';
 import type { Instant } from '@/lib/time';
 import { instantToIso } from '@/lib/time';
 import { hoursToRules, type WeeklyHours } from './hours';
-import type { MessageSettingsInput, ServiceInput } from './schemas';
+import type { MessageSettingsInput, ServiceInput, WaitlistSettingsInput } from './schemas';
 
 // Mutations behind the settings pages. Callers pass a user-scoped client (RLS applies) and an actor
 // derived on the server; every write is also filtered by the actor's shop_id.
@@ -115,6 +115,25 @@ export async function updateMessageSettings(
 			sms_cancelled_enabled: input.cancelledEnabled,
 			sms_reminder_lead_hours: input.reminderLeadHours,
 			sms_sign_off: input.signOff,
+		})
+		.eq('id', actor.shopId)
+		.select('id');
+	return settle(error, data);
+}
+
+export async function updateWaitlistSettings(
+	db: Db,
+	actor: Actor,
+	input: WaitlistSettingsInput,
+): Promise<MutationResult> {
+	if (!isOwner(actor)) return fail(OWNER_ONLY);
+	const { data, error } = await db
+		.from('shops')
+		.update({
+			waitlist_enabled: input.enabled,
+			waitlist_wave_size: input.waveSize,
+			waitlist_offer_minutes: input.offerMinutes,
+			waitlist_min_notice_minutes: input.minNoticeMinutes,
 		})
 		.eq('id', actor.shopId)
 		.select('id');

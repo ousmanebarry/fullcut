@@ -1,8 +1,9 @@
 'use client';
 
 import type { CalendarLayout, LayoutColumn } from '@/lib/dashboard/calendar-layout';
-import { needsOutcome, type DashboardBooking } from '@/lib/dashboard/types';
+import { isRefill, needsOutcome, type DashboardBooking } from '@/lib/dashboard/types';
 import { cn } from '@/lib/utils';
+import { RefillBadge } from './booking-list';
 import { OutcomeButtons } from './outcome-buttons';
 import { minuteToTime, useNow, zonedMinuteOfDay } from './use-now';
 
@@ -147,7 +148,7 @@ export function CalendarGrid({
 												type="button"
 												className="absolute inset-0 rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
 												onClick={() => onOpenBooking(booking.id)}
-												aria-label={`${booking.clientName}, ${booking.serviceName}, ${booking.timeLabel}`}
+												aria-label={`${booking.clientName}, ${booking.serviceName}, ${booking.timeLabel}${isRefill(booking) ? ', refilled from waitlist' : ''}`}
 											/>
 											<div
 												className={cn(
@@ -160,6 +161,9 @@ export function CalendarGrid({
 													<p className="truncate opacity-80">
 														{booking.serviceName} · {booking.timeLabel}
 													</p>
+												) : null}
+												{tall && isRefill(booking) ? (
+													<RefillBadge className="mt-0.5 h-4 px-1.5 text-[10px]" />
 												) : null}
 											</div>
 											{unmarked ? (

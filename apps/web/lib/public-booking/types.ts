@@ -24,6 +24,7 @@ export interface PublicShop {
 	timezone: string;
 	currency: string;
 	country: 'CA' | 'US';
+	waitlistEnabled: boolean;
 	services: PublicService[];
 	staff: PublicStaff[];
 }
@@ -68,6 +69,9 @@ export interface BookingDetails {
 	timezone: string;
 }
 
+/** Why a waitlist offer can no longer be claimed. */
+export type OfferClosedReason = 'taken' | 'expired' | 'claimed' | 'inactive';
+
 export interface BookingCreated {
 	reference: string;
 	manageUrl: string;
@@ -85,6 +89,10 @@ export type PublicApiError =
 	  }
 	| { error: 'slot_taken'; message: string; suggestions: PublicSlot[] }
 	| { error: 'too_many_bookings'; message: string }
+	| { error: 'too_many_waitlist_entries'; message: string }
+	| { error: 'waitlist_disabled'; message: string }
+	| { error: 'sms_opted_out'; message: string }
+	| { error: 'offer_closed'; reason: OfferClosedReason; message: string }
 	| { error: 'rate_limited'; message: string; retryAfterSeconds: number }
 	| { error: 'cancel_window_passed'; message: string }
 	| { error: 'not_active'; message: string };

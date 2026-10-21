@@ -9,7 +9,7 @@ import {
 	type Instant,
 	type TimeZone,
 } from '@/lib/time';
-import type { MessageType, SkipReason } from './types';
+import type { MessageType, SkipReason, WaitlistMessageType } from './types';
 
 export const QUIET_HOURS_START_MINUTE = 21 * 60;
 export const QUIET_HOURS_END_MINUTE = 9 * 60;
@@ -39,6 +39,34 @@ export function quietHoursEnd(now: Instant, zone: TimeZone): Instant | null {
 }
 
 const skip = (reason: SkipReason): SendDecision => ({ action: 'skip', reason });
+
+export interface WaitlistSendContext {
+	type: WaitlistMessageType;
+	shop: { timezone: TimeZone; isDemo: boolean; waitlistEnabled: boolean };
+	client: { phoneE164: string | null; smsOptedOut: boolean };
+	entry: { active: boolean };
+	/** Offer texts only: whether the offer is still open (sent and unexpired). */
+	offer?: { open: boolean };
+}
+
+/**
+ * Send-time check for waitlist texts. The join confirmation answers a client action, so quiet hours
+ * don't apply; an offer is never sent in quiet hours and never deferred (the next wave takes over).
+ */
+export function decideWaitlistSend(ctx: WaitlistSendContext, now: Instant): SendDecision {
+	const { shop, client, entry } = ctx;
+	if (shop.isDemo) return skip('demo_shop');
+	if (!shop.waitlistEnabled) return skip('type_disabled');
+	if (client.smsOptedOut) return skip('opted_out');
+	if (!client.phoneE164) return skip('no_phone');
+	if (!isValidPhoneNumber(client.phoneE164)) return skip('invalid_phone');
+	if (!entry.active) return skip('entry_inactive');
+	if (ctx.type === 'waitlist_offer') {
+		if (!ctx.offer?.open) return skip('offer_closed');
+		if (quietHoursEnd(now, shop.timezone) !== null) return skip('quiet_hours');
+	}
+	return { action: 'send' };
+}
 
 export function decideSend(ctx: SendContext, now: Instant): SendDecision {
 	const { type, shop, client, booking } = ctx;

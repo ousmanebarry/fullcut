@@ -178,6 +178,7 @@ export type Database = {
 					risk_score: number | null;
 					service_id: string;
 					shop_id: string;
+					slot_offer_id: string | null;
 					source: string;
 					staff_id: string;
 					starts_at: string;
@@ -205,6 +206,7 @@ export type Database = {
 					risk_score?: number | null;
 					service_id: string;
 					shop_id: string;
+					slot_offer_id?: string | null;
 					source?: string;
 					staff_id: string;
 					starts_at: string;
@@ -231,6 +233,7 @@ export type Database = {
 					risk_score?: number | null;
 					service_id?: string;
 					shop_id?: string;
+					slot_offer_id?: string | null;
 					source?: string;
 					staff_id?: string;
 					starts_at?: string;
@@ -265,6 +268,13 @@ export type Database = {
 						isOneToOne: false;
 						referencedRelation: 'shops';
 						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'bookings_slot_offer_same_shop_fk';
+						columns: ['shop_id', 'slot_offer_id'];
+						isOneToOne: false;
+						referencedRelation: 'slot_offers';
+						referencedColumns: ['shop_id', 'id'];
 					},
 					{
 						foreignKeyName: 'bookings_staff_same_shop_fk';
@@ -382,6 +392,77 @@ export type Database = {
 					},
 				];
 			};
+			freed_slots: {
+				Row: {
+					created_at: string;
+					drop_reason: string | null;
+					ends_at: string;
+					freed_booking_id: string | null;
+					id: string;
+					locked_at: string | null;
+					next_run_at: string;
+					shop_id: string;
+					staff_id: string;
+					starts_at: string;
+					status: string;
+					updated_at: string;
+					wave: number;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					drop_reason?: string | null;
+					ends_at: string;
+					freed_booking_id?: string | null;
+					id?: string;
+					locked_at?: string | null;
+					next_run_at?: string;
+					shop_id: string;
+					staff_id: string;
+					starts_at: string;
+					status?: string;
+					updated_at?: string;
+					wave?: number;
+				};
+				Update: {
+					created_at?: string;
+					drop_reason?: string | null;
+					ends_at?: string;
+					freed_booking_id?: string | null;
+					id?: string;
+					locked_at?: string | null;
+					next_run_at?: string;
+					shop_id?: string;
+					staff_id?: string;
+					starts_at?: string;
+					status?: string;
+					updated_at?: string;
+					wave?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'freed_slots_booking_same_shop_fk';
+						columns: ['shop_id', 'freed_booking_id'];
+						isOneToOne: false;
+						referencedRelation: 'bookings';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'freed_slots_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'freed_slots_staff_same_shop_fk';
+						columns: ['shop_id', 'staff_id'];
+						isOneToOne: false;
+						referencedRelation: 'staff';
+						referencedColumns: ['shop_id', 'id'];
+					},
+				];
+			};
 			inbound_messages: {
 				Row: {
 					body: string | null;
@@ -477,7 +558,7 @@ export type Database = {
 				Row: {
 					attempts: number;
 					body: string | null;
-					booking_id: string;
+					booking_id: string | null;
 					client_id: string;
 					created_at: string;
 					dedupe_key: string;
@@ -491,16 +572,18 @@ export type Database = {
 					sent_at: string | null;
 					shop_id: string;
 					skip_reason: string | null;
+					slot_offer_id: string | null;
 					status: string;
 					twilio_sid: string | null;
 					type: string;
 					updated_at: string;
+					waitlist_entry_id: string | null;
 				};
 				ComputedFields: never;
 				Insert: {
 					attempts?: number;
 					body?: string | null;
-					booking_id: string;
+					booking_id?: string | null;
 					client_id: string;
 					created_at?: string;
 					dedupe_key: string;
@@ -514,15 +597,17 @@ export type Database = {
 					sent_at?: string | null;
 					shop_id: string;
 					skip_reason?: string | null;
+					slot_offer_id?: string | null;
 					status?: string;
 					twilio_sid?: string | null;
 					type: string;
 					updated_at?: string;
+					waitlist_entry_id?: string | null;
 				};
 				Update: {
 					attempts?: number;
 					body?: string | null;
-					booking_id?: string;
+					booking_id?: string | null;
 					client_id?: string;
 					created_at?: string;
 					dedupe_key?: string;
@@ -536,10 +621,12 @@ export type Database = {
 					sent_at?: string | null;
 					shop_id?: string;
 					skip_reason?: string | null;
+					slot_offer_id?: string | null;
 					status?: string;
 					twilio_sid?: string | null;
 					type?: string;
 					updated_at?: string;
+					waitlist_entry_id?: string | null;
 				};
 				Relationships: [
 					{
@@ -561,6 +648,20 @@ export type Database = {
 						columns: ['shop_id', 'client_id'];
 						isOneToOne: false;
 						referencedRelation: 'clients';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'scheduled_messages_entry_same_shop_fk';
+						columns: ['shop_id', 'waitlist_entry_id'];
+						isOneToOne: false;
+						referencedRelation: 'waitlist_entries';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'scheduled_messages_offer_same_shop_fk';
+						columns: ['shop_id', 'slot_offer_id'];
+						isOneToOne: false;
+						referencedRelation: 'slot_offers';
 						referencedColumns: ['shop_id', 'id'];
 					},
 					{
@@ -689,6 +790,10 @@ export type Database = {
 					sms_sign_off: string | null;
 					timezone: string;
 					updated_at: string;
+					waitlist_enabled: boolean;
+					waitlist_min_notice_minutes: number;
+					waitlist_offer_minutes: number;
+					waitlist_wave_size: number;
 				};
 				ComputedFields: never;
 				Insert: {
@@ -716,6 +821,10 @@ export type Database = {
 					sms_sign_off?: string | null;
 					timezone: string;
 					updated_at?: string;
+					waitlist_enabled?: boolean;
+					waitlist_min_notice_minutes?: number;
+					waitlist_offer_minutes?: number;
+					waitlist_wave_size?: number;
 				};
 				Update: {
 					about_text?: string | null;
@@ -742,8 +851,123 @@ export type Database = {
 					sms_sign_off?: string | null;
 					timezone?: string;
 					updated_at?: string;
+					waitlist_enabled?: boolean;
+					waitlist_min_notice_minutes?: number;
+					waitlist_offer_minutes?: number;
+					waitlist_wave_size?: number;
 				};
 				Relationships: [];
+			};
+			slot_offers: {
+				Row: {
+					blocked_until: string;
+					booking_id: string | null;
+					created_at: string;
+					ends_at: string;
+					expires_at: string;
+					freed_booking_id: string | null;
+					freed_slot_id: string | null;
+					id: string;
+					sent_at: string;
+					service_id: string;
+					shop_id: string;
+					staff_id: string;
+					starts_at: string;
+					status: string;
+					token_hash: string | null;
+					waitlist_entry_id: string;
+					wave: number;
+				};
+				ComputedFields: never;
+				Insert: {
+					blocked_until: string;
+					booking_id?: string | null;
+					created_at?: string;
+					ends_at: string;
+					expires_at: string;
+					freed_booking_id?: string | null;
+					freed_slot_id?: string | null;
+					id?: string;
+					sent_at?: string;
+					service_id: string;
+					shop_id: string;
+					staff_id: string;
+					starts_at: string;
+					status?: string;
+					token_hash?: string | null;
+					waitlist_entry_id: string;
+					wave?: number;
+				};
+				Update: {
+					blocked_until?: string;
+					booking_id?: string | null;
+					created_at?: string;
+					ends_at?: string;
+					expires_at?: string;
+					freed_booking_id?: string | null;
+					freed_slot_id?: string | null;
+					id?: string;
+					sent_at?: string;
+					service_id?: string;
+					shop_id?: string;
+					staff_id?: string;
+					starts_at?: string;
+					status?: string;
+					token_hash?: string | null;
+					waitlist_entry_id?: string;
+					wave?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'slot_offers_booking_same_shop_fk';
+						columns: ['shop_id', 'booking_id'];
+						isOneToOne: false;
+						referencedRelation: 'bookings';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'slot_offers_entry_same_shop_fk';
+						columns: ['shop_id', 'waitlist_entry_id'];
+						isOneToOne: false;
+						referencedRelation: 'waitlist_entries';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'slot_offers_freed_booking_same_shop_fk';
+						columns: ['shop_id', 'freed_booking_id'];
+						isOneToOne: false;
+						referencedRelation: 'bookings';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'slot_offers_freed_slot_same_shop_fk';
+						columns: ['shop_id', 'freed_slot_id'];
+						isOneToOne: false;
+						referencedRelation: 'freed_slots';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'slot_offers_service_same_shop_fk';
+						columns: ['shop_id', 'service_id'];
+						isOneToOne: false;
+						referencedRelation: 'services';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'slot_offers_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'slot_offers_staff_same_shop_fk';
+						columns: ['shop_id', 'staff_id'];
+						isOneToOne: false;
+						referencedRelation: 'staff';
+						referencedColumns: ['shop_id', 'id'];
+					},
+				];
 			};
 			staff: {
 				Row: {
@@ -827,6 +1051,137 @@ export type Database = {
 					},
 				];
 			};
+			waitlist_entries: {
+				Row: {
+					client_id: string;
+					created_at: string;
+					earliest_date: string;
+					id: string;
+					latest_date: string;
+					offers_requested_at: string;
+					request_method: string;
+					service_id: string;
+					shop_id: string;
+					staff_id: string | null;
+					status: string;
+					time_windows: NonNullable<Json>;
+					updated_at: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					client_id: string;
+					created_at?: string;
+					earliest_date: string;
+					id?: string;
+					latest_date: string;
+					offers_requested_at?: string;
+					request_method: string;
+					service_id: string;
+					shop_id: string;
+					staff_id?: string | null;
+					status?: string;
+					time_windows?: NonNullable<Json>;
+					updated_at?: string;
+				};
+				Update: {
+					client_id?: string;
+					created_at?: string;
+					earliest_date?: string;
+					id?: string;
+					latest_date?: string;
+					offers_requested_at?: string;
+					request_method?: string;
+					service_id?: string;
+					shop_id?: string;
+					staff_id?: string | null;
+					status?: string;
+					time_windows?: NonNullable<Json>;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'waitlist_entries_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'client_stats';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'waitlist_entries_client_same_shop_fk';
+						columns: ['shop_id', 'client_id'];
+						isOneToOne: false;
+						referencedRelation: 'clients';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'waitlist_entries_service_same_shop_fk';
+						columns: ['shop_id', 'service_id'];
+						isOneToOne: false;
+						referencedRelation: 'services';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'waitlist_entries_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'waitlist_entries_staff_same_shop_fk';
+						columns: ['shop_id', 'staff_id'];
+						isOneToOne: false;
+						referencedRelation: 'staff';
+						referencedColumns: ['shop_id', 'id'];
+					},
+				];
+			};
+			waitlist_links: {
+				Row: {
+					created_at: string;
+					expires_at: string;
+					id: string;
+					revoked_at: string | null;
+					shop_id: string;
+					token_hash: string;
+					waitlist_entry_id: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					expires_at: string;
+					id?: string;
+					revoked_at?: string | null;
+					shop_id: string;
+					token_hash: string;
+					waitlist_entry_id: string;
+				};
+				Update: {
+					created_at?: string;
+					expires_at?: string;
+					id?: string;
+					revoked_at?: string | null;
+					shop_id?: string;
+					token_hash?: string;
+					waitlist_entry_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'waitlist_links_entry_same_shop_fk';
+						columns: ['shop_id', 'waitlist_entry_id'];
+						isOneToOne: false;
+						referencedRelation: 'waitlist_entries';
+						referencedColumns: ['shop_id', 'id'];
+					},
+					{
+						foreignKeyName: 'waitlist_links_shop_id_fkey';
+						columns: ['shop_id'];
+						isOneToOne: false;
+						referencedRelation: 'shops';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			webhook_events: {
 				Row: {
 					event_id: string;
@@ -878,13 +1233,51 @@ export type Database = {
 			};
 		};
 		Functions: {
+			add_waitlist_entry: {
+				Args: {
+					p_client_id?: string;
+					p_client_name?: string;
+					p_earliest_date: string;
+					p_latest_date: string;
+					p_phone_e164?: string;
+					p_service_id: string;
+					p_shop_id: string;
+					p_staff_id?: string;
+					p_time_windows: Json;
+				};
+				Returns: string;
+			};
 			anonymise_client: { Args: { p_client_id: string }; Returns: undefined };
+			claim_due_freed_slots: {
+				Args: { p_limit: number };
+				Returns: {
+					created_at: string;
+					drop_reason: string | null;
+					ends_at: string;
+					freed_booking_id: string | null;
+					id: string;
+					locked_at: string | null;
+					next_run_at: string;
+					shop_id: string;
+					staff_id: string;
+					starts_at: string;
+					status: string;
+					updated_at: string;
+					wave: number;
+				}[];
+				SetofOptions: {
+					from: '*';
+					to: 'freed_slots';
+					isOneToOne: false;
+					isSetofReturn: true;
+				};
+			};
 			claim_due_messages: {
 				Args: { p_limit: number };
 				Returns: {
 					attempts: number;
 					body: string | null;
-					booking_id: string;
+					booking_id: string | null;
 					client_id: string;
 					created_at: string;
 					dedupe_key: string;
@@ -898,10 +1291,12 @@ export type Database = {
 					sent_at: string | null;
 					shop_id: string;
 					skip_reason: string | null;
+					slot_offer_id: string | null;
 					status: string;
 					twilio_sid: string | null;
 					type: string;
 					updated_at: string;
+					waitlist_entry_id: string | null;
 				}[];
 				SetofOptions: {
 					from: '*';
@@ -909,6 +1304,13 @@ export type Database = {
 					isOneToOne: false;
 					isSetofReturn: true;
 				};
+			};
+			claim_slot_offer: {
+				Args: { p_manage_token_hash: string; p_token_hash: string };
+				Returns: {
+					booking_id: string;
+					outcome: string;
+				}[];
 			};
 			create_public_booking: {
 				Args: {
@@ -933,6 +1335,15 @@ export type Database = {
 					client_id: string;
 				}[];
 			};
+			create_slot_offers: {
+				Args: {
+					p_expires_at: string;
+					p_freed_slot_id: string;
+					p_next_run_at: string;
+					p_offers: Json;
+				};
+				Returns: number;
+			};
 			create_staff_booking: {
 				Args: {
 					p_blocked_until: string;
@@ -953,6 +1364,13 @@ export type Database = {
 					client_id: string;
 				}[];
 			};
+			expire_waitlist: {
+				Args: Record<PropertyKey, never>;
+				Returns: {
+					entries_expired: number;
+					offers_expired: number;
+				}[];
+			};
 			hit_rate_limit: {
 				Args: { p_key: string; p_max: number; p_window_seconds: number };
 				Returns: {
@@ -964,6 +1382,19 @@ export type Database = {
 			is_own_staff: { Args: { p_shop_id: string; p_staff_id: string }; Returns: boolean };
 			is_shop_member: { Args: { p_shop_id: string }; Returns: boolean };
 			is_shop_owner: { Args: { p_shop_id: string }; Returns: boolean };
+			join_waitlist: {
+				Args: {
+					p_client_name: string;
+					p_earliest_date: string;
+					p_latest_date: string;
+					p_phone_e164: string;
+					p_service_id: string;
+					p_shop_id: string;
+					p_staff_id?: string;
+					p_time_windows: Json;
+				};
+				Returns: string;
+			};
 			merge_clients: {
 				Args: { p_contact?: Json; p_keep_id: string; p_merge_id: string };
 				Returns: string;

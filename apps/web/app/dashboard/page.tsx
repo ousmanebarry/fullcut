@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { BookingList } from '@/components/dashboard/booking-list';
+import { RefillMetricCard } from '@/components/dashboard/refill-metric';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireShopMember, toActor, type ShopContext } from '@/lib/auth/session';
@@ -10,6 +11,8 @@ import { currentInstant, loadToday } from '@/lib/dashboard/views';
 import { toBookingShop } from '@/lib/public-booking/data';
 import { setupProgress } from '@/lib/shop/queries';
 import { createClient } from '@/lib/supabase/server';
+import { timeZone } from '@/lib/time';
+import { loadRefillMetric } from '@/lib/waitlist/metrics';
 
 export const metadata: Metadata = { title: 'Today · Fullcut' };
 
@@ -24,9 +27,11 @@ export default function DashboardPage() {
 async function Today() {
 	const ctx = await requireShopMember();
 	const db = await createClient();
-	const [model, progress] = await Promise.all([
-		loadToday(db, toBookingShop(ctx.shop), toActor(ctx), currentInstant()),
+	const now = currentInstant();
+	const [model, progress, refill] = await Promise.all([
+		loadToday(db, toBookingShop(ctx.shop), toActor(ctx), now),
 		setupProgress(ctx),
+		loadRefillMetric(db, ctx.shop.id, timeZone(ctx.shop.timezone), now),
 	]);
 
 	return (
@@ -70,6 +75,10 @@ async function Today() {
 					hint="For your shortest service"
 				/>
 			</dl>
+
+			{ctx.shop.waitlist_enabled || refill.slotsRecovered > 0 ? (
+				<RefillMetricCard metric={refill} currency={ctx.shop.currency} />
+			) : null}
 
 			<section className="grid gap-2" aria-labelledby="today-heading">
 				<div className="flex items-center justify-between gap-3">

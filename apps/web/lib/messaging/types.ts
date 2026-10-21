@@ -9,6 +9,10 @@ export const MESSAGE_TYPES = [
 ] as const;
 export type MessageType = (typeof MESSAGE_TYPES)[number];
 
+/** Texts about a waitlist entry or offer rather than a booking. */
+export const WAITLIST_MESSAGE_TYPES = ['waitlist_joined', 'waitlist_offer'] as const;
+export type WaitlistMessageType = (typeof WAITLIST_MESSAGE_TYPES)[number];
+
 export const MESSAGE_STATUSES = [
 	'queued',
 	'sending',
@@ -26,7 +30,10 @@ export type SkipReason =
 	| 'booking_inactive'
 	| 'type_disabled'
 	| 'demo_shop'
-	| 'too_late';
+	| 'too_late'
+	| 'entry_inactive'
+	| 'offer_closed'
+	| 'quiet_hours';
 
 export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
 	confirmation: 'Booking confirmation',
@@ -44,10 +51,17 @@ export const SKIP_REASON_LABELS: Record<SkipReason, string> = {
 	type_disabled: 'turned off in settings',
 	demo_shop: 'demo shop',
 	too_late: 'too late to send',
+	entry_inactive: 'left the waitlist',
+	offer_closed: 'offer no longer open',
+	quiet_hours: 'quiet hours',
 };
 
 export function isMessageType(value: string): value is MessageType {
 	return (MESSAGE_TYPES as readonly string[]).includes(value);
+}
+
+export function isWaitlistMessageType(value: string): value is WaitlistMessageType {
+	return (WAITLIST_MESSAGE_TYPES as readonly string[]).includes(value);
 }
 
 export function isSkipReason(value: string): value is SkipReason {

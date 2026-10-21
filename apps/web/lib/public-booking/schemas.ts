@@ -6,12 +6,12 @@ export const MAX_NAME_LENGTH = 80;
 export const MAX_NOTES_LENGTH = 500;
 
 // Lenient UUID shape: stable fixture ids are not RFC 4122 variants.
-const idSchema = z.guid({ error: 'Choose an option.' });
+export const idSchema = z.guid({ error: 'Choose an option.' });
 
 export const staffChoiceSchema = z.union([z.literal('any'), idSchema]);
 export type StaffChoice = z.infer<typeof staffChoiceSchema>;
 
-const localDateSchema = z
+export const localDateSchema = z
 	.string()
 	.refine(
 		(value) => {
@@ -85,7 +85,7 @@ export const bookingBodySchema = z.object({
 export type BookingBody = z.infer<typeof bookingBodySchema>;
 
 export const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
-const tokenSchema = z.string().regex(TOKEN_PATTERN, { error: 'This link is not valid.' });
+export const tokenSchema = z.string().regex(TOKEN_PATTERN, { error: 'This link is not valid.' });
 
 export const cancelBodySchema = z.object({ token: tokenSchema });
 

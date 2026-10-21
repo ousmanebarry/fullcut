@@ -72,3 +72,30 @@ export function rescheduleBooking(token: string, staffId: string, startsAt: stri
 		postJson({ token, staffId, startsAt }),
 	);
 }
+
+export interface WaitlistRequest {
+	serviceId: string;
+	staffId: string;
+	earliestDate: string;
+	latestDate: string;
+	timeWindows: { weekday: number; start: string; end: string }[];
+	name: string;
+	phone: string;
+	offersRequested: boolean;
+	website: string;
+}
+
+export function joinWaitlist(slug: string, body: WaitlistRequest) {
+	return call<{ status: 'joined' }>(
+		`/api/public/${encodeURIComponent(slug)}/waitlist`,
+		postJson(body),
+	);
+}
+
+export function leaveWaitlist(token: string) {
+	return call<{ status: 'left' }>('/api/waitlist/leave', postJson({ token }));
+}
+
+export function claimOffer(token: string) {
+	return call<BookingCreated>('/api/waitlist/claim', postJson({ token }));
+}

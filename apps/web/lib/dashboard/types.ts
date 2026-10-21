@@ -106,4 +106,10 @@ export const SOURCE_LABELS: Record<string, string> = {
 	direct: 'Online',
 	phone: 'Phone',
 	walk_in: 'Walk-in',
+	waitlist: 'Waitlist',
 };
+
+/** Booked by a waitlisted client from an offer text. */
+export function isRefill(booking: Pick<DashboardBooking, 'source'>): boolean {
+	return booking.source === 'waitlist';
+}
