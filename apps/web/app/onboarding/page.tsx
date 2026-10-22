@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { getCurrentShop, requireUser } from '@/lib/auth/session';
 import { timeZoneOptions } from '@/lib/shop/timezones';
 import { OnboardingWizard } from './wizard';
 
-export const metadata: Metadata = { title: 'Set up your shop · Fullcut' };
+export const metadata: Metadata = { title: 'Set up your shop' };
 
 export default function OnboardingPage() {
 	return (
@@ -14,7 +15,7 @@ export default function OnboardingPage() {
 				<p className="text-sm font-semibold tracking-tight">Fullcut</p>
 				<h1 className="text-2xl font-semibold">Set up your shop</h1>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton />}>
 				<OnboardingGate />
 			</Suspense>
 		</main>

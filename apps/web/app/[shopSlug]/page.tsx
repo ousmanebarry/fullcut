@@ -3,16 +3,21 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { BookingFlow } from '@/components/booking/booking-flow';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getCachedPublicShop } from '@/lib/public-booking/cached';
 import type { PublicShop } from '@/lib/public-booking/types';
 
 export async function generateMetadata({ params }: PageProps<'/[shopSlug]'>): Promise<Metadata> {
 	const { shopSlug } = await params;
 	const shop = await getCachedPublicShop(shopSlug);
-	if (!shop) return { title: 'Booking page not found · Fullcut' };
+	if (!shop) return { title: 'Booking page not found' };
+	const title = `Book with ${shop.name}`;
+	const description = shop.aboutText ?? `Book an appointment with ${shop.name} online.`;
 	return {
-		title: `Book with ${shop.name}`,
-		description: shop.aboutText ?? `Book an appointment with ${shop.name} online.`,
+		// The booking page is the shop's own, so no Fullcut suffix.
+		title: { absolute: title },
+		description,
+		openGraph: { title, description, siteName: shop.name },
 	};
 }
 
@@ -71,15 +76,15 @@ function ShopHeader({ shop }: { shop: PublicShop }) {
 
 function BookingPageSkeleton() {
 	return (
-		<div aria-busy className="grid gap-6">
+		<div role="status" aria-busy="true" className="grid gap-6">
 			<span className="sr-only">Loading booking page…</span>
 			<div className="flex items-center gap-3" aria-hidden>
-				<div className="size-14 animate-pulse rounded-xl bg-muted" />
-				<div className="h-7 w-48 animate-pulse rounded bg-muted" />
+				<Skeleton className="size-14 rounded-xl" />
+				<Skeleton className="h-7 w-48" />
 			</div>
 			<div className="grid gap-2" aria-hidden>
 				{Array.from({ length: 4 }, (_, i) => (
-					<div key={i} className="h-16 animate-pulse rounded-xl bg-muted" />
+					<Skeleton key={i} className="h-16 rounded-xl" />
 				))}
 			</div>
 		</div>

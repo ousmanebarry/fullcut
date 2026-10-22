@@ -1,20 +1,21 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { ManageWaitlist } from '@/components/booking/manage-waitlist';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatShortDate, localDate, timeZone, zonedToInstant, type Instant } from '@/lib/time';
 import { findEntryByToken } from '@/lib/waitlist/manage';
 
 export const metadata: Metadata = {
-	title: 'Your waitlist spot · Fullcut',
+	title: 'Your waitlist spot',
 	robots: { index: false, follow: false },
 };
 
 export default function WaitlistPage({ params }: PageProps<'/wl/[token]'>) {
 	return (
 		<main className="mx-auto grid w-full max-w-lg gap-6 px-4 py-6">
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<ListSkeleton rows={3} title />}>
 				<Entry params={params} />
 			</Suspense>
 		</main>

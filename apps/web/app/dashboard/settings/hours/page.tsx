@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { requireShopMember } from '@/lib/auth/session';
 import { editableStaff, listRules } from '@/lib/shop/queries';
 import { rulesToHours } from '@/lib/shop/hours';
 import { cn } from '@/lib/utils';
 import { HoursForm } from './hours-form';
 
-export const metadata: Metadata = { title: 'Hours · Fullcut' };
+export const metadata: Metadata = { title: 'Hours' };
 
 export default function HoursSettingsPage({
 	searchParams,
@@ -20,7 +21,7 @@ export default function HoursSettingsPage({
 					Weekly hours in your shop&apos;s timezone. Add more than one range to a day for breaks.
 				</p>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton fields={7} />}>
 				<Hours searchParams={searchParams} />
 			</Suspense>
 		</div>
@@ -58,7 +59,7 @@ async function Hours({
 							href={`/dashboard/settings/hours?staff=${member.id}`}
 							aria-current={member.id === selected.id ? 'page' : undefined}
 							className={cn(
-								'rounded-full border px-3 py-1.5 text-sm hover:bg-muted',
+								'rounded-full border px-3 py-1.5 text-sm hover:bg-accent',
 								member.id === selected.id &&
 									'bg-primary text-primary-foreground hover:bg-primary/90',
 							)}

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { canEditSchedule } from '@/lib/auth/roles';
 import { requireShopMember } from '@/lib/auth/session';
 import { editableStaff, listStaff, listUpcomingTimeOff } from '@/lib/shop/queries';
 import { formatSlotLabel, instantFromIso, localDateOf, timeZone, type Instant } from '@/lib/time';
 import { AddTimeOffForm, DeleteTimeOffButton } from './time-off-forms';
 
-export const metadata: Metadata = { title: 'Time off · Fullcut' };
+export const metadata: Metadata = { title: 'Time off' };
 
 export default function TimeOffSettingsPage() {
 	return (
@@ -16,7 +17,7 @@ export default function TimeOffSettingsPage() {
 				<h1 className="text-2xl font-semibold">Time off</h1>
 				<p className="text-sm text-muted-foreground">No bookings are offered during time off.</p>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<ListSkeleton rows={3} />}>
 				<TimeOff />
 			</Suspense>
 		</div>

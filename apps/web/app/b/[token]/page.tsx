@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { ManageBooking } from '@/components/booking/manage-booking';
 import { loadActiveStaff } from '@/lib/public-booking/data';
 import { findBookingByToken, managedDetails, managePolicy } from '@/lib/public-booking/manage';
@@ -8,14 +9,14 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { formatLongDateTime, type Instant } from '@/lib/time';
 
 export const metadata: Metadata = {
-	title: 'Your booking · Fullcut',
+	title: 'Your booking',
 	robots: { index: false, follow: false },
 };
 
 export default function ManageBookingPage({ params }: PageProps<'/b/[token]'>) {
 	return (
 		<main className="mx-auto grid w-full max-w-lg gap-6 px-4 py-6">
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading your booking…</p>}>
+			<Suspense fallback={<ListSkeleton rows={3} title label="Loading your booking…" />}>
 				<ManagedBooking params={params} />
 			</Suspense>
 		</main>

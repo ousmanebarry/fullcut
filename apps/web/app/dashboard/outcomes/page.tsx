@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { UnmarkedList } from '@/components/dashboard/unmarked-list';
 import { requireShopMember } from '@/lib/auth/session';
 import { loadUnmarked } from '@/lib/dashboard/queries';
@@ -8,7 +9,7 @@ import { currentInstant } from '@/lib/dashboard/views';
 import { toBookingShop } from '@/lib/public-booking/data';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = { title: 'Outcomes · Fullcut' };
+export const metadata: Metadata = { title: 'Outcomes' };
 
 export default function OutcomesPage() {
 	return (
@@ -22,7 +23,7 @@ export default function OutcomesPage() {
 					Did they show up? Marking every appointment keeps your no-show history accurate.
 				</p>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<ListSkeleton />}>
 				<Unmarked />
 			</Suspense>
 		</div>

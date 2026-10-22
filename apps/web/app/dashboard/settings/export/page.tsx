@@ -1,19 +1,20 @@
 import { DownloadIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { buttonVariants } from '@/components/ui/button';
 import { requireShopOwner } from '@/lib/auth/session';
 import { EXPORT_SOURCES } from '@/lib/export/tables';
 import { createClient } from '@/lib/supabase/server';
 import { formatSlotLabel, instantFromIso, timeZone } from '@/lib/time';
 
-export const metadata: Metadata = { title: 'Export data · Fullcut' };
+export const metadata: Metadata = { title: 'Export data' };
 
 export default function ExportPage() {
 	return (
 		<div className="grid max-w-xl gap-4">
 			<h1 className="text-2xl font-semibold">Export data</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton fields={1} />}>
 				<ExportContent />
 			</Suspense>
 		</div>

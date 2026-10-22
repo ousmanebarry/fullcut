@@ -2,6 +2,7 @@ import { CheckIcon, PhoneIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { requireShopMember } from '@/lib/auth/session';
 import { unhandledReplies } from '@/lib/messaging/queries';
@@ -9,7 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 import { timeZone } from '@/lib/time';
 import { markReplyHandledAction } from './actions';
 
-export const metadata: Metadata = { title: 'Inbox · Fullcut' };
+export const metadata: Metadata = { title: 'Inbox' };
 
 export default function InboxPage() {
 	return (
@@ -21,7 +22,7 @@ export default function InboxPage() {
 					automatically.
 				</p>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading messages…</p>}>
+			<Suspense fallback={<ListSkeleton label="Loading messages…" />}>
 				<Replies />
 			</Suspense>
 		</div>

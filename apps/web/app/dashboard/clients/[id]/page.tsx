@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { ClientNotes } from '@/components/clients/client-notes';
 import { ClientContactForm } from '@/components/clients/contact-form';
 import { DeleteClientButton } from '@/components/clients/delete-client-button';
@@ -18,7 +19,7 @@ import { formatCents } from '@/lib/money/format';
 import { toBookingShop } from '@/lib/public-booking/data';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = { title: 'Client · Fullcut' };
+export const metadata: Metadata = { title: 'Client' };
 
 export default function ClientPage({ params }: PageProps<'/dashboard/clients/[id]'>) {
 	return (
@@ -30,7 +31,7 @@ export default function ClientPage({ params }: PageProps<'/dashboard/clients/[id
 				<ArrowLeftIcon aria-hidden="true" className="size-4" />
 				All clients
 			</Link>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading client…</p>}>
+			<Suspense fallback={<ListSkeleton title label="Loading client…" />}>
 				<Profile params={params} />
 			</Suspense>
 		</div>

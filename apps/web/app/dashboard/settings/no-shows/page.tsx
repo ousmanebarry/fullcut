@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { requireShopOwner } from '@/lib/auth/session';
 import { loadTierShares } from '@/lib/risk/queries';
 import { toRiskSettings } from '@/lib/risk/settings';
@@ -7,13 +8,13 @@ import { createClient } from '@/lib/supabase/server';
 import type { Instant } from '@/lib/time';
 import { RiskSettingsForm } from './no-shows-form';
 
-export const metadata: Metadata = { title: 'No-show protection · Fullcut' };
+export const metadata: Metadata = { title: 'No-show protection' };
 
 export default function NoShowSettingsPage() {
 	return (
 		<div className="grid max-w-xl gap-4">
 			<h1 className="text-2xl font-semibold">No-show protection</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton />}>
 				<NoShowSettings />
 			</Suspense>
 		</div>

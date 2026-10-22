@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { TableSkeleton } from '@/components/skeletons';
 import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,13 +21,13 @@ import { toBookingShop } from '@/lib/public-booking/data';
 import { createClient } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = { title: 'Clients · Fullcut' };
+export const metadata: Metadata = { title: 'Clients' };
 
 export default function ClientsPage({ searchParams }: PageProps<'/dashboard/clients'>) {
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-4">
 			<h1 className="text-2xl font-semibold">Clients</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading clients…</p>}>
+			<Suspense fallback={<TableSkeleton label="Loading clients…" />}>
 				<ClientList searchParams={searchParams} />
 			</Suspense>
 		</div>
@@ -100,10 +101,32 @@ async function ClientList({
 				{params.q ? ` matching “${params.q}”` : null}
 			</p>
 
-			{list.rows.length === 0 ? (
+			{list.rows.length === 0 && params.q ? (
 				<p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-					{params.q ? 'No clients match that search.' : 'No clients yet.'}
+					No clients match that search.
 				</p>
+			) : list.rows.length === 0 ? (
+				<div className="grid justify-items-center gap-3 rounded-lg border border-dashed p-8 text-center">
+					<p className="font-medium">No clients yet</p>
+					<p className="max-w-sm text-sm text-muted-foreground">
+						Clients are added automatically when they book through your page, or when you add a
+						booking yourself.
+					</p>
+					<div className="flex flex-wrap justify-center gap-2">
+						<Link href="/dashboard/calendar?new=1" className={buttonVariants({ size: 'lg' })}>
+							New booking
+						</Link>
+						{ctx.shop.booking_page_enabled ? (
+							<Link
+								href={`/${ctx.shop.slug}`}
+								target="_blank"
+								className={buttonVariants({ variant: 'outline', size: 'lg' })}
+							>
+								Open your booking page
+							</Link>
+						) : null}
+					</div>
+				</div>
 			) : (
 				<Table>
 					<TableHeader>

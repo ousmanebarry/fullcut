@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { requireShopOwner } from '@/lib/auth/session';
 import { listServices } from '@/lib/shop/queries';
 import { AddServiceForm, ServiceRow } from './service-forms';
 
-export const metadata: Metadata = { title: 'Services · Fullcut' };
+export const metadata: Metadata = { title: 'Services' };
 
 export default function ServicesSettingsPage() {
 	return (
@@ -13,7 +14,7 @@ export default function ServicesSettingsPage() {
 				<h1 className="text-2xl font-semibold">Services</h1>
 				<p className="text-sm text-muted-foreground">Clients see services in this order.</p>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<ListSkeleton />}>
 				<ServiceList />
 			</Suspense>
 		</div>

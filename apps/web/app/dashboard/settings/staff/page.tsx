@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { requireShopOwner } from '@/lib/auth/session';
 import { listStaff } from '@/lib/shop/queries';
 import { AddStaffForm, StaffRow } from './staff-forms';
 
-export const metadata: Metadata = { title: 'Staff · Fullcut' };
+export const metadata: Metadata = { title: 'Staff' };
 
 export default function StaffSettingsPage() {
 	return (
@@ -15,7 +16,7 @@ export default function StaffSettingsPage() {
 					Deactivated staff stop taking new bookings; their past bookings are kept.
 				</p>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<ListSkeleton rows={3} />}>
 				<StaffList />
 			</Suspense>
 		</div>

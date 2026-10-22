@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { AddEntryForm } from '@/components/dashboard/add-waitlist-entry';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { localDateOf, plusDays, timeZone } from '@/lib/time';
 import { OFFER_STATUS_LABELS, listActiveEntries, listRecentOffers } from '@/lib/waitlist/dashboard';
 import { cancelEntryAction } from './actions';
 
-export const metadata: Metadata = { title: 'Waitlist · Fullcut' };
+export const metadata: Metadata = { title: 'Waitlist' };
 
 export default function WaitlistPage() {
 	return (
@@ -24,7 +25,7 @@ export default function WaitlistPage() {
 					books the slot.
 				</p>
 			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading waitlist…</p>}>
+			<Suspense fallback={<ListSkeleton label="Loading waitlist…" />}>
 				<Waitlist />
 			</Suspense>
 		</div>

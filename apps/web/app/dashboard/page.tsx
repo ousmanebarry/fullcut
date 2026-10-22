@@ -2,6 +2,7 @@ import { CheckCircle2Icon, CircleIcon, PlusIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { BookingList } from '@/components/dashboard/booking-list';
 import { RefillMetricCard } from '@/components/dashboard/refill-metric';
 import { buttonVariants } from '@/components/ui/button';
@@ -14,11 +15,11 @@ import { createClient } from '@/lib/supabase/server';
 import { timeZone } from '@/lib/time';
 import { loadRefillMetric } from '@/lib/waitlist/metrics';
 
-export const metadata: Metadata = { title: 'Today · Fullcut' };
+export const metadata: Metadata = { title: 'Today' };
 
 export default function DashboardPage() {
 	return (
-		<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+		<Suspense fallback={<ListSkeleton title className="mx-auto w-full max-w-3xl" />}>
 			<Today />
 		</Suspense>
 	);
