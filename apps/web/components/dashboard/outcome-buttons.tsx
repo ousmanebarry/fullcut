@@ -44,7 +44,7 @@ export function OutcomeButtons({
 				size={compact ? 'icon-xs' : 'sm'}
 				variant="outline"
 				disabled={pending}
-				aria-label={`Mark ${clientName} completed`}
+				aria-label={`Mark ${clientName} done`}
 				onClick={(event) => {
 					event.stopPropagation();
 					mark('completed');
