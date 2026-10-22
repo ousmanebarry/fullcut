@@ -43,7 +43,9 @@ export function LoginForm() {
 				required
 				error={errors?.password}
 			/>
-			<SubmitButton pendingLabel="Signing in…">Sign in</SubmitButton>
+			<SubmitButton pendingLabel="Signing in…" className="h-11">
+				Sign in
+			</SubmitButton>
 			<p className="text-sm text-muted-foreground">
 				New to Fullcut?{' '}
 				<Link href="/signup" className="font-medium text-foreground underline underline-offset-4">

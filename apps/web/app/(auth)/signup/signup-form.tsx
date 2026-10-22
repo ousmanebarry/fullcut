@@ -49,7 +49,9 @@ export function SignupForm() {
 				hint="At least 8 characters."
 				error={errors?.password}
 			/>
-			<SubmitButton pendingLabel="Creating account…">Create account</SubmitButton>
+			<SubmitButton pendingLabel="Creating account…" className="h-11">
+				Create account
+			</SubmitButton>
 			<p className="text-sm text-muted-foreground">
 				Already have an account?{' '}
 				<Link href="/login" className="font-medium text-foreground underline underline-offset-4">

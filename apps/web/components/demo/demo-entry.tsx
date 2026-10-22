@@ -12,8 +12,11 @@ export function DemoEntry({ shopSlug }: { shopSlug: string }) {
 	const [state, action] = useActionState(signInAsDemo, idleState);
 
 	return (
-		<section aria-labelledby="demo-heading" className="grid gap-3 rounded-lg border p-4">
-			<h2 id="demo-heading" className="font-medium">
+		<section
+			aria-labelledby="demo-heading"
+			className="grid gap-3 rounded-2xl border bg-card p-5 shadow-sm md:p-6"
+		>
+			<h2 id="demo-heading" className="text-lg font-semibold tracking-tight">
 				Try it without signing up
 			</h2>
 			<p className="text-sm text-muted-foreground">
@@ -21,7 +24,7 @@ export function DemoEntry({ shopSlug }: { shopSlug: string }) {
 				night.
 			</p>
 			<FormError message={state.status === 'error' ? state.message : undefined} />
-			<form action={action} className="flex flex-wrap gap-2">
+			<form action={action} className="grid gap-2 sm:flex sm:flex-wrap">
 				<SubmitButton pendingLabel="Opening the demo…">Open the demo dashboard</SubmitButton>
 				<Link href={`/${shopSlug}`} className={buttonVariants({ variant: 'outline', size: 'lg' })}>
 					See a booking page
