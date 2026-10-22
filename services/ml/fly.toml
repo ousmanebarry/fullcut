@@ -1,37 +1,38 @@
-# No-show scoring service (docs/adr/0010-risk-scoring.md). Deploy from this folder: `fly deploy`.
-# First time: `fly launch --no-deploy --copy-config`, then `fly secrets set ML_SHARED_SECRET=<32+ random characters>`.
-app = "fullcut-ml"
-primary_region = "yyz"
+# fly.toml app configuration file generated for fullcut on 2026-10-22T01:23:35Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'fullcut'
+primary_region = 'yyz'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8000"
-  # The Kaggle prototype must never score real shops; turn this on only with a model trained on Fullcut data.
-  ML_MODEL_ENABLED = "false"
+  ML_MODEL_ENABLED = 'false'
+  PORT = '8000'
 
 [http_service]
   internal_port = 8000
   force_https = true
-  # The app gives scoring 300 ms, so a cold start would always time out: keep one machine running.
-  auto_stop_machines = "off"
+  auto_stop_machines = 'off'
   auto_start_machines = false
   min_machines_running = 1
 
   [http_service.concurrency]
-    type = "requests"
-    soft_limit = 50
+    type = 'requests'
     hard_limit = 100
+    soft_limit = 50
 
   [[http_service.checks]]
-    method = "GET"
-    path = "/health"
-    protocol = "http"
-    interval = "15s"
-    timeout = "3s"
-    grace_period = "15s"
+    interval = '15s'
+    timeout = '3s'
+    grace_period = '15s'
+    method = 'GET'
+    path = '/health'
+    protocol = 'http'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "1gb"
+  size = 'shared-cpu-1x'
+  memory = '1gb'
