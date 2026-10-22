@@ -1,6 +1,7 @@
 .venv/
 data/
-artifacts/
+artifacts/*
+!artifacts/2026-10-20-logreg-1/
 notebooks/
 tests/
 **/__pycache__/

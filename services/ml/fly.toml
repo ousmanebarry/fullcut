@@ -10,7 +10,10 @@ primary_region = 'yyz'
   dockerfile = 'Dockerfile'
 
 [env]
-  ML_MODEL_ENABLED = 'false'
+  # Kaggle prototype (clinic data), knowingly enabled for the demo; set to 'false' to fall back to the heuristic.
+  ML_MODEL_ENABLED = 'true'
+  ML_MODEL_PATH = '/app/model/model.joblib'
+  ML_MIN_SHOP_HISTORY = '0'
   PORT = '8000'
 
 [http_service]

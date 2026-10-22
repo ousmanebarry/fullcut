@@ -5,6 +5,8 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY fullcut_ml ./fullcut_ml
+# Git-ignored: only present when deploying from a machine that ran `python -m fullcut_ml.train`.
+COPY artifacts/2026-10-20-logreg-1/model.joblib ./model/model.joblib
 RUN uv sync --frozen --no-dev
 
 FROM python:3.12-slim
