@@ -63,7 +63,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
 			await test.step('client profile', async () => {
 				await page.goto('/dashboard/clients');
-				await page.locator('main table a[href^="/dashboard/clients/"]').first().click();
+				await page.locator('main a[href^="/dashboard/clients/"]:visible').first().click();
 				await expect(page).toHaveURL(/\/dashboard\/clients\/[0-9a-f-]{36}/);
 				await expectNoAxeViolations(page, true);
 			});

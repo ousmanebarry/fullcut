@@ -9,6 +9,7 @@ import {
 	nativeControlClass,
 } from '@/components/forms/fields';
 import { SubmitButton, useFormToast } from '@/components/forms/form-controls';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { idleState } from '@/lib/forms';
 import { REMINDER_LEAD_HOURS } from '@/lib/shop/schemas';
 import { saveMessageSettings } from './actions';
@@ -134,7 +135,9 @@ export function MessageSettingsForm({ defaults }: { defaults: MessageSettingsDef
 			<p className="text-sm text-muted-foreground">
 				Every text starts with your shop name. Clients who reply STOP get no more texts from you.
 			</p>
-			<SubmitButton className="justify-self-start">Save</SubmitButton>
+			<StickyActionBar>
+				<SubmitButton>Save</SubmitButton>
+			</StickyActionBar>
 		</form>
 	);
 }

@@ -1,62 +1,32 @@
-import Link from 'next/link';
 import { Suspense } from 'react';
-import { signOut } from '@/app/(auth)/actions';
+import { BottomTabBar, DashboardHeader } from '@/components/dashboard/app-nav';
 import { BookingsLive } from '@/components/dashboard/bookings-live';
 import { DemoTour, RestartTourButton } from '@/components/demo/demo-tour';
 import { InstallHint } from '@/components/pwa/install-hint';
 import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
-import { ThemeToggle } from '@/components/theme/theme-toggle';
-import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { requireShopMember } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 
-const NAV = [
-	{ href: '/dashboard', label: 'Today' },
-	{ href: '/dashboard/calendar', label: 'Calendar' },
-	{ href: '/dashboard/clients', label: 'Clients' },
-	{ href: '/dashboard/waitlist', label: 'Waitlist' },
-	{ href: '/dashboard/inbox', label: 'Inbox' },
-	{ href: '/dashboard/settings', label: 'Settings' },
-];
-
 export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>) {
 	return (
-		<div className="flex flex-1 flex-col">
-			<header className="border-b">
-				<div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
-					<Link href="/dashboard" className="font-semibold tracking-tight">
-						Fullcut
-					</Link>
+		// --tab-bar-h lifts sticky action bars above the phone tab bar, which already covers the home indicator.
+		<div className="flex flex-1 flex-col [--bar-safe:0px] [--tab-bar-h:calc(4rem+env(safe-area-inset-bottom))] md:[--tab-bar-h:0px]">
+			<DashboardHeader
+				shopName={
 					<Suspense fallback={null}>
 						<ShopName />
 					</Suspense>
-					<nav aria-label="Main" className="ml-auto flex flex-wrap items-center justify-end gap-1">
-						{NAV.map((item) => (
-							<Link
-								key={item.href}
-								href={item.href}
-								className="rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-							>
-								{item.label}
-							</Link>
-						))}
-						<ThemeToggle />
-						<form action={signOut}>
-							<Button type="submit" variant="ghost">
-								Sign out
-							</Button>
-						</form>
-					</nav>
-				</div>
-			</header>
-			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+				}
+			/>
+			<main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-5 pb-[calc(var(--tab-bar-h)+5.5rem)] md:py-8">
 				<Suspense fallback={null}>
 					<DemoNotice />
 				</Suspense>
 				<InstallHint />
 				{children}
 			</main>
+			<BottomTabBar />
 			<Toaster position="top-center" />
 			<ServiceWorkerRegister />
 			<Suspense fallback={null}>
@@ -68,7 +38,7 @@ export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>)
 
 async function ShopName() {
 	const { shop } = await requireShopMember();
-	return <span className="truncate text-sm text-muted-foreground">{shop.name}</span>;
+	return <span className="truncate">{shop.name}</span>;
 }
 
 async function LiveUpdates() {

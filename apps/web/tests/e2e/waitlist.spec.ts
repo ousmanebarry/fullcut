@@ -98,7 +98,7 @@ test.describe('waitlist refill', () => {
 
 		await owner.goto(`/dashboard/calendar?date=${torontoDate(1)}`);
 		const block = owner.getByRole('button', {
-			name: /^Ben Waiting, Haircut, .*refilled from waitlist$/,
+			name: /^Ben Waiting,?\s*Haircut.*refilled from waitlist$/i,
 		});
 		await expect(block).toBeVisible();
 		await block.click();

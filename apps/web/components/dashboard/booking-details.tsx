@@ -93,13 +93,6 @@ export function BookingDetails({
 				<dd>{booking.createdLabel}</dd>
 			</dl>
 
-			<RiskSection booking={booking} isOwner={isOwner} />
-
-			<BookingMessages
-				bookingId={booking.id}
-				version={`${booking.status}:${booking.startsAtMs}:${booking.staffId}:${booking.confirmation}`}
-			/>
-
 			{mode === 'edit' ? (
 				<EditForm
 					booking={booking}
@@ -111,10 +104,12 @@ export function BookingDetails({
 				/>
 			) : mode === 'cancel' ? (
 				<CancelForm booking={booking} onBack={() => setMode('view')} onDone={onClose} />
-			) : (
-				<div className="flex flex-wrap gap-2">
+			) : actions.length > 0 ? (
+				<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
 					{actions.includes('markCompleted') ? (
-						<OutcomeButtons bookingId={booking.id} clientName={booking.clientName} />
+						<div className="col-span-2">
+							<OutcomeButtons bookingId={booking.id} clientName={booking.clientName} />
+						</div>
 					) : null}
 					{actions.includes('undoOutcome') ? (
 						<Button type="button" variant="outline" onClick={() => void undoOutcome(booking.id)}>
@@ -133,7 +128,14 @@ export function BookingDetails({
 						</Button>
 					) : null}
 				</div>
-			)}
+			) : null}
+
+			<RiskSection booking={booking} isOwner={isOwner} />
+
+			<BookingMessages
+				bookingId={booking.id}
+				version={`${booking.status}:${booking.startsAtMs}:${booking.staffId}:${booking.confirmation}`}
+			/>
 		</div>
 	);
 }
@@ -211,7 +213,7 @@ function EditForm({
 				errors={error.fields}
 				suggestions={error.suggestions}
 			/>
-			<div className="flex gap-2">
+			<div className="grid grid-cols-2 gap-2 sm:flex">
 				<Button type="submit" size="lg" disabled={pending}>
 					{pending ? 'Saving…' : 'Save changes'}
 				</Button>
@@ -260,7 +262,7 @@ function CancelForm({
 				value={reason}
 				onChange={(event) => setReason(event.target.value)}
 			/>
-			<div className="flex gap-2">
+			<div className="grid grid-cols-2 gap-2 sm:flex">
 				<Button type="submit" size="lg" variant="destructive" disabled={pending}>
 					{pending ? 'Cancelling…' : 'Cancel booking'}
 				</Button>

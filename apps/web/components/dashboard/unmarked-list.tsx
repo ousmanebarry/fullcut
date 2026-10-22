@@ -50,8 +50,8 @@ export function UnmarkedList({
 
 	return (
 		<div className="grid gap-3">
-			<div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2">
-				<label className="flex items-center gap-2 px-1 text-sm">
+			<div className="sticky top-[calc(3.5rem+env(safe-area-inset-top)+0.5rem)] z-10 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2 shadow-sm">
+				<label className="flex min-h-10 items-center gap-2 px-1 text-sm">
 					<input
 						type="checkbox"
 						className="size-4 accent-primary"

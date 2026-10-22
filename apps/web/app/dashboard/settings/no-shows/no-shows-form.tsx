@@ -9,6 +9,7 @@ import {
 	nativeControlClass,
 } from '@/components/forms/fields';
 import { SubmitButton, useFormToast } from '@/components/forms/form-controls';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { idleState } from '@/lib/forms';
 import {
 	riskSettingsPreview,
@@ -233,7 +234,9 @@ export function RiskSettingsForm({
 			<p className="text-sm text-muted-foreground">
 				Texts are never sent between 9 PM and 9 AM, and clients who replied STOP get none.
 			</p>
-			<SubmitButton className="justify-self-start">Save</SubmitButton>
+			<StickyActionBar>
+				<SubmitButton>Save</SubmitButton>
+			</StickyActionBar>
 		</form>
 	);
 }

@@ -9,6 +9,7 @@ import {
 	nativeControlClass,
 } from '@/components/forms/fields';
 import { SubmitButton, useFormToast } from '@/components/forms/form-controls';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { idleState } from '@/lib/forms';
 import { SLOT_STEPS } from '@/lib/shop/schemas';
 import { saveBookingRules } from './actions';
@@ -128,7 +129,9 @@ export function BookingRulesForm({ defaults }: { defaults: BookingRulesDefaults 
 				}
 				error={errors?.maxActiveBookingsPerPhone}
 			/>
-			<SubmitButton className="justify-self-start">Save</SubmitButton>
+			<StickyActionBar>
+				<SubmitButton>Save</SubmitButton>
+			</StickyActionBar>
 		</form>
 	);
 }

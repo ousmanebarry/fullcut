@@ -1,10 +1,12 @@
-import { CheckCircle2Icon, CircleIcon, PlusIcon } from 'lucide-react';
+import { CheckCircle2Icon, ChevronRightIcon, CircleIcon, PlusIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { ListSkeleton } from '@/components/skeletons';
 import { BookingList } from '@/components/dashboard/booking-list';
+import { NewBookingFab } from '@/components/dashboard/new-booking-fab';
 import { RefillMetricCard } from '@/components/dashboard/refill-metric';
+import { PageHeader } from '@/components/layout/page-header';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireShopMember, toActor, type ShopContext } from '@/lib/auth/session';
@@ -13,6 +15,7 @@ import { toBookingShop } from '@/lib/public-booking/data';
 import { setupProgress } from '@/lib/shop/queries';
 import { createClient } from '@/lib/supabase/server';
 import { timeZone } from '@/lib/time';
+import { cn } from '@/lib/utils';
 import { loadRefillMetric } from '@/lib/waitlist/metrics';
 
 export const metadata: Metadata = { title: 'Today' };
@@ -37,16 +40,20 @@ async function Today() {
 
 	return (
 		<div className="mx-auto grid w-full max-w-3xl gap-6">
-			<div className="flex flex-wrap items-end justify-between gap-3">
-				<div className="grid gap-1">
-					<h1 className="text-2xl font-semibold">Today</h1>
-					<p className="text-sm text-muted-foreground">{model.title}</p>
-				</div>
-				<Link href="/dashboard/calendar?new=1" className={buttonVariants({ size: 'lg' })}>
-					<PlusIcon aria-hidden="true" />
-					New booking
-				</Link>
-			</div>
+			<PageHeader
+				title="Today"
+				description={model.title}
+				actions={
+					<Link
+						href="/dashboard/calendar?new=1"
+						className={cn(buttonVariants({ size: 'lg' }), 'hidden md:inline-flex')}
+					>
+						<PlusIcon aria-hidden="true" />
+						New booking
+					</Link>
+				}
+			/>
+			<NewBookingFab />
 
 			<SetupChecklist ctx={ctx} progress={progress} />
 
@@ -102,9 +109,9 @@ async function Today() {
 
 function Stat({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
 	return (
-		<div className="grid gap-0.5 rounded-lg border p-3">
+		<div className="grid gap-1 rounded-xl border bg-card p-4">
 			<dt className="text-sm text-muted-foreground">{label}</dt>
-			<dd className="text-2xl font-semibold tabular-nums">{value}</dd>
+			<dd className="text-3xl font-semibold tracking-tight tabular-nums">{value}</dd>
 			{hint ? <dd className="text-xs text-muted-foreground">{hint}</dd> : null}
 		</div>
 	);
@@ -157,30 +164,37 @@ function SetupChecklist({
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ul className="grid gap-2">
-					{steps.map((step) => (
-						<li key={step.href} className="flex items-center justify-between gap-3">
-							<span className="flex items-center gap-2 text-sm">
+				<ul className="-mx-2 grid gap-1">
+					{steps.map((step) => {
+						const content = (
+							<>
 								{step.done ? (
-									<CheckCircle2Icon className="size-4 text-primary" aria-hidden="true" />
+									<CheckCircle2Icon className="size-5 text-primary" aria-hidden="true" />
 								) : (
-									<CircleIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+									<CircleIcon className="size-5 text-muted-foreground" aria-hidden="true" />
 								)}
-								<span className={step.done ? 'text-muted-foreground line-through' : undefined}>
+								<span className={cn('flex-1', step.done && 'text-muted-foreground line-through')}>
 									{step.label}
 								</span>
 								<span className="sr-only">{step.done ? '(done)' : '(to do)'}</span>
-							</span>
-							{step.done ? null : (
-								<Link
-									href={step.href}
-									className={buttonVariants({ variant: 'outline', size: 'sm' })}
-								>
-									Go
-								</Link>
-							)}
-						</li>
-					))}
+								{step.done ? null : (
+									<ChevronRightIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+								)}
+							</>
+						);
+						const rowClass = 'flex min-h-11 items-center gap-3 rounded-lg px-2 text-sm';
+						return (
+							<li key={step.href}>
+								{step.done ? (
+									<span className={rowClass}>{content}</span>
+								) : (
+									<Link href={step.href} className={cn(rowClass, 'font-medium hover:bg-accent')}>
+										{content}
+									</Link>
+								)}
+							</li>
+						);
+					})}
 				</ul>
 			</CardContent>
 		</Card>

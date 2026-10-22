@@ -13,6 +13,9 @@ import {
 const NAVIGATION = { timeout: 20_000 };
 const LIVE = { timeout: 15_000 };
 
+// Grid blocks read "Name, Haircut, time"; phone agenda rows read "Name Haircut · time".
+const booking = (name: string, time: string) => new RegExp(`^${name},?\\s*Haircut[, ·]+${time}`);
+
 async function signIn(page: Page, credentials: { email: string; password: string }) {
 	await page.goto('/login');
 	await page.getByLabel('Email').fill(credentials.email);
@@ -23,7 +26,10 @@ async function signIn(page: Page, credentials: { email: string; password: string
 
 async function openCalendar(page: Page, date: string) {
 	await page.goto(`/dashboard/calendar?date=${date}`);
-	await expect(page.getByTestId('calendar-grid')).toBeVisible();
+	// Phones get the agenda list; wider screens the time grid.
+	await expect(
+		page.locator('[data-testid="calendar-grid"]:visible, [data-testid="calendar-agenda"]:visible'),
+	).toBeVisible();
 	await page.waitForLoadState('networkidle');
 }
 
@@ -68,7 +74,7 @@ test.describe('dashboard calendar', () => {
 			phone: '4165550142',
 			time: '10:00',
 		});
-		const block = page.getByRole('button', { name: 'Pat Phone, Haircut, 10:00 AM – 10:30 AM' });
+		const block = page.getByRole('button', { name: booking('Pat Phone', '10:00 AM – 10:30 AM') });
 		await expect(block).toBeVisible();
 
 		await block.click();
@@ -84,7 +90,7 @@ test.describe('dashboard calendar', () => {
 		await expect(drawer.getByText('Haircut · 11:00 AM – 11:30 AM')).toBeVisible();
 		await page.keyboard.press('Escape');
 		await expect(
-			page.getByRole('button', { name: 'Pat Phone, Haircut, 11:00 AM – 11:30 AM' }),
+			page.getByRole('button', { name: booking('Pat Phone', '11:00 AM – 11:30 AM') }),
 		).toBeVisible();
 
 		// A walk-in recorded after the fact is past its end, so it asks for an outcome.
@@ -129,7 +135,7 @@ test.describe('dashboard calendar', () => {
 		await clientContext.close();
 
 		await expect(
-			page.getByRole('button', { name: 'Lee Live, Haircut, 2:00 PM – 2:30 PM' }),
+			page.getByRole('button', { name: booking('Lee Live', '2:00 PM – 2:30 PM') }),
 		).toBeVisible(LIVE);
 	});
 });

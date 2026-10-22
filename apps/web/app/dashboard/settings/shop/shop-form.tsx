@@ -10,6 +10,7 @@ import {
 	nativeControlClass,
 } from '@/components/forms/fields';
 import { SubmitButton, useFormToast } from '@/components/forms/form-controls';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { idleState } from '@/lib/forms';
 import { CURRENCIES } from '@/lib/shop/schemas';
 import { saveShopProfile } from './actions';
@@ -129,7 +130,9 @@ export function ShopProfileForm({
 				defaultValue={value('logoUrl')}
 				error={errors?.logoUrl}
 			/>
-			<SubmitButton className="justify-self-start">Save</SubmitButton>
+			<StickyActionBar>
+				<SubmitButton>Save</SubmitButton>
+			</StickyActionBar>
 		</form>
 	);
 }
