@@ -5,6 +5,7 @@ import { BookingsLive } from '@/components/dashboard/bookings-live';
 import { DemoTour, RestartTourButton } from '@/components/demo/demo-tour';
 import { InstallHint } from '@/components/pwa/install-hint';
 import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { requireShopMember } from '@/lib/auth/session';
@@ -35,11 +36,12 @@ export default function DashboardLayout({ children }: LayoutProps<'/dashboard'>)
 							<Link
 								key={item.href}
 								href={item.href}
-								className="rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+								className="rounded-md px-2 py-1.5 text-sm hover:bg-accent"
 							>
 								{item.label}
 							</Link>
 						))}
+						<ThemeToggle />
 						<form action={signOut}>
 							<Button type="submit" variant="ghost">
 								Sign out

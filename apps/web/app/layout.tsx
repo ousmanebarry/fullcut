@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { THEME_SCRIPT } from '@/lib/theme';
 import './globals.css';
 
 const geistSans = Geist({
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
 	metadataBase: new URL(process.env.SITE_URL || 'https://fullcut.ca'),
-	title: 'Fullcut',
+	title: { default: 'Fullcut', template: '%s · Fullcut' },
 	applicationName: 'Fullcut',
 	description: 'Booking for independent barbers and stylists. Flat price, zero commission.',
 	openGraph: {
@@ -35,12 +36,19 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
 	width: 'device-width',
 	initialScale: 1,
-	themeColor: '#ffffff',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
 	return (
-		<html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+		// The theme script sets class, color-scheme and theme-color before hydration.
+		<html
+			lang="en"
+			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+			suppressHydrationWarning
+		>
+			<head>
+				<script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+			</head>
 			<body className="flex min-h-full flex-col">{children}</body>
 		</html>
 	);

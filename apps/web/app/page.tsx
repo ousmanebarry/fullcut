@@ -9,6 +9,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DemoEntry } from '@/components/demo/demo-entry';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { buttonVariants } from '@/components/ui/button';
 import { getDemoShopSlug } from '@/lib/env';
 import { cn } from '@/lib/utils';
@@ -87,10 +88,11 @@ export default function Home() {
 						Fullcut
 					</Link>
 					<nav aria-label="Main" className="ml-auto flex items-center gap-1">
-						<Link href="#pricing" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+						<ThemeToggle />
+						<Link href="#pricing" className="rounded-md px-2 py-1.5 text-sm hover:bg-accent">
 							Pricing
 						</Link>
-						<Link href="/login" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+						<Link href="/login" className="rounded-md px-2 py-1.5 text-sm hover:bg-accent">
 							Log in
 						</Link>
 						<Link href="/signup" className={buttonVariants()}>
