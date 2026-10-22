@@ -19,7 +19,7 @@ export default function OpengraphImage() {
 				fontFamily: 'sans-serif',
 			}}
 		>
-			<div style={{ fontSize: 40, opacity: 0.7 }}>Fullcut</div>
+			<div style={{ fontSize: 40, color: '#5fd0cb' }}>Fullcut</div>
 			<div style={{ fontSize: 80, fontWeight: 700, marginTop: 24, lineHeight: 1.1 }}>
 				Fill your chair. Keep your clients.
 			</div>

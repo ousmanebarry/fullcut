@@ -10,7 +10,7 @@ export function monogramIcon(size: number, { maskable = false } = {}): ImageResp
 				display: 'flex',
 				alignItems: 'center',
 				justifyContent: 'center',
-				background: '#171717',
+				background: '#0e6b6e',
 				color: '#ffffff',
 				fontSize: Math.round(size * (maskable ? 0.45 : 0.62)),
 				lineHeight: 1,
