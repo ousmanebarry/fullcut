@@ -90,13 +90,13 @@ test.describe('dashboard calendar', () => {
 		// A walk-in recorded after the fact is past its end, so it asks for an outcome.
 		await openCalendar(page, torontoDate(-1));
 		await addBooking(page, { source: 'Walk-in', name: 'Walt Walkin', time: '10:00' });
-		await page.getByRole('button', { name: 'Mark Walt Walkin completed' }).click();
+		await page.getByRole('button', { name: 'Mark Walt Walkin done' }).click();
 		await expect(page.getByText('Walt Walkin: Marked completed.')).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Mark Walt Walkin completed' })).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Mark Walt Walkin done' })).toHaveCount(0);
 
 		await page.getByRole('button', { name: 'Undo' }).click();
 		await expect(page.getByText('Outcome undone.')).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Mark Walt Walkin completed' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Mark Walt Walkin done' })).toBeVisible();
 
 		await page.goto('/dashboard');
 		await expect(page.getByText('1 past appointment needs an outcome.')).toBeVisible();
