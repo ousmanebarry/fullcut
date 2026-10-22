@@ -146,7 +146,7 @@ export function RestartTourButton() {
 		<button
 			type="button"
 			onClick={() => setDone(false)}
-			className="font-medium underline underline-offset-4"
+			className="font-medium underline underline-offset-4 hover:no-underline"
 		>
 			Take the tour
 		</button>

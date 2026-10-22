@@ -18,8 +18,8 @@ export function SettingsNav({ items }: { items: SettingsSection[] }) {
 								href={item.href}
 								aria-current={active ? 'page' : undefined}
 								className={cn(
-									'block rounded-md px-3 py-2 text-sm whitespace-nowrap hover:bg-muted',
-									active && 'bg-muted font-medium',
+									'block rounded-md px-3 py-2 text-sm whitespace-nowrap hover:bg-accent',
+									active && 'bg-accent font-medium',
 								)}
 							>
 								{item.label}

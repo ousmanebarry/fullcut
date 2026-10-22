@@ -158,7 +158,7 @@ export function CalendarGrid({
 										>
 											<button
 												type="button"
-												className="absolute inset-0 rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+												className="absolute inset-0 rounded-md hover:bg-foreground/5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
 												onClick={() => onOpenBooking(booking.id)}
 												aria-label={`${booking.clientName}, ${booking.serviceName}, ${booking.timeLabel}${flags.length > 0 ? `, ${flags.join(', ')}` : ''}`}
 											/>

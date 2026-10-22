@@ -184,7 +184,7 @@ export function NewBookingForm({
 									<li key={match.id}>
 										<button
 											type="button"
-											className="flex w-full justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
+											className="flex w-full justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
 											onClick={() => pick(match)}
 										>
 											<span className="font-medium">{match.name}</span>

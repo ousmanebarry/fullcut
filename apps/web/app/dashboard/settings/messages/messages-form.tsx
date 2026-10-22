@@ -84,7 +84,10 @@ export function MessageSettingsForm({ defaults }: { defaults: MessageSettingsDef
 			<fieldset className="grid gap-2">
 				<legend className="mb-2 text-sm font-medium">Texts to send</legend>
 				{TOGGLES.map((toggle) => (
-					<label key={toggle.name} className="flex items-start gap-3 rounded-lg border p-3">
+					<label
+						key={toggle.name}
+						className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50"
+					>
 						<input
 							type="checkbox"
 							name={toggle.name}

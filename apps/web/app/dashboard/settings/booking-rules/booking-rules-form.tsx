@@ -47,7 +47,7 @@ export function BookingRulesForm({ defaults }: { defaults: BookingRulesDefaults 
 			<FormError
 				message={state.status === 'error' && !state.fieldErrors ? state.message : undefined}
 			/>
-			<label className="flex items-start gap-3 rounded-lg border p-3">
+			<label className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50">
 				<input
 					type="checkbox"
 					name="bookingPageEnabled"

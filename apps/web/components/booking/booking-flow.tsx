@@ -102,7 +102,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 										setSlot(null);
 										setStep('time');
 									}}
-									className="flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+									className="flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 text-left outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
 								>
 									<span className="grid">
 										<span className="font-medium">{s.name}</span>
@@ -226,7 +226,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 						/>
 						<a
 							href={created.manageUrl}
-							className="inline-flex h-11 items-center rounded-lg border px-3 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+							className="inline-flex h-11 items-center rounded-lg border px-3 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
 							Manage booking
 						</a>

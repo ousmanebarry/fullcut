@@ -112,7 +112,7 @@ export function RiskSettingsForm({
 				used.
 			</p>
 
-			<label className="flex items-start gap-3 rounded-lg border p-3">
+			<label className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50">
 				<input
 					type="checkbox"
 					name="actionsEnabled"

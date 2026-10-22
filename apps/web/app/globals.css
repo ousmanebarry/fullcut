@@ -61,7 +61,7 @@
 	--secondary-foreground: oklch(0.205 0 0);
 	--muted: oklch(0.97 0 0);
 	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
+	--accent: oklch(0.94 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: oklch(0.577 0.245 27.325);
 	--border: oklch(0.922 0 0);
@@ -126,5 +126,34 @@
 	}
 	html {
 		@apply font-sans;
+	}
+	/* Tailwind v4 preflight resets buttons to cursor: default. */
+	button:not(:disabled),
+	[role='button']:not([aria-disabled='true']),
+	[role='tab']:not([aria-disabled='true']),
+	[role='option']:not([aria-disabled='true']),
+	[role='menuitem']:not([aria-disabled='true']),
+	summary,
+	select:not(:disabled),
+	input[type='checkbox']:not(:disabled),
+	input[type='radio']:not(:disabled),
+	label:has(input[type='checkbox']:not(:disabled)),
+	label:has(input[type='radio']:not(:disabled)) {
+		cursor: pointer;
+	}
+	button:disabled,
+	select:disabled {
+		cursor: not-allowed;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
 	}
 }
