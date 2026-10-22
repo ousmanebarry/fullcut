@@ -1,7 +1,8 @@
 'use client';
 
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { StepProgress } from '@/components/layout/step-progress';
 import { Button } from '@/components/ui/button';
 import { formatCents } from '@/lib/money/format';
 import type { BookingCreated, PublicShop, PublicSlot } from '@/lib/public-booking/types';
@@ -49,42 +50,48 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 		setStep('service');
 	}
 
-	return (
-		<section aria-labelledby="booking-step-title" className="grid gap-4">
-			<div className="grid gap-1">
-				{stepNumber ? (
-					<p className="text-xs font-medium text-muted-foreground">Step {stepNumber} of 3</p>
-				) : null}
-				<h2
-					id="booking-step-title"
-					ref={headingRef}
-					tabIndex={-1}
-					className="flex items-center gap-2 text-xl font-semibold outline-none"
-				>
-					{step === 'done' || step === 'waitlisted' ? (
-						<Check aria-hidden className="size-5" />
-					) : null}
-					{STEP_TITLES[step]}
-				</h2>
-			</div>
+	const backLabel =
+		step === 'details'
+			? 'Change time'
+			: step === 'waitlist'
+				? 'Back to times'
+				: step === 'time'
+					? 'Change service'
+					: null;
 
-			{step !== 'service' && step !== 'done' && step !== 'waitlisted' ? (
-				<Button
-					type="button"
-					variant="ghost"
-					className="h-11 justify-self-start px-2"
-					onClick={() =>
-						setStep(step === 'details' ? 'time' : step === 'waitlist' ? 'time' : 'service')
-					}
-				>
-					<ArrowLeft aria-hidden />
-					{step === 'details'
-						? 'Change time'
-						: step === 'waitlist'
-							? 'Back to times'
-							: 'Change service'}
-				</Button>
-			) : null}
+	return (
+		<section aria-labelledby="booking-step-title" className="grid gap-5">
+			<div className="sticky top-0 z-20 -mx-4 grid gap-3 border-b bg-background/95 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3 backdrop-blur supports-backdrop-filter:bg-background/80 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+				{stepNumber ? <StepProgress current={stepNumber} total={3} /> : null}
+				<div className="flex items-center justify-between gap-2">
+					<h2
+						id="booking-step-title"
+						ref={headingRef}
+						tabIndex={-1}
+						className="flex items-center gap-2 text-xl font-semibold tracking-tight outline-none"
+					>
+						{step === 'done' || step === 'waitlisted' ? (
+							<span className="flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
+								<Check aria-hidden className="size-4" />
+							</span>
+						) : null}
+						{STEP_TITLES[step]}
+					</h2>
+					{backLabel ? (
+						<Button
+							type="button"
+							variant="ghost"
+							className="h-10 shrink-0 px-2 text-muted-foreground"
+							onClick={() =>
+								setStep(step === 'details' || step === 'waitlist' ? 'time' : 'service')
+							}
+						>
+							<ArrowLeft aria-hidden />
+							{backLabel}
+						</Button>
+					) : null}
+				</div>
+			</div>
 
 			{step === 'service' ? (
 				shop.services.length === 0 ? (
@@ -102,13 +109,16 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 										setSlot(null);
 										setStep('time');
 									}}
-									className="flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 text-left outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
+									className="flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 text-left outline-none hover:border-primary/40 hover:bg-primary/5 focus-visible:ring-3 focus-visible:ring-ring/50"
 								>
 									<span className="grid">
 										<span className="font-medium">{s.name}</span>
 										<span className="text-sm text-muted-foreground">{s.durationMinutes} min</span>
 									</span>
-									<span className="font-medium">{formatCents(s.priceCents, shop.currency)}</span>
+									<span className="flex items-center gap-2 font-semibold">
+										{formatCents(s.priceCents, shop.currency)}
+										<ChevronRight aria-hidden className="size-4 text-muted-foreground" />
+									</span>
 								</button>
 							</li>
 						))}
@@ -118,7 +128,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 
 			{step === 'time' && service ? (
 				<>
-					<p className="text-sm">
+					<p className="rounded-lg bg-muted/60 px-3 py-2 text-sm">
 						<span className="font-medium">{service.name}</span>
 						<span className="text-muted-foreground">
 							{' '}
@@ -218,7 +228,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 							}}
 						/>
 					</div>
-					<div className="flex flex-wrap gap-2">
+					<div className="grid gap-2 sm:flex sm:flex-wrap">
 						<AddToCalendarButton
 							booking={created.booking}
 							reference={created.reference}
@@ -226,7 +236,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
 						/>
 						<a
 							href={created.manageUrl}
-							className="inline-flex h-11 items-center rounded-lg border px-3 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
+							className="inline-flex h-11 items-center justify-center rounded-lg border px-4 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
 							Manage booking
 						</a>

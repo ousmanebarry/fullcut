@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FieldShell, FormError, describedBy, nativeControlClass } from '@/components/forms/fields';
 import { HoneypotField } from '@/components/forms/honeypot-field';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { joinWaitlist } from '@/lib/public-booking/client-api';
@@ -245,9 +246,11 @@ export function WaitlistForm({ shop, serviceId, staffChoice, onJoined }: Waitlis
 
 			<HoneypotField id="waitlist-website" value={website} onChange={setWebsite} />
 
-			<Button type="submit" size="lg" className="h-12 text-base" disabled={submitting}>
-				{submitting ? 'Joining…' : 'Join the waitlist'}
-			</Button>
+			<StickyActionBar>
+				<Button type="submit" size="lg" className="h-12 text-base md:w-full" disabled={submitting}>
+					{submitting ? 'Joining…' : 'Join the waitlist'}
+				</Button>
+			</StickyActionBar>
 		</form>
 	);
 }

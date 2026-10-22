@@ -28,20 +28,39 @@ export function DayStrip({
 	onPreviousWeek: () => void;
 	onNextWeek: () => void;
 }) {
+	const first = days[0]?.date;
+	const last = days.at(-1)?.date;
+	const monthLabel =
+		first && last
+			? `${monthLong(first)}${monthLong(last) !== monthLong(first) ? ` – ${monthLong(last)}` : ''} ${last.slice(0, 4)}`
+			: '';
 	return (
-		<div className="flex items-stretch gap-1">
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon-lg"
-				className="h-auto min-h-11 shrink-0"
-				aria-label="Previous week"
-				disabled={!canGoBack}
-				onClick={onPreviousWeek}
-			>
-				<ChevronLeft aria-hidden />
-			</Button>
-			<ul className="grid flex-1 grid-cols-7 gap-1" aria-label="Choose a day">
+		<div className="grid gap-2">
+			<div className="flex items-center justify-between gap-2">
+				<p className="text-sm font-medium">{monthLabel}</p>
+				<div className="flex gap-1">
+					<Button
+						type="button"
+						variant="outline"
+						size="icon-lg"
+						aria-label="Previous week"
+						disabled={!canGoBack}
+						onClick={onPreviousWeek}
+					>
+						<ChevronLeft aria-hidden />
+					</Button>
+					<Button
+						type="button"
+						variant="outline"
+						size="icon-lg"
+						aria-label="Next week"
+						onClick={onNextWeek}
+					>
+						<ChevronRight aria-hidden />
+					</Button>
+				</div>
+			</div>
+			<ul className="grid grid-cols-7 gap-1 sm:gap-1.5" aria-label="Choose a day">
 				{days.map(({ date, weekday, count }) => {
 					const active = date === activeDate;
 					return (
@@ -51,7 +70,7 @@ export function DayStrip({
 								aria-pressed={active}
 								onClick={() => onPickDay(date)}
 								className={cn(
-									'flex min-h-14 w-full flex-col items-center justify-center rounded-lg border text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+									'flex min-h-16 w-full flex-col items-center justify-center rounded-xl border text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
 									active
 										? 'border-primary bg-primary text-primary-foreground'
 										: 'bg-background hover:bg-accent',
@@ -59,7 +78,7 @@ export function DayStrip({
 								)}
 							>
 								<span>{weekday ?? weekdayShort(date)}</span>{' '}
-								<span className="text-base font-semibold">{Number(date.slice(8))}</span>
+								<span className="text-lg font-semibold">{Number(date.slice(8))}</span>
 								<span className="sr-only">
 									{` ${monthLong(date)}, ${loading ? 'loading' : count === 0 ? 'no times' : `${count} times`}`}
 								</span>
@@ -79,16 +98,6 @@ export function DayStrip({
 					);
 				})}
 			</ul>
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon-lg"
-				className="h-auto min-h-11 shrink-0"
-				aria-label="Next week"
-				onClick={onNextWeek}
-			>
-				<ChevronRight aria-hidden />
-			</Button>
 		</div>
 	);
 }

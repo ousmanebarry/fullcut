@@ -101,7 +101,7 @@ export function SlotList({
 												aria-label={slot.label}
 												onClick={() => onPick(slot)}
 												className={cn(
-													'min-h-11 w-full rounded-lg border px-2 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+													'min-h-12 w-full rounded-xl border px-2 text-sm font-medium tabular-nums outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
 													isSelected
 														? 'border-primary bg-primary text-primary-foreground'
 														: 'bg-background hover:bg-accent',

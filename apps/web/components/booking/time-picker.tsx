@@ -154,13 +154,22 @@ export function TimePicker({
 				</fieldset>
 			) : null}
 
+			<DayStrip
+				days={dayItems}
+				activeDate={activeDate}
+				loading={loading}
+				canGoBack={windowStart > today}
+				onPickDay={setUserDate}
+				onPreviousWeek={() => moveWindow(addDays(windowStart, -WINDOW_DAYS))}
+				onNextWeek={() => moveWindow(addDays(windowStart, WINDOW_DAYS))}
+			/>
+
 			<div className="flex flex-wrap items-center justify-between gap-2">
-				<h3 className="text-sm font-medium">{longDateLabel(activeDate)}</h3>
+				<h3 className="font-medium">{longDateLabel(activeDate)}</h3>
 				<Button
 					type="button"
-					variant="outline"
-					size="lg"
-					className="min-h-11"
+					variant="ghost"
+					className="h-10 px-2 text-primary hover:text-primary"
 					onClick={() => {
 						if (windowStart === today) {
 							const first = days.find((d) => slotsByDate.has(d));
@@ -174,16 +183,6 @@ export function TimePicker({
 					Next available
 				</Button>
 			</div>
-
-			<DayStrip
-				days={dayItems}
-				activeDate={activeDate}
-				loading={loading}
-				canGoBack={windowStart > today}
-				onPickDay={setUserDate}
-				onPreviousWeek={() => moveWindow(addDays(windowStart, -WINDOW_DAYS))}
-				onNextWeek={() => moveWindow(addDays(windowStart, WINDOW_DAYS))}
-			/>
 
 			{browserTz && browserTz !== timezone ? (
 				<p className="text-xs text-muted-foreground">

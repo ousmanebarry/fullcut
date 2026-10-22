@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function ManageBookingPage({ params }: PageProps<'/b/[token]'>) {
 	return (
-		<main className="mx-auto grid w-full max-w-lg gap-6 px-4 py-6">
+		<main className="mx-auto grid w-full max-w-lg content-start gap-6 px-4 pt-6 pb-10 md:my-12 md:rounded-2xl md:border md:bg-card md:p-8 md:shadow-sm">
 			<Suspense fallback={<ListSkeleton rows={3} title label="Loading your booking…" />}>
 				<ManagedBooking params={params} />
 			</Suspense>
