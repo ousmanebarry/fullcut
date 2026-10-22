@@ -56,7 +56,7 @@ The case study, with the problem, the hardest engineering problems and the resul
 
 | Suite                                    | Count                         | Command         |
 | ---------------------------------------- | ----------------------------- | --------------- |
-| Unit (Vitest)                            | 500 tests in 29 files         | `pnpm test`     |
+| Unit + component (Vitest)                | 519 tests in 35 files         | `pnpm test`     |
 | Database (pgTAP: RLS, constraints, RPCs) | 462 tests in 18 files         | `pnpm db:test`  |
 | DB integration (Vitest, real Postgres)   | 110 tests in 12 files         | `pnpm db:test`  |
 | End-to-end (Playwright, incl. axe)       | 22 tests × desktop and mobile | `pnpm test:e2e` |
