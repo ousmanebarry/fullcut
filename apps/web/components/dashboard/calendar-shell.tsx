@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { BookingDetails } from './booking-details';
 import { CalendarGrid } from './calendar-grid';
 import { NewBookingForm } from './new-booking-form';
+import { StaffTabs } from './staff-tabs';
 import { minuteToTime, useNow, zonedMinuteOfDay } from './use-now';
 
 const PATH = '/dashboard/calendar';
@@ -133,7 +134,7 @@ export function CalendarShell({
 							aria-current={model.view === view ? 'page' : undefined}
 							className={cn(
 								'rounded-md px-3 py-1 text-sm capitalize',
-								model.view === view ? 'bg-muted font-medium' : 'hover:bg-muted/60',
+								model.view === view ? 'bg-accent font-medium' : 'hover:bg-accent/60',
 							)}
 						>
 							{view}
@@ -168,27 +169,16 @@ export function CalendarShell({
 							</select>
 						</label>
 					) : model.staff.length > 1 ? (
-						<div role="tablist" aria-label="Staff" className="flex gap-1 overflow-x-auto md:hidden">
-							{model.staff.map((member) => (
-								<button
-									key={member.id}
-									type="button"
-									role="tab"
-									aria-selected={member.id === phoneStaffId}
-									className={cn(
-										'shrink-0 rounded-md border px-3 py-1.5 text-sm',
-										member.id === phoneStaffId ? 'bg-muted font-medium' : '',
-									)}
-									onClick={() => {
-										const params = new URLSearchParams(searchParams);
-										params.set('staff', member.id);
-										window.history.replaceState(null, '', `${PATH}?${params}`);
-									}}
-								>
-									{member.name}
-								</button>
-							))}
-						</div>
+						<StaffTabs
+							className="md:hidden"
+							staff={model.staff}
+							selectedId={phoneStaffId}
+							onSelect={(id) => {
+								const params = new URLSearchParams(searchParams);
+								params.set('staff', id);
+								window.history.replaceState(null, '', `${PATH}?${params}`);
+							}}
+						/>
 					) : null}
 
 					<CalendarGrid

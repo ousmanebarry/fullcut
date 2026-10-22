@@ -24,6 +24,7 @@ export function SubmitButton({
 			size="lg"
 			disabled={pending}
 			aria-disabled={pending}
+			aria-busy={pending}
 			className={className}
 			variant={variant}
 		>
