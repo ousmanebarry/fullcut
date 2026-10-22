@@ -8,5 +8,6 @@ export default function robots(): MetadataRoute.Robots {
 			// Private areas and per-client token links.
 			disallow: ['/dashboard', '/onboarding', '/api/', '/auth/', '/b/', '/w/', '/wl/'],
 		},
+		sitemap: new URL('/sitemap.xml', process.env.SITE_URL || 'https://fullcut.ca').href,
 	};
 }
