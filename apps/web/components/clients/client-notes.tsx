@@ -19,12 +19,18 @@ export function ClientNotes({
 	notes: ClientNoteView[];
 	canAdd: boolean;
 }) {
-	const [body, setBody] = useState('');
 	const [error, setError] = useState<string>();
 	const [pending, startTransition] = useTransition();
 
-	const add = (event: React.FormEvent) => {
+	// Read from the form, not state: text typed before hydration must still count.
+	const add = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		const form = event.currentTarget;
+		const body = String(new FormData(form).get('body') ?? '');
+		if (!body.trim()) {
+			setError('Write a note first.');
+			return;
+		}
 		startTransition(async () => {
 			const result = await addNoteAction({ clientId, body });
 			if (!result.ok) {
@@ -32,7 +38,7 @@ export function ClientNotes({
 				return;
 			}
 			setError(undefined);
-			setBody('');
+			form.reset();
 			toast.success(result.message);
 		});
 	};
@@ -53,14 +59,12 @@ export function ClientNotes({
 						name="body"
 						label="Add a note"
 						hint="Only your team sees these, e.g. “#2 fade, likes it short on top”."
-						value={body}
-						onChange={(event) => setBody(event.target.value)}
 						maxLength={MAX_NOTE_LENGTH}
 						error={error}
 						rows={2}
 					/>
 					<div>
-						<Button type="submit" size="sm" disabled={pending || !body.trim()}>
+						<Button type="submit" size="sm" disabled={pending}>
 							Add note
 						</Button>
 					</div>

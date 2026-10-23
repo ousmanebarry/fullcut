@@ -111,8 +111,9 @@ export function CalendarAgenda({
 									{minuteLabel(item.startMin)}
 								</span>
 								<span className="grid min-w-0 flex-1 gap-1">
-									<span className="truncate font-medium text-foreground">{booking.clientName}</span>
-									<span className="truncate text-sm text-muted-foreground">
+									<span className="truncate font-medium">{booking.clientName}</span>
+									{/* Inherits the status colour: muted grey fails contrast on the tinted rows. */}
+									<span className="truncate text-sm">
 										{booking.serviceName} · {booking.timeLabel}
 									</span>
 									<span className="flex flex-wrap gap-1.5 empty:hidden">

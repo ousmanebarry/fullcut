@@ -62,6 +62,7 @@ test.describe('clients and export', () => {
 		await page.getByLabel('Name or phone').press('Enter');
 		await page.getByRole('link', { name: 'Pat Regular' }).click();
 		await expect(page.getByRole('heading', { name: 'Pat Regular' })).toBeVisible(NAVIGATION);
+		await page.waitForLoadState('networkidle');
 		await expect(page.getByText('28 days')).toBeVisible();
 
 		await page.getByLabel('Add a note').fill('#2 fade, likes it short on top');
