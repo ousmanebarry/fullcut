@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(21);
 
 select tests.seed_two_shops();
 
@@ -116,6 +116,26 @@ select is(
   (select count(*) from public.bookings where shop_id = tests.id('shop_a')),
   (select shop_a_bookings from before_reset),
   'reset leaves other shops alone'
+);
+
+select is(
+  (select count(*)::int from public.inbound_messages
+   where shop_id = (select shop_id from demo) and kind = 'other' and handled_at is null),
+  5,
+  'reset seeds five unhandled inbox messages'
+);
+
+select results_eq(
+  $$select status, count(*)::int from public.slot_offers
+    where shop_id = (select shop_id from demo) group by status order by status$$,
+  $$values ('claimed', 1), ('expired', 2), ('sent', 1), ('taken', 1)$$,
+  'reset seeds slot offers in every state'
+);
+
+select is(
+  (select count(*)::int from public.waitlist_entries where shop_id = (select shop_id from demo) and status = 'active'),
+  5,
+  'reset seeds five active waitlist entries'
 );
 
 select is(

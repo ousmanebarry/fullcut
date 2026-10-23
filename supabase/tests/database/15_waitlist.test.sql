@@ -322,14 +322,14 @@ select ok(
 );
 select is(
   (select count(*)::int from public.waitlist_entries where shop_id = (select shop_id from demo) and status = 'active'),
-  3,
+  5,
   'the demo shop starts with sample waitlist entries'
 );
 
 select private.reset_demo_shop();
 select is(
   (select count(*)::int from public.waitlist_entries where shop_id = (select shop_id from demo)),
-  3,
+  7,
   'the nightly reset rebuilds the sample entries without duplicating them'
 );
 
