@@ -18,6 +18,8 @@ Flat price. Zero commission. Your clients stay yours. And the app actively fills
 
 ![Fullcut demo](docs/media/demo.gif)
 
+**Screenshots:** [light desktop](docs/media/screens/light/desktop) · [light phone](docs/media/screens/light/phone) · [dark desktop](docs/media/screens/dark/desktop) · [dark phone](docs/media/screens/dark/phone)
+
 ---
 
 Square Appointments, Booksy, Fresha, Vagaro and StyleSeat charge established professionals new-client commissions, add-on fees, and list them in marketplaces next to their competitors. Fullcut is the opposite: a branded booking page the shop controls, no commission ever, a full data export, and features that work to keep the chair full: it spots bookings likely to be missed, asks only those clients to confirm, and texts the waitlist when a slot frees up.
@@ -137,21 +139,22 @@ Local Supabase ports are 553xx instead of 543xx, because Windows/Hyper-V often r
 
 Run everything from the repository root.
 
-| Command                         | Purpose                                                       |
-| ------------------------------- | ------------------------------------------------------------- |
-| `pnpm dev`                      | Run the web app locally                                       |
-| `pnpm jobs:dev`                 | Tick `/api/jobs/tick` every 15 s locally                      |
-| `pnpm lint`                     | ESLint (warnings fail)                                        |
-| `pnpm typecheck`                | `next typegen` then `tsc --noEmit`                            |
-| `pnpm test`                     | Vitest unit tests                                             |
-| `pnpm test:e2e`                 | Playwright e2e (with axe checks) on desktop and mobile Chrome |
-| `pnpm format` / `format:check`  | Prettier                                                      |
-| `pnpm audit`                    | Audit production dependencies                                 |
-| `pnpm db:start` / `db:stop`     | Start / stop local Supabase (Docker)                          |
-| `pnpm db:reset`                 | Rebuild local DB from migrations and seed                     |
-| `pnpm db:test`                  | pgTAP database tests + DB integration tests                   |
-| `pnpm db:types`                 | Regenerate `apps/web/lib/database.types.ts`                   |
-| `pnpm --filter web screenshots` | Refresh the landing-page screenshots from the local demo shop |
+| Command                         | Purpose                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------- |
+| `pnpm dev`                      | Run the web app locally                                                         |
+| `pnpm jobs:dev`                 | Tick `/api/jobs/tick` every 15 s locally                                        |
+| `pnpm lint`                     | ESLint (warnings fail)                                                          |
+| `pnpm typecheck`                | `next typegen` then `tsc --noEmit`                                              |
+| `pnpm test`                     | Vitest unit tests                                                               |
+| `pnpm test:e2e`                 | Playwright e2e (with axe checks) on desktop and mobile Chrome                   |
+| `pnpm format` / `format:check`  | Prettier                                                                        |
+| `pnpm audit`                    | Audit production dependencies                                                   |
+| `pnpm db:start` / `db:stop`     | Start / stop local Supabase (Docker)                                            |
+| `pnpm db:reset`                 | Rebuild local DB from migrations and seed                                       |
+| `pnpm db:test`                  | pgTAP database tests + DB integration tests                                     |
+| `pnpm db:types`                 | Regenerate `apps/web/lib/database.types.ts`                                     |
+| `pnpm --filter web screenshots` | Refresh the landing-page screenshots from the local demo shop                   |
+| `pnpm --filter web gallery`     | Capture every screen into `docs/media/screens/` (add `-- --dark` for dark mode) |
 
 `pnpm --filter web check:bundle` scans the last build's browser bundle for server secrets (run `pnpm --filter web build` first). One-time setup for e2e: `pnpm --filter web exec playwright install chromium`. [supabase/snippets/perf-large-shop.sql](supabase/snippets/perf-large-shop.sql) loads ~850k bookings into a rolled-back transaction and prints query plans for the dashboard's hot queries.
 
