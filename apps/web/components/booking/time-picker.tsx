@@ -1,6 +1,5 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/button';
 import { fetchAvailability } from '@/lib/public-booking/client-api';
@@ -11,20 +10,12 @@ import {
 	todayInZone,
 	zoneDisplayName,
 } from '@/lib/public-booking/client-dates';
-import type {
-	AvailabilityResponse,
-	DayPeriod,
-	PublicSlot,
-	PublicStaff,
-} from '@/lib/public-booking/types';
+import type { AvailabilityResponse, PublicSlot, PublicStaff } from '@/lib/public-booking/types';
 import { cn } from '@/lib/utils';
+import { DayStrip } from './day-strip';
+import { SlotList, type SlotListState } from './slot-list';
 
 const WINDOW_DAYS = 7;
-const PERIODS: { id: DayPeriod; label: string }[] = [
-	{ id: 'morning', label: 'Morning' },
-	{ id: 'afternoon', label: 'Afternoon' },
-	{ id: 'evening', label: 'Evening' },
-];
 
 export interface TimePickerProps {
 	slug: string;
@@ -105,9 +96,7 @@ export function TimePicker({
 		userDate && userDate >= windowStart && userDate <= windowEnd
 			? userDate
 			: (days.find((d) => slotsByDate.has(d)) ?? windowStart);
-	const daySlots = slotsByDate.get(activeDate) ?? [];
 	const laterOpenDay = days.find((d) => d > activeDate && slotsByDate.has(d));
-	const weekIsEmpty = data !== null && data.slots.length === 0;
 
 	function moveWindow(start: string, date: string | null = null) {
 		setWindowStart(start < today ? today : start);
@@ -119,7 +108,20 @@ export function TimePicker({
 		else moveWindow(addDays(windowStart, WINDOW_DAYS));
 	}
 
-	const dayInfo = (date: string) => data?.days.find((d) => d.date === date);
+	const dayItems = days.map((date) => ({
+		date,
+		weekday: data?.days.find((d) => d.date === date)?.weekday,
+		count: slotsByDate.get(date)?.length ?? 0,
+	}));
+
+	const listState: SlotListState =
+		current === null
+			? { kind: 'loading' }
+			: !current.ok
+				? { kind: 'error', message: current.message }
+				: current.data.slots.length === 0
+					? { kind: 'week-empty', nextOpenDate: current.data.nextOpenDate ?? null }
+					: { kind: 'day', date: activeDate, slots: slotsByDate.get(activeDate) ?? [] };
 
 	return (
 		<div className="grid gap-5">
@@ -134,7 +136,7 @@ export function TimePicker({
 									'flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-medium has-focus-visible:ring-3 has-focus-visible:ring-ring/50',
 									staffChoice === s.id
 										? 'border-primary bg-primary text-primary-foreground'
-										: 'bg-background hover:bg-muted',
+										: 'bg-background hover:bg-accent',
 								)}
 							>
 								<input
@@ -152,13 +154,22 @@ export function TimePicker({
 				</fieldset>
 			) : null}
 
+			<DayStrip
+				days={dayItems}
+				activeDate={activeDate}
+				loading={loading}
+				canGoBack={windowStart > today}
+				onPickDay={setUserDate}
+				onPreviousWeek={() => moveWindow(addDays(windowStart, -WINDOW_DAYS))}
+				onNextWeek={() => moveWindow(addDays(windowStart, WINDOW_DAYS))}
+			/>
+
 			<div className="flex flex-wrap items-center justify-between gap-2">
-				<h3 className="text-sm font-medium">{longDateLabel(activeDate)}</h3>
+				<h3 className="font-medium">{longDateLabel(activeDate)}</h3>
 				<Button
 					type="button"
-					variant="outline"
-					size="lg"
-					className="min-h-11"
+					variant="ghost"
+					className="h-10 px-2 text-primary hover:text-primary"
 					onClick={() => {
 						if (windowStart === today) {
 							const first = days.find((d) => slotsByDate.has(d));
@@ -173,171 +184,21 @@ export function TimePicker({
 				</Button>
 			</div>
 
-			<div className="flex items-stretch gap-1">
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon-lg"
-					className="h-auto min-h-11 shrink-0"
-					aria-label="Previous week"
-					disabled={windowStart <= today}
-					onClick={() => moveWindow(addDays(windowStart, -WINDOW_DAYS))}
-				>
-					<ChevronLeft aria-hidden />
-				</Button>
-				<ul className="grid flex-1 grid-cols-7 gap-1" aria-label="Choose a day">
-					{days.map((date) => {
-						const info = dayInfo(date);
-						const count = slotsByDate.get(date)?.length ?? 0;
-						const active = date === activeDate;
-						return (
-							<li key={date}>
-								<button
-									type="button"
-									aria-pressed={active}
-									onClick={() => setUserDate(date)}
-									className={cn(
-										'flex min-h-14 w-full flex-col items-center justify-center rounded-lg border text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-										active
-											? 'border-primary bg-primary text-primary-foreground'
-											: 'bg-background hover:bg-muted',
-										!loading && count === 0 && !active && 'text-muted-foreground',
-									)}
-								>
-									<span>{info?.weekday ?? weekdayShort(date)}</span>{' '}
-									<span className="text-base font-semibold">{Number(date.slice(8))}</span>
-									<span className="sr-only">
-										{` ${monthLong(date)}, ${loading ? 'loading' : count === 0 ? 'no times' : `${count} times`}`}
-									</span>
-									<span
-										aria-hidden
-										className={cn(
-											'mt-0.5 size-1.5 rounded-full',
-											count > 0
-												? active
-													? 'bg-primary-foreground'
-													: 'bg-primary'
-												: 'bg-transparent',
-										)}
-									/>
-								</button>
-							</li>
-						);
-					})}
-				</ul>
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon-lg"
-					className="h-auto min-h-11 shrink-0"
-					aria-label="Next week"
-					onClick={() => moveWindow(addDays(windowStart, WINDOW_DAYS))}
-				>
-					<ChevronRight aria-hidden />
-				</Button>
-			</div>
-
 			{browserTz && browserTz !== timezone ? (
 				<p className="text-xs text-muted-foreground">
 					Times are in {zoneDisplayName(timezone)} ({timezone}), the shop&apos;s local time.
 				</p>
 			) : null}
 
-			<div aria-live="polite" aria-busy={loading} className="grid gap-4">
-				{loading ? (
-					<>
-						<span className="sr-only">Loading times…</span>
-						<div className="grid grid-cols-3 gap-2" aria-hidden>
-							{Array.from({ length: 9 }, (_, i) => (
-								<div key={i} className="h-11 animate-pulse rounded-lg bg-muted" />
-							))}
-						</div>
-					</>
-				) : current && !current.ok ? (
-					<div className="grid justify-items-start gap-2">
-						<p role="alert" className="text-sm text-destructive">
-							{current.message}
-						</p>
-						<Button type="button" variant="outline" onClick={() => setRetry((n) => n + 1)}>
-							Try again
-						</Button>
-					</div>
-				) : weekIsEmpty ? (
-					<div className="grid justify-items-start gap-2">
-						<p className="text-sm">No open times this week.</p>
-						{data?.nextOpenDate ? (
-							<Button
-								type="button"
-								variant="outline"
-								className="min-h-11"
-								onClick={() => moveWindow(data.nextOpenDate ?? today, data.nextOpenDate)}
-							>
-								Jump to {longDateLabel(data.nextOpenDate)}
-							</Button>
-						) : (
-							<p className="text-sm text-muted-foreground">
-								There are no online openings right now. Please contact the shop.
-							</p>
-						)}
-					</div>
-				) : daySlots.length === 0 ? (
-					<div className="grid justify-items-start gap-2">
-						<p className="text-sm">No times on {longDateLabel(activeDate)}.</p>
-						<Button
-							type="button"
-							variant="outline"
-							className="min-h-11"
-							onClick={jumpToNextOpenDay}
-						>
-							Jump to next open day
-						</Button>
-					</div>
-				) : (
-					PERIODS.map(({ id, label }) => {
-						const periodSlots = daySlots.filter((s) => s.period === id);
-						if (periodSlots.length === 0) return null;
-						const headingId = `${idPrefix}-${id}`;
-						return (
-							<section key={id} aria-labelledby={headingId} className="grid gap-2">
-								<h4 id={headingId} className="text-xs font-medium uppercase text-muted-foreground">
-									{label}
-								</h4>
-								<ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-									{periodSlots.map((slot) => {
-										const isSelected = selected?.startsAt === slot.startsAt;
-										return (
-											<li key={slot.startsAt}>
-												<button
-													type="button"
-													aria-pressed={isSelected}
-													aria-label={slot.label}
-													onClick={() => onPick(slot)}
-													className={cn(
-														'min-h-11 w-full rounded-lg border px-2 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-														isSelected
-															? 'border-primary bg-primary text-primary-foreground'
-															: 'bg-background hover:bg-muted',
-													)}
-												>
-													{slot.time}
-												</button>
-											</li>
-										);
-									})}
-								</ul>
-							</section>
-						);
-					})
-				)}
-			</div>
+			<SlotList
+				state={listState}
+				selected={selected}
+				idPrefix={idPrefix}
+				onPick={onPick}
+				onRetry={() => setRetry((n) => n + 1)}
+				onJumpToDate={(date) => moveWindow(date, date)}
+				onJumpToNextDay={jumpToNextOpenDay}
+			/>
 		</div>
 	);
-}
-
-function weekdayShort(date: string): string {
-	return longDateLabel(date).slice(0, 3);
-}
-
-function monthLong(date: string): string {
-	return longDateLabel(date).split(', ')[1]?.split(' ')[0] ?? '';
 }

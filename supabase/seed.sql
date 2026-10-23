@@ -162,3 +162,103 @@ select
   (array['returning', 'returning', 'instagram', 'direct', 'referral', 'google'])[1 + (hash / 7) % 6],
   price_cents
 from picked;
+
+-- Waitlist ---------------------------------------------------------------------
+-- Eight entries for Demo Barbers (six waiting, one booked, one expired) plus three freed slots with
+-- offers in every state, so the Waitlist tab shows both lists. Seed clients 1-30 belong to Demo Barbers.
+
+update public.shops set waitlist_enabled = true where id = '10000000-0000-4000-8000-000000000001';
+
+insert into public.waitlist_entries (
+  id, shop_id, client_id, service_id, staff_id, earliest_date, latest_date, time_windows, status, request_method, created_at
+)
+select
+  md5('seed-waitlist-' || e.n)::uuid,
+  '10000000-0000-4000-8000-000000000001',
+  md5('seed-client-' || e.client_n)::uuid,
+  ('40000000-0000-4000-8000-00000000000' || e.service_n)::uuid,
+  e.staff_id::uuid,
+  current_date + e.from_day,
+  current_date + e.to_day,
+  e.windows::jsonb,
+  e.status,
+  e.method,
+  now() - e.age
+from (values
+  (1,  3, 1, null,                                   1, 14, '[]',                                                                          'active',  'booking_page', interval '96 hours'),
+  (2,  7, 3, null,                                   1, 10, '[{"weekday":6,"start":"09:00","end":"13:00"}]',                                'active',  'booking_page', interval '20 hours'),
+  (3, 11, 4, '30000000-0000-4000-8000-000000000001', 2, 21, '[{"weekday":3,"start":"15:00","end":"18:00"},{"weekday":4,"start":"15:00","end":"18:00"}]', 'active', 'staff', interval '6 hours'),
+  (4, 14, 2, null,                                   1,  7, '[]',                                                                          'active',  'booking_page', interval '90 minutes'),
+  (5, 19, 5, '30000000-0000-4000-8000-000000000002', 3, 14, '[{"weekday":6,"start":"10:00","end":"14:00"}]',                                'active',  'booking_page', interval '72 hours'),
+  (6, 22, 1, null,                                  -1,  9, '[]',                                                                          'booked',  'booking_page', interval '120 hours'),
+  (7, 25, 2, null,                                 -12, -2, '[]',                                                                          'expired', 'booking_page', interval '14 days'),
+  (8, 28, 2, null,                                   1, 10, '[]',                                                                          'active',  'booking_page', interval '150 hours')
+) as e (n, client_n, service_n, staff_id, from_day, to_day, windows, status, method, age);
+
+insert into public.freed_slots (id, shop_id, staff_id, starts_at, ends_at, status, wave, next_run_at, created_at)
+values
+  (md5('seed-freed-1')::uuid, '10000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001',
+    (current_date - 1 + time '14:00') at time zone 'America/Toronto',
+    (current_date - 1 + time '14:30') at time zone 'America/Toronto', 'filled', 1, now() - interval '2 days', now() - interval '2 days'),
+  (md5('seed-freed-2')::uuid, '10000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000002',
+    (current_date + 1 + time '11:00') at time zone 'America/Toronto',
+    (current_date + 1 + time '11:20') at time zone 'America/Toronto', 'offering', 1, now() + interval '2 hours', now() - interval '15 minutes'),
+  (md5('seed-freed-3')::uuid, '10000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000003',
+    (current_date - 3 + time '16:00') at time zone 'America/Toronto',
+    (current_date - 3 + time '16:45') at time zone 'America/Toronto', 'exhausted', 2, now() - interval '4 days', now() - interval '4 days 6 hours');
+
+-- token_hash stays null: seeded offers cannot be claimed from a link.
+insert into public.slot_offers (
+  id, shop_id, waitlist_entry_id, freed_slot_id, staff_id, service_id, starts_at, ends_at, blocked_until, wave, status, sent_at, expires_at
+)
+select
+  md5('seed-offer-' || o.n)::uuid,
+  '10000000-0000-4000-8000-000000000001',
+  md5('seed-waitlist-' || o.entry_n)::uuid,
+  f.id,
+  f.staff_id,
+  ('40000000-0000-4000-8000-00000000000' || o.service_n)::uuid,
+  f.starts_at,
+  f.ends_at,
+  f.ends_at + make_interval(mins => o.buffer_min),
+  o.wave,
+  o.status,
+  o.sent_at,
+  o.sent_at + interval '30 minutes'
+from (values
+  (1, 6, 1, 'seed-freed-1', 5,  1, 'claimed', now() - interval '2 days'),
+  (2, 1, 1, 'seed-freed-1', 5,  1, 'taken',   now() - interval '2 days'),
+  (3, 2, 3, 'seed-freed-2', 5,  1, 'sent',    now() - interval '15 minutes'),
+  (4, 8, 2, 'seed-freed-3', 10, 1, 'expired', now() - interval '4 days 6 hours'),
+  (5, 7, 2, 'seed-freed-3', 10, 2, 'expired', now() - interval '4 days 5 hours')
+) as o (n, entry_n, service_n, slot, buffer_min, wave, status, sent_at)
+join public.freed_slots f on f.id = md5(o.slot)::uuid;
+
+-- Inbox -------------------------------------------------------------------------
+-- Replies that need a person (kind 'other', unhandled), plus a few already handled and automatic YES replies.
+
+insert into public.inbound_messages (
+  id, shop_id, client_id, twilio_sid, from_phone, body, kind, handled_at, handled_by, created_at
+)
+select
+  md5('seed-inbound-' || m.n)::uuid,
+  '10000000-0000-4000-8000-000000000001',
+  case when m.client_n is not null then md5('seed-client-' || m.client_n)::uuid end,
+  'SMseed' || lpad(m.n::text, 4, '0'),
+  coalesce('+1555' || lpad(m.client_n::text, 7, '0'), m.phone),
+  m.body,
+  m.kind,
+  case when m.handled then now() - m.age + interval '1 hour' end,
+  case when m.handled then '20000000-0000-4000-8000-000000000001'::uuid end,
+  now() - m.age
+from (values
+  (1,   5, null,           'Hey, can I move my appointment to later in the day? Running about 20 min behind.', 'other',   false, interval '25 minutes'),
+  (2,   9, null,           'Do you have anything open Saturday morning for a skin fade?',                      'other',   false, interval '3 hours'),
+  (3,   2, null,           'I''m running 10 min late, sorry!!',                                                  'other',   false, interval '5 hours'),
+  (4,  16, null,           'Thanks! Also, do you take Apple Pay?',                                              'other',   false, interval '1 day'),
+  (5, null, '+14165550199', 'Is this the barbershop on Example St? I got a text about a booking.',               'other',   false, interval '2 days'),
+  (6,  12, null,           'Can you add my brother to the same time? He needs a kids cut.',                    'other',   true,  interval '3 days'),
+  (7,  20, null,           'Perfect, see you then.',                                                           'other',   true,  interval '4 days'),
+  (8,  10, null,           'YES',                                                                              'confirm', true,  interval '6 hours'),
+  (9,  13, null,           'yes',                                                                              'confirm', true,  interval '1 day')
+) as m (n, client_n, phone, body, kind, handled, age);

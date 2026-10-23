@@ -13,13 +13,33 @@ const TAP_SNAP_MIN = 15;
 const MIN_BLOCK_PX = 18;
 const TALL_BLOCK_PX = 44;
 
-const STATUS_CLASSES: Record<DashboardBooking['status'], string> = {
+export const STATUS_CLASSES: Record<DashboardBooking['status'], string> = {
 	pending: 'border-dashed border-primary/50 bg-primary/5',
 	confirmed: 'border-primary/50 bg-primary/15',
 	completed: 'border-border bg-muted text-neutral-600 dark:text-muted-foreground',
 	no_show: 'border-destructive/40 bg-destructive/10 text-red-700 dark:text-destructive',
 	cancelled: 'border-border bg-background text-neutral-600 line-through dark:text-muted-foreground',
 };
+
+export function isRiskyBooking(booking: DashboardBooking): boolean {
+	return (
+		booking.status === 'confirmed' &&
+		booking.risk !== null &&
+		!booking.risk.trusted &&
+		(booking.risk.tier === 'high' || booking.risk.tier === 'medium')
+	);
+}
+
+// Blocks are too small for their text, so the button carries the full description.
+function bookingButtonLabel(booking: DashboardBooking): string {
+	const flags = [
+		isRefill(booking) ? 'refilled from waitlist' : null,
+		isRiskyBooking(booking) ? `${booking.risk?.tier} no-show risk` : null,
+		booking.confirmation === 'unconfirmed' ? 'unconfirmed' : null,
+		booking.confirmation === 'released' ? 'released' : null,
+	].filter(Boolean);
+	return `${booking.clientName}, ${booking.serviceName}, ${booking.timeLabel}${flags.length > 0 ? `, ${flags.join(', ')}` : ''}`;
+}
 
 export function CalendarGrid({
 	layout,
@@ -54,7 +74,7 @@ export function CalendarGrid({
 						{layout.hours.map((hour) => (
 							<span
 								key={hour.minute}
-								className="absolute right-1.5 -translate-y-1/2 text-[0.7rem] text-muted-foreground tabular-nums first:translate-y-0"
+								className="absolute right-1.5 -translate-y-1/2 text-xs text-muted-foreground tabular-nums first:translate-y-0"
 								style={{ top: y(hour.minute) }}
 							>
 								{hour.label}
@@ -125,17 +145,7 @@ export function CalendarGrid({
 								const unmarked = now !== null && needsOutcome(booking, now);
 								const blockPx = Math.max(MIN_BLOCK_PX, block.heightMin * PX_PER_MIN);
 								const tall = blockPx >= TALL_BLOCK_PX;
-								const risky =
-									booking.status === 'confirmed' &&
-									booking.risk !== null &&
-									!booking.risk.trusted &&
-									(booking.risk.tier === 'high' || booking.risk.tier === 'medium');
-								const flags = [
-									isRefill(booking) ? 'refilled from waitlist' : null,
-									risky ? `${booking.risk?.tier} no-show risk` : null,
-									booking.confirmation === 'unconfirmed' ? 'unconfirmed' : null,
-									booking.confirmation === 'released' ? 'released' : null,
-								].filter(Boolean);
+								const risky = isRiskyBooking(booking);
 								return (
 									<div
 										key={block.bookingId}
@@ -158,9 +168,9 @@ export function CalendarGrid({
 										>
 											<button
 												type="button"
-												className="absolute inset-0 rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+												className="absolute inset-0 rounded-md hover:bg-foreground/5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
 												onClick={() => onOpenBooking(booking.id)}
-												aria-label={`${booking.clientName}, ${booking.serviceName}, ${booking.timeLabel}${flags.length > 0 ? `, ${flags.join(', ')}` : ''}`}
+												aria-label={bookingButtonLabel(booking)}
 											/>
 											{risky ? (
 												<span

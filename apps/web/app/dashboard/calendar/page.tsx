@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { CalendarSkeleton } from '@/components/skeletons';
 import { CalendarShell } from '@/components/dashboard/calendar-shell';
 import { requireShopMember, toActor } from '@/lib/auth/session';
 import { loadClientMatch } from '@/lib/dashboard/queries';
@@ -8,11 +9,11 @@ import { currentInstant, loadCalendar } from '@/lib/dashboard/views';
 import { toBookingShop } from '@/lib/public-booking/data';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = { title: 'Calendar · Fullcut' };
+export const metadata: Metadata = { title: 'Calendar' };
 
 export default function CalendarPage({ searchParams }: PageProps<'/dashboard/calendar'>) {
 	return (
-		<Suspense fallback={<p className="text-sm text-muted-foreground">Loading calendar…</p>}>
+		<Suspense fallback={<CalendarSkeleton />}>
 			<Calendar searchParams={searchParams} />
 		</Suspense>
 	);

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { FieldShell, FormError, describedBy, nativeControlClass } from '@/components/forms/fields';
+import { HoneypotField } from '@/components/forms/honeypot-field';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { joinWaitlist } from '@/lib/public-booking/client-api';
@@ -242,22 +244,13 @@ export function WaitlistForm({ shop, serviceId, staffChoice, onJoined }: Waitlis
 				) : null}
 			</div>
 
-			{/* Honeypot: off-screen and skipped by keyboard and screen readers; bots fill it in. */}
-			<div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
-				<label htmlFor="waitlist-website">Website</label>
-				<input
-					id="waitlist-website"
-					name="website"
-					tabIndex={-1}
-					autoComplete="off"
-					value={website}
-					onChange={(e) => setWebsite(e.target.value)}
-				/>
-			</div>
+			<HoneypotField id="waitlist-website" value={website} onChange={setWebsite} />
 
-			<Button type="submit" size="lg" className="h-12 text-base" disabled={submitting}>
-				{submitting ? 'Joining…' : 'Join the waitlist'}
-			</Button>
+			<StickyActionBar>
+				<Button type="submit" size="lg" className="h-12 text-base md:w-full" disabled={submitting}>
+					{submitting ? 'Joining…' : 'Join the waitlist'}
+				</Button>
+			</StickyActionBar>
 		</form>
 	);
 }
@@ -277,7 +270,7 @@ function Chip({
 				'flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-medium has-focus-visible:ring-3 has-focus-visible:ring-ring/50',
 				checked
 					? 'border-primary bg-primary text-primary-foreground'
-					: 'bg-background hover:bg-muted',
+					: 'bg-background hover:bg-accent',
 			)}
 		>
 			<input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />

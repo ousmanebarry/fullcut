@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { ClaimOffer } from '@/components/booking/claim-offer';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Instant } from '@/lib/time';
@@ -8,14 +9,14 @@ import { findOfferByToken } from '@/lib/waitlist/claim';
 import { OFFER_CLOSED_MESSAGES } from '@/lib/waitlist/responses';
 
 export const metadata: Metadata = {
-	title: 'A spot opened · Fullcut',
+	title: 'A spot opened',
 	robots: { index: false, follow: false },
 };
 
 export default function ClaimPage({ params }: PageProps<'/w/[token]'>) {
 	return (
-		<main className="mx-auto grid w-full max-w-lg gap-6 px-4 py-6">
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+		<main className="mx-auto grid w-full max-w-lg content-start gap-6 px-4 pt-6 pb-10 md:my-12 md:rounded-2xl md:border md:bg-card md:p-8 md:shadow-sm">
+			<Suspense fallback={<ListSkeleton rows={3} title />}>
 				<Offer params={params} />
 			</Suspense>
 		</main>

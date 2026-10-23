@@ -74,7 +74,7 @@ export function ClaimOffer({ token, shop, booking, expiresLabel, closedMessage }
 						/>
 						<a
 							href={created.manageUrl}
-							className="inline-flex h-11 items-center rounded-lg border px-3 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+							className="inline-flex h-11 items-center rounded-lg border px-3 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
 							Manage booking
 						</a>
@@ -87,7 +87,7 @@ export function ClaimOffer({ token, shop, booking, expiresLabel, closedMessage }
 					</p>
 					<a
 						href={`/${shop.slug}`}
-						className="inline-flex h-11 items-center justify-self-start rounded-lg border px-4 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+						className="inline-flex h-11 items-center justify-self-start rounded-lg border px-4 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
 					>
 						See other times
 					</a>

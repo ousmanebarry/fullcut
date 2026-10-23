@@ -1,6 +1,8 @@
+import { ChevronRightIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { TableSkeleton } from '@/components/skeletons';
 import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,6 +14,7 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { nativeControlClass } from '@/components/forms/fields';
+import { PageHeader } from '@/components/layout/page-header';
 import { requireShopMember } from '@/lib/auth/session';
 import { listClients } from '@/lib/clients/queries';
 import { clientListParamsSchema, type ClientListParams } from '@/lib/clients/schemas';
@@ -20,13 +23,13 @@ import { toBookingShop } from '@/lib/public-booking/data';
 import { createClient } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = { title: 'Clients · Fullcut' };
+export const metadata: Metadata = { title: 'Clients' };
 
 export default function ClientsPage({ searchParams }: PageProps<'/dashboard/clients'>) {
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-4">
-			<h1 className="text-2xl font-semibold">Clients</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading clients…</p>}>
+			<PageHeader title="Clients" />
+			<Suspense fallback={<TableSkeleton label="Loading clients…" />}>
 				<ClientList searchParams={searchParams} />
 			</Suspense>
 		</div>
@@ -59,8 +62,12 @@ async function ClientList({
 
 	return (
 		<>
-			<form role="search" className="flex flex-wrap items-end gap-2" action="/dashboard/clients">
-				<div className="grid min-w-48 flex-1 gap-1.5">
+			<form
+				role="search"
+				className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 sm:flex sm:flex-wrap"
+				action="/dashboard/clients"
+			>
+				<div className="col-span-2 grid gap-1.5 sm:min-w-48 sm:flex-1">
 					<label htmlFor="client-search" className="text-sm font-medium">
 						Name or phone
 					</label>
@@ -81,7 +88,7 @@ async function ClientList({
 						id="client-sort"
 						name="sort"
 						defaultValue={params.sort}
-						className={cn(nativeControlClass, 'w-auto')}
+						className={cn(nativeControlClass, 'sm:w-auto')}
 					>
 						{CLIENT_SORTS.map((sort) => (
 							<option key={sort} value={sort}>
@@ -100,45 +107,102 @@ async function ClientList({
 				{params.q ? ` matching “${params.q}”` : null}
 			</p>
 
-			{list.rows.length === 0 ? (
+			{list.rows.length === 0 && params.q ? (
 				<p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-					{params.q ? 'No clients match that search.' : 'No clients yet.'}
+					No clients match that search.
 				</p>
+			) : list.rows.length === 0 ? (
+				<div className="grid justify-items-center gap-3 rounded-lg border border-dashed p-8 text-center">
+					<p className="font-medium">No clients yet</p>
+					<p className="max-w-sm text-sm text-muted-foreground">
+						Clients are added automatically when they book through your page, or when you add a
+						booking yourself.
+					</p>
+					<div className="flex flex-wrap justify-center gap-2">
+						<Link href="/dashboard/calendar?new=1" className={buttonVariants({ size: 'lg' })}>
+							New booking
+						</Link>
+						{ctx.shop.booking_page_enabled ? (
+							<Link
+								href={`/${ctx.shop.slug}`}
+								target="_blank"
+								className={buttonVariants({ variant: 'outline', size: 'lg' })}
+							>
+								Open your booking page
+							</Link>
+						) : null}
+					</div>
+				</div>
 			) : (
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Name</TableHead>
-							<TableHead className="hidden sm:table-cell">Phone</TableHead>
-							<TableHead>Last visit</TableHead>
-							<TableHead className="text-right">Visits</TableHead>
-							<TableHead className="hidden text-right md:table-cell">No-shows</TableHead>
-							<TableHead className="hidden md:table-cell">Next booking</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
+				<>
+					<ul className="grid gap-2 md:hidden">
 						{list.rows.map((row) => (
-							<TableRow key={row.id} data-testid="client-row">
-								<TableCell className="font-medium">
-									<Link href={`/dashboard/clients/${row.id}`} className="hover:underline">
-										{row.name}
-									</Link>
-								</TableCell>
-								<TableCell className="hidden tabular-nums sm:table-cell">
-									{row.phone ?? '–'}
-								</TableCell>
-								<TableCell>{row.lastVisitLabel ?? '–'}</TableCell>
-								<TableCell className="text-right tabular-nums">{row.visits}</TableCell>
-								<TableCell className="hidden text-right tabular-nums md:table-cell">
-									{row.noShows}
-								</TableCell>
-								<TableCell className="hidden md:table-cell">
-									{row.nextBookingLabel ?? '–'}
-								</TableCell>
-							</TableRow>
+							<li key={row.id}>
+								<Link
+									href={`/dashboard/clients/${row.id}`}
+									className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:bg-accent/50"
+								>
+									<span className="grid min-w-0 flex-1 gap-0.5">
+										<span className="truncate font-medium">{row.name}</span>
+										<span className="truncate text-sm text-muted-foreground">
+											{[
+												row.lastVisitLabel ? `Last visit ${row.lastVisitLabel}` : 'No visits yet',
+												`${row.visits} ${row.visits === 1 ? 'visit' : 'visits'}`,
+												row.noShows > 0
+													? `${row.noShows} no-show${row.noShows === 1 ? '' : 's'}`
+													: null,
+											]
+												.filter(Boolean)
+												.join(' · ')}
+										</span>
+										{row.nextBookingLabel ? (
+											<span className="truncate text-sm text-primary">
+												Next: {row.nextBookingLabel}
+											</span>
+										) : null}
+									</span>
+									<ChevronRightIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+								</Link>
+							</li>
 						))}
-					</TableBody>
-				</Table>
+					</ul>
+					<div className="hidden md:block">
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Name</TableHead>
+									<TableHead className="hidden sm:table-cell">Phone</TableHead>
+									<TableHead>Last visit</TableHead>
+									<TableHead className="text-right">Visits</TableHead>
+									<TableHead className="hidden text-right md:table-cell">No-shows</TableHead>
+									<TableHead className="hidden md:table-cell">Next booking</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{list.rows.map((row) => (
+									<TableRow key={row.id} data-testid="client-row">
+										<TableCell className="font-medium">
+											<Link href={`/dashboard/clients/${row.id}`} className="hover:underline">
+												{row.name}
+											</Link>
+										</TableCell>
+										<TableCell className="hidden tabular-nums sm:table-cell">
+											{row.phone ?? '–'}
+										</TableCell>
+										<TableCell>{row.lastVisitLabel ?? '–'}</TableCell>
+										<TableCell className="text-right tabular-nums">{row.visits}</TableCell>
+										<TableCell className="hidden text-right tabular-nums md:table-cell">
+											{row.noShows}
+										</TableCell>
+										<TableCell className="hidden md:table-cell">
+											{row.nextBookingLabel ?? '–'}
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</div>
+				</>
 			)}
 
 			{list.pageCount > 1 ? (

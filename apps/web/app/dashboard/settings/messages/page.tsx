@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { requireShopOwner } from '@/lib/auth/session';
 import { MessageSettingsForm } from './messages-form';
 
-export const metadata: Metadata = { title: 'Text messages · Fullcut' };
+export const metadata: Metadata = { title: 'Text messages' };
 
 export default function MessageSettingsPage() {
 	return (
 		<div className="grid max-w-xl gap-4">
 			<h1 className="text-2xl font-semibold">Text messages</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton />}>
 				<MessageSettings />
 			</Suspense>
 		</div>

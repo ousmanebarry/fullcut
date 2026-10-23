@@ -10,6 +10,8 @@ import {
 	nativeControlClass,
 } from '@/components/forms/fields';
 import { SubmitButton } from '@/components/forms/form-controls';
+import { StepProgress } from '@/components/layout/step-progress';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { HoursEditor, hoursErrorsFrom } from '@/components/shop/hours-editor';
 import { Button } from '@/components/ui/button';
 import { fieldErrorsFrom, idleState, type FieldErrors, type FormState } from '@/lib/forms';
@@ -138,11 +140,15 @@ export function OnboardingWizard({
 		>
 			<input type="hidden" name="payload" value={JSON.stringify(draft)} />
 
-			<div className="grid gap-1">
-				<p className="text-sm text-muted-foreground" aria-live="polite">
-					Step {step + 1} of {STEPS.length}
-				</p>
-				<h2 ref={headingRef} tabIndex={-1} className="text-xl font-semibold outline-none">
+			<div className="grid gap-3">
+				<div aria-live="polite">
+					<StepProgress current={step + 1} total={STEPS.length} />
+				</div>
+				<h2
+					ref={headingRef}
+					tabIndex={-1}
+					className="text-xl font-semibold tracking-tight outline-none"
+				>
 					{STEPS[step]?.title}
 				</h2>
 			</div>
@@ -239,7 +245,7 @@ export function OnboardingWizard({
 				<div className="grid gap-4">
 					<FormError message={errors.services} />
 					{draft.services.map((service, index) => (
-						<fieldset key={index} className="grid gap-3 rounded-lg border p-3">
+						<fieldset key={index} className="grid gap-3 rounded-xl border bg-card p-4">
 							<legend className="px-1 text-sm font-medium">Service {index + 1}</legend>
 							<TextField
 								name={`service-${index}-name`}
@@ -249,7 +255,7 @@ export function OnboardingWizard({
 								error={errors[`services.${index}.name`]}
 								onChange={(event) => setService(index, { name: event.target.value })}
 							/>
-							<div className="grid grid-cols-3 gap-2">
+							<div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
 								<TextField
 									name={`service-${index}-duration`}
 									label="Minutes"
@@ -270,6 +276,7 @@ export function OnboardingWizard({
 								<TextField
 									name={`service-${index}-price`}
 									label={`Price (${draft.shop.currency})`}
+									className="col-span-2 sm:col-span-1"
 									inputMode="decimal"
 									placeholder="35.00"
 									value={service.price}
@@ -313,14 +320,12 @@ export function OnboardingWizard({
 				/>
 			) : null}
 
-			<div className="flex items-center justify-between gap-3">
+			<StickyActionBar className="md:justify-end">
 				{step > 0 ? (
-					<Button type="button" variant="outline" size="lg" onClick={back}>
+					<Button type="button" variant="outline" size="lg" className="md:mr-auto" onClick={back}>
 						Back
 					</Button>
-				) : (
-					<span />
-				)}
+				) : null}
 				{isLast ? (
 					<SubmitButton pendingLabel="Creating your shop…">Create my shop</SubmitButton>
 				) : (
@@ -328,7 +333,7 @@ export function OnboardingWizard({
 						Next
 					</Button>
 				)}
-			</div>
+			</StickyActionBar>
 		</form>
 	);
 }

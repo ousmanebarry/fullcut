@@ -8,7 +8,10 @@ import {
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Logo } from '@/components/brand/logo';
 import { DemoEntry } from '@/components/demo/demo-entry';
+import { PhoneFrame } from '@/components/marketing/phone-frame';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { buttonVariants } from '@/components/ui/button';
 import { getDemoShopSlug } from '@/lib/env';
 import { cn } from '@/lib/utils';
@@ -81,16 +84,18 @@ export default function Home() {
 	const demoShopSlug = getDemoShopSlug();
 	return (
 		<div className="flex flex-1 flex-col">
-			<header className="border-b">
-				<div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3">
-					<Link href="/" className="font-semibold tracking-tight">
-						Fullcut
-					</Link>
+			<header className="sticky top-0 z-30 border-b bg-background/90 pt-safe backdrop-blur supports-backdrop-filter:bg-background/75">
+				<div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4">
+					<Logo />
 					<nav aria-label="Main" className="ml-auto flex items-center gap-1">
-						<Link href="#pricing" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+						<ThemeToggle />
+						<Link
+							href="#pricing"
+							className="hidden rounded-md px-2.5 py-1.5 text-sm hover:bg-accent sm:block"
+						>
 							Pricing
 						</Link>
-						<Link href="/login" className="rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+						<Link href="/login" className="rounded-md px-2.5 py-1.5 text-sm hover:bg-accent">
 							Log in
 						</Link>
 						<Link href="/signup" className={buttonVariants()}>
@@ -103,23 +108,29 @@ export default function Home() {
 			<main className="flex-1">
 				<section
 					className={cn(
-						'mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 md:items-center md:py-24',
+						'mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 md:items-center md:py-24',
 						demoShopSlug && 'md:grid-cols-[1.2fr_1fr]',
 					)}
 				>
 					<div className="grid gap-5">
-						<h1 className="font-heading text-4xl font-semibold tracking-tight text-balance md:text-5xl">
+						<p className="w-fit rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+							Zero commission, ever
+						</p>
+						<h1 className="font-heading text-4xl font-semibold tracking-tight text-balance md:text-6xl">
 							Fill your chair. Keep your clients.
 						</h1>
 						<p className="text-lg text-pretty text-muted-foreground">
 							Booking for independent barbers and stylists who already have their own clients. Flat
 							price, zero commission, and an app that works to fill the gaps in your day.
 						</p>
-						<div className="flex flex-wrap gap-2">
-							<Link href="/signup" className={buttonVariants({ size: 'lg' })}>
+						<div className="grid gap-2 sm:flex sm:flex-wrap">
+							<Link href="/signup" className={cn(buttonVariants({ size: 'lg' }), 'h-11 px-5')}>
 								Set up your shop free
 							</Link>
-							<Link href="#features" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+							<Link
+								href="#features"
+								className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'h-11 px-5')}
+							>
 								See how it works
 							</Link>
 						</div>
@@ -151,22 +162,27 @@ export default function Home() {
 									</h3>
 									<p className="text-pretty text-muted-foreground">{feature.body}</p>
 								</div>
-								<Image
-									src={feature.image.src}
-									width={feature.image.width}
-									height={feature.image.height}
-									alt={feature.image.alt}
-									sizes={
-										'phone' in feature
-											? '(min-width: 768px) 280px, 70vw'
-											: '(min-width: 768px) 560px, 100vw'
-									}
-									className={
-										'phone' in feature
-											? 'mx-auto w-full max-w-70 rounded-3xl border-4 border-foreground/80 shadow-lg'
-											: 'w-full rounded-xl border shadow-lg'
-									}
-								/>
+								{'phone' in feature ? (
+									<PhoneFrame>
+										<Image
+											src={feature.image.src}
+											width={feature.image.width}
+											height={feature.image.height}
+											alt={feature.image.alt}
+											sizes="(min-width: 768px) 260px, 65vw"
+											className="block h-auto w-full"
+										/>
+									</PhoneFrame>
+								) : (
+									<Image
+										src={feature.image.src}
+										width={feature.image.width}
+										height={feature.image.height}
+										alt={feature.image.alt}
+										sizes="(min-width: 768px) 560px, 100vw"
+										className="w-full rounded-xl border shadow-lg"
+									/>
+								)}
 							</article>
 						))}
 					</div>
@@ -179,7 +195,9 @@ export default function Home() {
 					<ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
 						{BASICS.map(({ icon: Icon, title, body }) => (
 							<li key={title} className="grid content-start gap-2">
-								<Icon aria-hidden="true" className="size-5" />
+								<span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+									<Icon aria-hidden="true" className="size-5" />
+								</span>
 								<h3 className="font-medium">{title}</h3>
 								<p className="text-sm text-muted-foreground">{body}</p>
 							</li>
@@ -204,13 +222,13 @@ export default function Home() {
 								'Export everything and leave whenever you want',
 							].map((line) => (
 								<li key={line} className="flex items-center gap-2">
-									<ShieldCheckIcon aria-hidden="true" className="size-4 shrink-0" />
+									<ShieldCheckIcon aria-hidden="true" className="size-4 shrink-0 text-primary" />
 									{line}
 								</li>
 							))}
 						</ul>
-						<div>
-							<Link href="/signup" className={buttonVariants({ size: 'lg' })}>
+						<div className="grid sm:block">
+							<Link href="/signup" className={cn(buttonVariants({ size: 'lg' }), 'h-11 px-5')}>
 								Set up your shop free
 							</Link>
 						</div>
@@ -233,7 +251,7 @@ export default function Home() {
 
 			<footer className="border-t">
 				<div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-4 px-4 py-6 text-sm text-muted-foreground">
-					<span>Fullcut</span>
+					<Logo className="text-foreground" />
 					<Link href="/login" className="hover:underline">
 						Log in
 					</Link>

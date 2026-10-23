@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { requireShopOwner } from '@/lib/auth/session';
 import { BookingRulesForm } from './booking-rules-form';
 
-export const metadata: Metadata = { title: 'Booking rules · Fullcut' };
+export const metadata: Metadata = { title: 'Booking rules' };
 
 export default function BookingRulesPage() {
 	return (
 		<div className="grid max-w-xl gap-4">
 			<h1 className="text-2xl font-semibold">Booking rules</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton fields={3} />}>
 				<BookingRules />
 			</Suspense>
 		</div>

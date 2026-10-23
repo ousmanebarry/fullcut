@@ -120,6 +120,9 @@ test.describe('public booking page', () => {
 		await expect(page.getByRole('heading', { name: "You're booked" })).toBeVisible();
 
 		await page.getByRole('link', { name: 'Manage booking' }).click();
+		// A full page load: wait for hydration so the Cancel click isn't lost.
+		await expect(page).toHaveURL(/\/b\/[A-Za-z0-9_-]{43}$/);
+		await page.waitForLoadState('networkidle');
 		await page.getByRole('button', { name: 'Cancel booking' }).click();
 		await expectNoAxeViolations(page);
 		await page.getByRole('button', { name: 'Yes, cancel it' }).click();

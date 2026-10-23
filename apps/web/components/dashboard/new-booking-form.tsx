@@ -122,14 +122,17 @@ export function NewBookingForm({
 
 			<fieldset className="grid gap-1.5">
 				<legend className="mb-1.5 text-sm font-medium">Booked by</legend>
-				<div className="flex gap-4">
+				<div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
 					{(
 						[
 							['phone', 'Phone'],
 							['walk_in', 'Walk-in'],
 						] as const
 					).map(([value, label]) => (
-						<label key={value} className="flex items-center gap-2 text-sm">
+						<label
+							key={value}
+							className="flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm hover:bg-accent/50 has-checked:border-primary has-checked:bg-primary/10 sm:min-h-9"
+						>
 							<input
 								type="radio"
 								name="source"
@@ -184,7 +187,7 @@ export function NewBookingForm({
 									<li key={match.id}>
 										<button
 											type="button"
-											className="flex w-full justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
+											className="flex w-full justify-between gap-2 px-3 py-3 text-left text-sm hover:bg-accent sm:py-2"
 											onClick={() => pick(match)}
 										>
 											<span className="font-medium">{match.name}</span>
@@ -239,7 +242,12 @@ export function NewBookingForm({
 				error={error.fields?.notes}
 			/>
 
-			<Button type="submit" size="lg" disabled={pending} className="justify-self-start">
+			<Button
+				type="submit"
+				size="lg"
+				disabled={pending}
+				className="w-full sm:w-auto sm:justify-self-start"
+			>
 				{pending ? 'Booking…' : 'Add booking'}
 			</Button>
 		</form>

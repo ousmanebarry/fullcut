@@ -2,6 +2,8 @@ import { CheckIcon, PhoneIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
+import { PageHeader } from '@/components/layout/page-header';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { requireShopMember } from '@/lib/auth/session';
 import { unhandledReplies } from '@/lib/messaging/queries';
@@ -9,19 +11,16 @@ import { createClient } from '@/lib/supabase/server';
 import { timeZone } from '@/lib/time';
 import { markReplyHandledAction } from './actions';
 
-export const metadata: Metadata = { title: 'Inbox · Fullcut' };
+export const metadata: Metadata = { title: 'Inbox' };
 
 export default function InboxPage() {
 	return (
 		<div className="mx-auto grid w-full max-w-3xl gap-4">
-			<div className="grid gap-1">
-				<h1 className="text-2xl font-semibold">Inbox</h1>
-				<p className="text-sm text-muted-foreground">
-					Text replies from clients that need a person. STOP, START and YES are handled
-					automatically.
-				</p>
-			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading messages…</p>}>
+			<PageHeader
+				title="Inbox"
+				description="Text replies from clients that need a person. STOP, START and YES are handled automatically."
+			/>
+			<Suspense fallback={<ListSkeleton label="Loading messages…" />}>
 				<Replies />
 			</Suspense>
 		</div>

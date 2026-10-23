@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { FormError } from '@/components/forms/fields';
 import { SubmitButton, useFormToast } from '@/components/forms/form-controls';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { HoursEditor, hoursErrorsFrom } from '@/components/shop/hours-editor';
 import { idleState } from '@/lib/forms';
 import type { WeeklyHours } from '@/lib/shop/hours';
@@ -26,7 +27,9 @@ export function HoursForm({
 			<input type="hidden" name="hours" value={JSON.stringify(hours)} />
 			<FormError message={state.status === 'error' && !fieldErrors ? state.message : undefined} />
 			<HoursEditor value={hours} onChange={setHours} errors={hoursErrorsFrom(fieldErrors)} />
-			<SubmitButton className="justify-self-start">Save hours</SubmitButton>
+			<StickyActionBar>
+				<SubmitButton>Save hours</SubmitButton>
+			</StickyActionBar>
 		</form>
 	);
 }

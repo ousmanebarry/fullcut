@@ -9,6 +9,7 @@ import {
 	nativeControlClass,
 } from '@/components/forms/fields';
 import { SubmitButton, useFormToast } from '@/components/forms/form-controls';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { idleState } from '@/lib/forms';
 import { WAITLIST_MIN_NOTICE_MINUTES, WAITLIST_OFFER_MINUTES } from '@/lib/shop/schemas';
 import {
@@ -37,7 +38,7 @@ export function WaitlistSettingsForm({ defaults }: { defaults: WaitlistSettingsD
 			<FormError
 				message={state.status === 'error' && !state.fieldErrors ? state.message : undefined}
 			/>
-			<label className="flex items-start gap-3 rounded-lg border p-3">
+			<label className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50">
 				<input
 					type="checkbox"
 					name="enabled"
@@ -110,7 +111,9 @@ export function WaitlistSettingsForm({ defaults }: { defaults: WaitlistSettingsD
 			<p className="text-sm text-muted-foreground">
 				Offers are never texted between 9 PM and 9 AM, and only to clients who asked to be texted.
 			</p>
-			<SubmitButton className="justify-self-start">Save</SubmitButton>
+			<StickyActionBar>
+				<SubmitButton>Save</SubmitButton>
+			</StickyActionBar>
 		</form>
 	);
 }

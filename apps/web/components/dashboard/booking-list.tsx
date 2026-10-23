@@ -76,56 +76,62 @@ export function BookingList({
 						key={booking.id}
 						data-testid="booking-row"
 						className={cn(
-							'flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border p-3',
+							'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl border bg-card p-3',
+							'sm:grid-cols-[5.5rem_minmax(0,1fr)_auto_auto] sm:gap-x-4 sm:px-4',
 							unmarked && 'border-amber-400 bg-amber-50 dark:bg-amber-950/30',
-							done && 'border-dashed',
+							done && 'border-dashed bg-transparent',
 						)}
 					>
-						<div className="grid min-w-0 flex-1 gap-0.5 text-sm">
-							<span className="font-medium tabular-nums">
-								{showDate ? `${booking.dateLabel} · ` : null}
-								{booking.timeLabel}
-							</span>
-							<span className="truncate">
-								<Link href={calendarHref(booking)} className="font-medium hover:underline">
-									{booking.clientName}
-								</Link>
-								<span className="text-muted-foreground">
-									{' · '}
-									{booking.serviceName}
-									{showStaff ? ` · ${booking.staffName}` : null}
-								</span>
+						<span className="order-1 text-sm font-semibold tabular-nums sm:order-none">
+							{showDate ? `${booking.dateLabel} · ` : null}
+							{booking.timeLabel}
+						</span>
+						<div className="order-3 col-span-2 grid min-w-0 gap-0.5 sm:order-none sm:col-span-1">
+							<Link href={calendarHref(booking)} className="truncate font-medium hover:underline">
+								{booking.clientName}
+							</Link>
+							<span className="truncate text-sm text-muted-foreground">
+								{booking.serviceName}
+								{showStaff ? ` · ${booking.staffName}` : null}
 							</span>
 						</div>
-						{booking.clientPhone ? (
-							<a
-								href={`tel:${booking.clientPhone}`}
-								className={buttonVariants({ variant: 'ghost', size: 'icon-sm' })}
-								aria-label={`Call ${booking.clientName}`}
-							>
-								<PhoneIcon aria-hidden="true" />
-							</a>
-						) : null}
-						{booking.risk && booking.status === 'confirmed' && !unmarked ? (
-							<RiskBadge risk={booking.risk} />
-						) : null}
-						<ConfirmationBadge booking={booking} />
-						{unmarked ? (
-							<OutcomeButtons bookingId={booking.id} clientName={booking.clientName} />
-						) : (
-							<StatusBadge status={booking.status} />
-						)}
-						{canUndo ? (
-							<Button
-								type="button"
-								size="sm"
-								variant="ghost"
-								onClick={() => void undoOutcome(booking.id)}
-								aria-label={`Undo outcome for ${booking.clientName}`}
-							>
-								<Undo2Icon aria-hidden="true" />
-								Undo
-							</Button>
+						<div className="order-2 flex flex-wrap items-center justify-end gap-1.5 sm:order-none">
+							{booking.risk && booking.status === 'confirmed' && !unmarked ? (
+								<RiskBadge risk={booking.risk} />
+							) : null}
+							<ConfirmationBadge booking={booking} />
+							{unmarked ? null : <StatusBadge status={booking.status} />}
+						</div>
+						{booking.clientPhone || unmarked || canUndo ? (
+							<div className="order-4 col-span-2 flex flex-wrap items-center gap-2 sm:order-none sm:col-span-1 sm:justify-end">
+								{unmarked ? (
+									<OutcomeButtons bookingId={booking.id} clientName={booking.clientName} />
+								) : null}
+								{canUndo ? (
+									<Button
+										type="button"
+										size="sm"
+										variant="ghost"
+										onClick={() => void undoOutcome(booking.id)}
+										aria-label={`Undo outcome for ${booking.clientName}`}
+									>
+										<Undo2Icon aria-hidden="true" />
+										Undo
+									</Button>
+								) : null}
+								{booking.clientPhone ? (
+									<a
+										href={`tel:${booking.clientPhone}`}
+										className={cn(
+											buttonVariants({ variant: 'outline', size: 'icon-sm' }),
+											'ml-auto sm:ml-0',
+										)}
+										aria-label={`Call ${booking.clientName}`}
+									>
+										<PhoneIcon aria-hidden="true" />
+									</a>
+								) : null}
+							</div>
 						) : null}
 					</li>
 				);

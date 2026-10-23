@@ -10,6 +10,11 @@ const eslintConfig = defineConfig([
 			'@typescript-eslint/no-explicit-any': 'error',
 		},
 	},
+	{
+		// ImageResponse only renders plain <img>. Next exempts these files on Linux but not Windows paths.
+		files: ['**/opengraph-image.tsx'],
+		rules: { '@next/next/no-img-element': 'off' },
+	},
 	// Override default ignores of eslint-config-next.
 	globalIgnores([
 		// Default ignores of eslint-config-next:

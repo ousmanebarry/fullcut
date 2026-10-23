@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { FieldShell, FormError, describedBy } from '@/components/forms/fields';
+import { HoneypotField } from '@/components/forms/honeypot-field';
+import { StickyActionBar } from '@/components/layout/sticky-action-bar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +14,7 @@ import type {
 	PublicShop,
 	PublicSlot,
 } from '@/lib/public-booking/types';
+import { validateDetails } from '@/lib/public-booking/validate-details';
 import { BookingSummary, type SummaryItem } from './booking-summary';
 import { SlotSuggestions } from './slot-suggestions';
 
@@ -87,16 +90,11 @@ export function DetailsForm({
 	}
 
 	function validate(): Record<string, string> {
-		const errors: Record<string, string> = {};
-		if (!values.name.trim()) errors.name = 'Enter your name.';
-		if (!values.phone.trim()) errors.phone = 'Enter your mobile number.';
-		else if (phoneLib.current && !phoneLib.current.isValidPhoneNumber(values.phone, shop.country)) {
-			errors.phone = 'Enter a valid mobile number.';
-		}
-		if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
-			errors.email = 'Enter a valid email or leave it blank.';
-		}
-		return errors;
+		const lib = phoneLib.current;
+		return validateDetails(
+			values,
+			lib ? (phone) => lib.isValidPhoneNumber(phone, shop.country) : null,
+		);
 	}
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -147,6 +145,9 @@ export function DetailsForm({
 
 	return (
 		<form onSubmit={onSubmit} noValidate className="grid gap-4">
+			<div className="rounded-xl border bg-muted/40 p-4">
+				<BookingSummary item={summary} />
+			</div>
 			<div ref={errorRef} tabIndex={-1} className="grid gap-2 outline-none">
 				<FormError message={apiError?.message} />
 				{suggestions ? (
@@ -237,26 +238,17 @@ export function DetailsForm({
 				</span>
 			</label>
 
-			{/* Honeypot: off-screen and skipped by keyboard and screen readers; bots fill it in. */}
-			<div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
-				<label htmlFor="details-website">Website</label>
-				<input
-					id="details-website"
-					name="website"
-					tabIndex={-1}
-					autoComplete="off"
-					value={values.website}
-					onChange={(e) => set('website', e.target.value)}
-				/>
-			</div>
+			<HoneypotField
+				id="details-website"
+				value={values.website}
+				onChange={(value) => set('website', value)}
+			/>
 
-			<div className="rounded-lg border bg-muted/40 p-3">
-				<BookingSummary item={summary} />
-			</div>
-
-			<Button type="submit" size="lg" className="h-12 text-base" disabled={submitting}>
-				{submitting ? 'Booking…' : 'Confirm booking'}
-			</Button>
+			<StickyActionBar>
+				<Button type="submit" size="lg" className="h-12 text-base md:w-full" disabled={submitting}>
+					{submitting ? 'Booking…' : 'Confirm booking'}
+				</Button>
+			</StickyActionBar>
 		</form>
 	);
 }

@@ -3,10 +3,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { ClientNotes } from '@/components/clients/client-notes';
 import { ClientContactForm } from '@/components/clients/contact-form';
 import { DeleteClientButton } from '@/components/clients/delete-client-button';
 import { BookingList } from '@/components/dashboard/booking-list';
+import { NewBookingFab } from '@/components/dashboard/new-booking-fab';
+import { PageHeader } from '@/components/layout/page-header';
 import { buttonVariants } from '@/components/ui/button';
 import { requireShopMember } from '@/lib/auth/session';
 import { loadClientProfile, PAST_SHOWN } from '@/lib/clients/queries';
@@ -17,8 +20,9 @@ import { currentInstant } from '@/lib/dashboard/views';
 import { formatCents } from '@/lib/money/format';
 import { toBookingShop } from '@/lib/public-booking/data';
 import { createClient } from '@/lib/supabase/server';
+import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = { title: 'Client · Fullcut' };
+export const metadata: Metadata = { title: 'Client' };
 
 export default function ClientPage({ params }: PageProps<'/dashboard/clients/[id]'>) {
 	return (
@@ -30,7 +34,7 @@ export default function ClientPage({ params }: PageProps<'/dashboard/clients/[id
 				<ArrowLeftIcon aria-hidden="true" className="size-4" />
 				All clients
 			</Link>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading client…</p>}>
+			<Suspense fallback={<ListSkeleton title label="Loading client…" />}>
 				<Profile params={params} />
 			</Suspense>
 		</div>
@@ -52,26 +56,31 @@ async function Profile({ params }: { params: PageProps<'/dashboard/clients/[id]'
 
 	return (
 		<>
-			<div className="flex flex-wrap items-end justify-between gap-3">
-				<div className="grid gap-1">
-					<h1 className="text-2xl font-semibold">{profile.name}</h1>
-					<p className="text-sm text-muted-foreground">
+			<PageHeader
+				title={profile.name}
+				description={
+					<>
 						Client since {profile.createdLabel}
 						{profile.firstSource
 							? ` · first came via ${SOURCE_LABELS[profile.firstSource] ?? profile.firstSource}`
 							: null}
-					</p>
-				</div>
-				{profile.anonymised ? null : (
-					<Link
-						href={bookAgainHref(profile.id, profile.bookAgain)}
-						className={buttonVariants({ size: 'lg' })}
-					>
-						<CalendarPlusIcon aria-hidden="true" />
-						Book again
-					</Link>
-				)}
-			</div>
+					</>
+				}
+				actions={
+					profile.anonymised ? null : (
+						<Link
+							href={bookAgainHref(profile.id, profile.bookAgain)}
+							className={cn(buttonVariants({ size: 'lg' }), 'hidden md:inline-flex')}
+						>
+							<CalendarPlusIcon aria-hidden="true" />
+							Book again
+						</Link>
+					)
+				}
+			/>
+			{profile.anonymised ? null : (
+				<NewBookingFab href={bookAgainHref(profile.id, profile.bookAgain)} label="Book again" />
+			)}
 
 			{profile.anonymised ? (
 				<p
@@ -82,7 +91,7 @@ async function Profile({ params }: { params: PageProps<'/dashboard/clients/[id]'
 				</p>
 			) : null}
 
-			<dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+			<dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
 				<Stat label="Visits" value={stats.visits} />
 				<Stat label="No-shows" value={stats.noShows} />
 				<Stat label="Cancellations" value={stats.cancellations} />
@@ -178,9 +187,9 @@ async function Profile({ params }: { params: PageProps<'/dashboard/clients/[id]'
 
 function Stat({ label, value }: { label: string; value: number | string }) {
 	return (
-		<div className="grid gap-0.5 rounded-lg border p-3">
+		<div className="grid gap-1 rounded-xl border bg-card p-4">
 			<dt className="text-sm text-muted-foreground">{label}</dt>
-			<dd className="text-xl font-semibold tabular-nums">{value}</dd>
+			<dd className="text-xl font-semibold tracking-tight tabular-nums">{value}</dd>
 		</div>
 	);
 }

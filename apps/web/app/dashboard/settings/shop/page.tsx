@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { requireShopOwner } from '@/lib/auth/session';
 import { timeZoneOptions } from '@/lib/shop/timezones';
 import { ShopProfileForm } from './shop-form';
 
-export const metadata: Metadata = { title: 'Shop settings · Fullcut' };
+export const metadata: Metadata = { title: 'Shop settings' };
 
 export default function ShopSettingsPage() {
 	return (
 		<div className="grid max-w-xl gap-4">
 			<h1 className="text-2xl font-semibold">Shop</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton fields={5} />}>
 				<ShopSettings />
 			</Suspense>
 		</div>

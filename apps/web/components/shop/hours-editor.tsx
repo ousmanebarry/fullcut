@@ -46,7 +46,7 @@ export function HoursEditor({
 				return (
 					<div
 						key={day.weekday}
-						className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[9rem_1fr] sm:items-start"
+						className="grid grid-cols-[1fr_auto] gap-2 rounded-xl border bg-card p-3 sm:grid-cols-[9rem_1fr] sm:items-start"
 					>
 						<label className="flex min-h-9 items-center gap-2 text-sm font-medium">
 							<input
@@ -58,9 +58,12 @@ export function HoursEditor({
 							{name}
 						</label>
 						{day.enabled ? (
-							<div className="grid gap-2">
+							<div className="col-span-2 grid gap-2 sm:col-span-1">
 								{day.windows.map((window, index) => (
-									<div key={index} className="flex items-center gap-2">
+									<div
+										key={index}
+										className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-2"
+									>
 										<input
 											type="time"
 											step={300}
@@ -132,7 +135,9 @@ export function HoursEditor({
 								) : null}
 							</div>
 						) : (
-							<p className="flex min-h-9 items-center text-sm text-muted-foreground">Closed</p>
+							<p className="flex min-h-9 items-center justify-end text-sm text-muted-foreground sm:justify-start">
+								Closed
+							</p>
 						)}
 					</div>
 				);

@@ -4,6 +4,8 @@ import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
+import { nativeControlClass } from '@/components/forms/fields';
+import { MOBILE_QUERY, useMediaQuery } from '@/components/layout/use-media-query';
 import { buttonVariants, Button } from '@/components/ui/button';
 import {
 	Sheet,
@@ -17,12 +19,20 @@ import type { ClientMatch } from '@/lib/dashboard/types';
 import type { CalendarModel } from '@/lib/dashboard/views';
 import { cn } from '@/lib/utils';
 import { BookingDetails } from './booking-details';
+import { CalendarAgenda } from './calendar-agenda';
 import { CalendarGrid } from './calendar-grid';
+import { FAB_CLASS } from './new-booking-fab';
 import { NewBookingForm } from './new-booking-form';
+import { StaffTabs } from './staff-tabs';
 import { minuteToTime, useNow, zonedMinuteOfDay } from './use-now';
 
 const PATH = '/dashboard/calendar';
 const DRAWER_PARAMS = ['booking', 'new', 'time', 'client', 'service'];
+const PHONE_LAYOUTS = [
+	{ id: 'agenda', label: 'List' },
+	{ id: 'grid', label: 'Grid' },
+	{ id: 'week', label: 'Week' },
+] as const;
 
 export function CalendarShell({
 	model,
@@ -46,11 +56,22 @@ export function CalendarShell({
 	const bookingId = searchParams.get('booking');
 	const openBooking = bookingId ? bookings.get(bookingId) : undefined;
 	const isNew = searchParams.get('new') === '1';
+	const gridOnPhone = searchParams.get('layout') === 'grid';
+	const agendaColumn = isWeek
+		? null
+		: (model.layout.columns.find((c) => c.key === phoneStaffId) ?? model.layout.columns[0] ?? null);
+	const isPhone = useMediaQuery(MOBILE_QUERY);
+	const sheetSide = isPhone ? 'bottom' : 'right';
+	const sheetClass = (desktopWidth: string) =>
+		isPhone
+			? 'max-h-[92dvh] overflow-y-auto rounded-t-2xl pb-safe'
+			: cn('w-full overflow-y-auto', desktopWidth);
 
 	// Navigation (date, view, week staff) re-renders on the server; drawers only touch the URL.
 	const href = (patch: Record<string, string | null>) => {
 		const params = new URLSearchParams({ view: model.view, date: model.date });
 		if (isWeek && model.selectedStaffId) params.set('staff', model.selectedStaffId);
+		if (gridOnPhone) params.set('layout', 'grid');
 		for (const [key, value] of Object.entries(patch)) {
 			if (value === null) params.delete(key);
 			else params.set(key, value);
@@ -86,15 +107,9 @@ export function CalendarShell({
 	};
 
 	return (
-		<div className="grid gap-3">
+		<div className="grid gap-4">
 			<div className="flex flex-wrap items-center gap-2">
-				<Link
-					href={href({ date: model.today })}
-					className={buttonVariants({ variant: 'outline', size: 'lg' })}
-				>
-					Today
-				</Link>
-				<div className="flex">
+				<div className="flex w-full items-center gap-1 md:w-auto">
 					<Link
 						href={href({ date: model.prevDate })}
 						className={buttonVariants({ variant: 'ghost', size: 'icon-lg' })}
@@ -102,6 +117,12 @@ export function CalendarShell({
 					>
 						<ChevronLeftIcon aria-hidden="true" />
 					</Link>
+					<h1
+						className="min-w-0 flex-1 truncate text-center text-lg font-semibold tracking-tight md:min-w-56 md:text-xl"
+						aria-live="polite"
+					>
+						{model.title}
+					</h1>
 					<Link
 						href={href({ date: model.nextDate })}
 						className={buttonVariants({ variant: 'ghost', size: 'icon-lg' })}
@@ -110,19 +131,52 @@ export function CalendarShell({
 						<ChevronRightIcon aria-hidden="true" />
 					</Link>
 				</div>
-				<h1 className="text-lg font-semibold" aria-live="polite">
-					{model.title}
-				</h1>
+				<Link
+					href={href({ date: model.today })}
+					className={buttonVariants({ variant: 'outline', size: 'lg' })}
+				>
+					Today
+				</Link>
 				<input
 					type="date"
 					aria-label="Go to date"
-					className="h-9 rounded-lg border border-input bg-transparent px-2 text-sm"
+					className={cn(nativeControlClass, 'w-auto')}
 					value={model.date}
 					onChange={(event) => {
 						if (event.target.value) router.push(href({ date: event.target.value }));
 					}}
 				/>
-				<nav aria-label="Calendar view" className="ml-auto flex rounded-lg border p-0.5">
+				<nav
+					aria-label="Calendar layout"
+					className="ml-auto flex rounded-lg border p-0.5 md:hidden"
+				>
+					{PHONE_LAYOUTS.map((option) => {
+						const current =
+							option.id === 'week' ? isWeek : !isWeek && (option.id === 'grid') === gridOnPhone;
+						return (
+							<Link
+								key={option.id}
+								href={href(
+									option.id === 'week'
+										? { view: 'week', staff: phoneStaffId, layout: null }
+										: {
+												view: 'day',
+												staff: null,
+												layout: option.id === 'grid' ? 'grid' : null,
+											},
+								)}
+								aria-current={current ? 'page' : undefined}
+								className={cn(
+									'flex min-h-9 items-center rounded-md px-3 text-sm pointer-coarse:min-h-10',
+									current ? 'bg-primary/10 font-medium text-primary' : 'hover:bg-accent/60',
+								)}
+							>
+								{option.label}
+							</Link>
+						);
+					})}
+				</nav>
+				<nav aria-label="Calendar view" className="ml-auto hidden rounded-lg border p-0.5 md:flex">
 					{(['day', 'week'] as const).map((view) => (
 						<Link
 							key={view}
@@ -133,15 +187,31 @@ export function CalendarShell({
 							aria-current={model.view === view ? 'page' : undefined}
 							className={cn(
 								'rounded-md px-3 py-1 text-sm capitalize',
-								model.view === view ? 'bg-muted font-medium' : 'hover:bg-muted/60',
+								model.view === view
+									? 'bg-primary/10 font-medium text-primary'
+									: 'hover:bg-accent/60',
 							)}
 						>
 							{view}
 						</Link>
 					))}
 				</nav>
-				<Button type="button" size="lg" onClick={() => setDrawerParams({ new: '1' })}>
+				<Button
+					type="button"
+					size="lg"
+					className="hidden md:inline-flex"
+					onClick={() => setDrawerParams({ new: '1' })}
+				>
 					<PlusIcon aria-hidden="true" />
+					New booking
+				</Button>
+				<Button
+					type="button"
+					size="lg"
+					className={FAB_CLASS}
+					onClick={() => setDrawerParams({ new: '1' })}
+				>
+					<PlusIcon aria-hidden="true" className="size-5" />
 					New booking
 				</Button>
 			</div>
@@ -168,43 +238,45 @@ export function CalendarShell({
 							</select>
 						</label>
 					) : model.staff.length > 1 ? (
-						<div role="tablist" aria-label="Staff" className="flex gap-1 overflow-x-auto md:hidden">
-							{model.staff.map((member) => (
-								<button
-									key={member.id}
-									type="button"
-									role="tab"
-									aria-selected={member.id === phoneStaffId}
-									className={cn(
-										'shrink-0 rounded-md border px-3 py-1.5 text-sm',
-										member.id === phoneStaffId ? 'bg-muted font-medium' : '',
-									)}
-									onClick={() => {
-										const params = new URLSearchParams(searchParams);
-										params.set('staff', member.id);
-										window.history.replaceState(null, '', `${PATH}?${params}`);
-									}}
-								>
-									{member.name}
-								</button>
-							))}
-						</div>
+						<StaffTabs
+							className="md:hidden"
+							staff={model.staff}
+							selectedId={phoneStaffId}
+							onSelect={(id) => {
+								const params = new URLSearchParams(searchParams);
+								params.set('staff', id);
+								window.history.replaceState(null, '', `${PATH}?${params}`);
+							}}
+						/>
 					) : null}
 
-					<CalendarGrid
-						layout={model.layout}
-						bookings={bookings}
-						today={model.today}
-						timezone={model.timezone}
-						phoneColumnKey={isWeek ? null : phoneStaffId}
-						onOpenBooking={(id) => setDrawerParams({ booking: id })}
-						onCreateAt={createAt}
-					/>
+					{agendaColumn ? (
+						<CalendarAgenda
+							className={cn('md:hidden', gridOnPhone && 'hidden')}
+							column={agendaColumn}
+							bookings={bookings}
+							today={model.today}
+							timezone={model.timezone}
+							onOpenBooking={(id) => setDrawerParams({ booking: id })}
+							onCreateAt={createAt}
+						/>
+					) : null}
+					<div className={cn(agendaColumn && !gridOnPhone && 'hidden md:block')}>
+						<CalendarGrid
+							layout={model.layout}
+							bookings={bookings}
+							today={model.today}
+							timezone={model.timezone}
+							phoneColumnKey={isWeek ? null : phoneStaffId}
+							onOpenBooking={(id) => setDrawerParams({ booking: id })}
+							onCreateAt={createAt}
+						/>
+					</div>
 				</>
 			)}
 
 			<Sheet open={Boolean(bookingId)} onOpenChange={(open) => (open ? null : closeDrawer())}>
-				<SheetContent className="w-full overflow-y-auto sm:max-w-md">
+				<SheetContent side={sheetSide} className={sheetClass('sm:max-w-md')}>
 					<SheetHeader>
 						<SheetTitle>{openBooking ? openBooking.clientName : 'Booking'}</SheetTitle>
 						<SheetDescription>
@@ -228,7 +300,7 @@ export function CalendarShell({
 			</Sheet>
 
 			<Sheet open={isNew} onOpenChange={(open) => (open ? null : closeDrawer())}>
-				<SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+				<SheetContent side={sheetSide} className={sheetClass('sm:max-w-lg')}>
 					<SheetHeader>
 						<SheetTitle>New booking</SheetTitle>
 						<SheetDescription>For a phone call or a walk-in.</SheetDescription>

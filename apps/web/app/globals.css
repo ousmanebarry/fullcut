@@ -55,18 +55,18 @@
 	--card-foreground: oklch(0.145 0 0);
 	--popover: oklch(1 0 0);
 	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
+	--primary: oklch(0.46 0.085 195);
+	--primary-foreground: oklch(0.99 0 0);
 	--secondary: oklch(0.97 0 0);
 	--secondary-foreground: oklch(0.205 0 0);
 	--muted: oklch(0.97 0 0);
 	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
+	--accent: oklch(0.94 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: oklch(0.577 0.245 27.325);
 	--border: oklch(0.922 0 0);
 	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
+	--ring: oklch(0.62 0.09 195);
 	--chart-1: oklch(0.87 0 0);
 	--chart-2: oklch(0.556 0 0);
 	--chart-3: oklch(0.439 0 0);
@@ -90,8 +90,8 @@
 	--card-foreground: oklch(0.985 0 0);
 	--popover: oklch(0.205 0 0);
 	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.922 0 0);
-	--primary-foreground: oklch(0.205 0 0);
+	--primary: oklch(0.74 0.105 190);
+	--primary-foreground: oklch(0.18 0.02 195);
 	--secondary: oklch(0.269 0 0);
 	--secondary-foreground: oklch(0.985 0 0);
 	--muted: oklch(0.269 0 0);
@@ -101,7 +101,7 @@
 	--destructive: oklch(0.704 0.191 22.216);
 	--border: oklch(1 0 0 / 10%);
 	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
+	--ring: oklch(0.6 0.09 190);
 	--chart-1: oklch(0.87 0 0);
 	--chart-2: oklch(0.556 0 0);
 	--chart-3: oklch(0.439 0 0);
@@ -123,8 +123,55 @@
 	}
 	body {
 		@apply bg-background text-foreground;
+		/* viewport-fit=cover: keep content clear of the notch in landscape. */
+		padding-left: env(safe-area-inset-left);
+		padding-right: env(safe-area-inset-right);
 	}
 	html {
 		@apply font-sans;
+	}
+	/* Tailwind v4 preflight resets buttons to cursor: default. */
+	button:not(:disabled),
+	[role='button']:not([aria-disabled='true']),
+	[role='tab']:not([aria-disabled='true']),
+	[role='option']:not([aria-disabled='true']),
+	[role='menuitem']:not([aria-disabled='true']),
+	summary,
+	select:not(:disabled),
+	input[type='checkbox']:not(:disabled),
+	input[type='radio']:not(:disabled),
+	label:has(input[type='checkbox']:not(:disabled)),
+	label:has(input[type='radio']:not(:disabled)) {
+		cursor: pointer;
+	}
+	button:disabled,
+	select:disabled {
+		cursor: not-allowed;
+	}
+	@media (pointer: coarse) {
+		input[type='checkbox'],
+		input[type='radio'] {
+			min-width: 1.25rem;
+			min-height: 1.25rem;
+		}
+	}
+}
+
+@utility pt-safe {
+	padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
 	}
 }

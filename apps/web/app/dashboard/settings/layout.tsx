@@ -5,8 +5,8 @@ import { settingsSections } from './sections';
 
 export default function SettingsLayout({ children }: LayoutProps<'/dashboard/settings'>) {
 	return (
-		<div className="mx-auto grid w-full max-w-5xl gap-6 md:grid-cols-[12rem_1fr]">
-			<Suspense fallback={<div className="h-10" />}>
+		<div className="mx-auto grid w-full max-w-5xl content-start gap-4 md:grid-cols-[12rem_1fr] md:gap-8">
+			<Suspense fallback={null}>
 				<RoleAwareNav />
 			</Suspense>
 			<div className="min-w-0">{children}</div>

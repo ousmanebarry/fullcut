@@ -18,7 +18,7 @@ export function SlotSuggestions({
 						<button
 							type="button"
 							onClick={() => onPick(slot)}
-							className="min-h-11 rounded-lg border bg-background px-3 text-sm font-medium outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+							className="min-h-11 rounded-lg border bg-background px-3 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
 							{slot.label}
 						</button>

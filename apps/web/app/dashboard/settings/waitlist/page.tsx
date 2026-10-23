@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { FormSkeleton } from '@/components/skeletons';
 import { requireShopOwner } from '@/lib/auth/session';
 import { WaitlistSettingsForm } from './waitlist-form';
 
-export const metadata: Metadata = { title: 'Waitlist · Fullcut' };
+export const metadata: Metadata = { title: 'Waitlist' };
 
 export default function WaitlistSettingsPage() {
 	return (
 		<div className="grid max-w-xl gap-4">
 			<h1 className="text-2xl font-semibold">Waitlist</h1>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+			<Suspense fallback={<FormSkeleton fields={3} />}>
 				<WaitlistSettings />
 			</Suspense>
 		</div>

@@ -48,8 +48,11 @@ function setDone(done: boolean) {
 	for (const listener of listeners) listener();
 }
 
+// Phones and desktop each render a Main nav; only one is visible.
 const findTarget = (href: string) =>
-	document.querySelector<HTMLElement>(`nav[aria-label="Main"] a[href="${href}"]`);
+	Array.from(
+		document.querySelectorAll<HTMLElement>(`nav[aria-label="Main"] a[href="${href}"]`),
+	).find((el) => el.getClientRects().length > 0);
 
 /** A four-step tour of the demo dashboard, anchored to the main navigation. */
 export function DemoTour() {
@@ -70,7 +73,11 @@ export function DemoTour() {
 			if (!el) return;
 			const margin = 8;
 			const rect = target?.getBoundingClientRect();
-			const top = rect ? rect.bottom + margin : window.innerHeight / 3;
+			const below = rect ? rect.bottom + margin : window.innerHeight / 3;
+			const top =
+				rect && below + el.offsetHeight > window.innerHeight
+					? rect.top - margin - el.offsetHeight
+					: below;
 			const centre = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
 			const left = Math.min(
 				Math.max(centre - el.offsetWidth / 2, margin),
@@ -146,7 +153,7 @@ export function RestartTourButton() {
 		<button
 			type="button"
 			onClick={() => setDone(false)}
-			className="font-medium underline underline-offset-4"
+			className="font-medium underline underline-offset-4 hover:no-underline"
 		>
 			Take the tour
 		</button>

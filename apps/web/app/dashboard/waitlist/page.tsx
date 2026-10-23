@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { ListSkeleton } from '@/components/skeletons';
 import { AddEntryForm } from '@/components/dashboard/add-waitlist-entry';
+import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { requireShopMember } from '@/lib/auth/session';
@@ -12,19 +14,16 @@ import { localDateOf, plusDays, timeZone } from '@/lib/time';
 import { OFFER_STATUS_LABELS, listActiveEntries, listRecentOffers } from '@/lib/waitlist/dashboard';
 import { cancelEntryAction } from './actions';
 
-export const metadata: Metadata = { title: 'Waitlist · Fullcut' };
+export const metadata: Metadata = { title: 'Waitlist' };
 
 export default function WaitlistPage() {
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-6">
-			<div className="grid gap-1">
-				<h1 className="text-2xl font-semibold">Waitlist</h1>
-				<p className="text-sm text-muted-foreground">
-					When a booking is cancelled or moved, matching clients here get a text. The first to tap
-					books the slot.
-				</p>
-			</div>
-			<Suspense fallback={<p className="text-sm text-muted-foreground">Loading waitlist…</p>}>
+			<PageHeader
+				title="Waitlist"
+				description="When a booking is cancelled or moved, matching clients here get a text. The first to tap books the slot."
+			/>
+			<Suspense fallback={<ListSkeleton label="Loading waitlist…" />}>
 				<Waitlist />
 			</Suspense>
 		</div>
@@ -73,9 +72,9 @@ async function Waitlist() {
 							<li
 								key={e.id}
 								data-testid="waitlist-entry"
-								className="flex flex-wrap items-start justify-between gap-3 rounded-lg border p-3"
+								className="flex items-start justify-between gap-3 rounded-xl border bg-card p-4"
 							>
-								<div className="grid gap-0.5 text-sm">
+								<div className="grid min-w-0 gap-0.5 text-sm">
 									<Link
 										href={`/dashboard/clients/${e.clientId}`}
 										className="font-medium hover:underline"
@@ -128,40 +127,60 @@ async function Waitlist() {
 						No slots offered yet.
 					</p>
 				) : (
-					<div className="overflow-x-auto rounded-lg border">
-						<table className="w-full text-sm">
-							<thead className="bg-muted/50 text-left">
-								<tr>
-									<th className="px-3 py-2 font-medium">Slot</th>
-									<th className="px-3 py-2 font-medium">Client</th>
-									<th className="px-3 py-2 font-medium">Service</th>
-									<th className="px-3 py-2 font-medium">Texted</th>
-									<th className="px-3 py-2 font-medium">Outcome</th>
-								</tr>
-							</thead>
-							<tbody>
-								{offers.map((o) => (
-									<tr key={o.id} className="border-t">
-										<td className="px-3 py-2">
-											{o.slotLabel}
-											<span className="block text-xs text-muted-foreground">{o.staffName}</span>
-										</td>
-										<td className="px-3 py-2">{o.clientName}</td>
-										<td className="px-3 py-2">{o.serviceName}</td>
-										<td className="px-3 py-2">
-											{o.sentLabel}
-											<span className="block text-xs text-muted-foreground">Wave {o.wave}</span>
-										</td>
-										<td className="px-3 py-2">
-											<Badge variant={o.status === 'claimed' ? 'default' : 'secondary'}>
-												{OFFER_STATUS_LABELS[o.status]}
-											</Badge>
-										</td>
+					<>
+						<ul className="grid gap-2 md:hidden">
+							{offers.map((o) => (
+								<li key={o.id} className="grid gap-1 rounded-xl border bg-card p-4 text-sm">
+									<div className="flex items-start justify-between gap-2">
+										<span className="font-medium">{o.slotLabel}</span>
+										<Badge variant={o.status === 'claimed' ? 'default' : 'secondary'}>
+											{OFFER_STATUS_LABELS[o.status]}
+										</Badge>
+									</div>
+									<span>
+										{o.clientName} · {o.serviceName}
+									</span>
+									<span className="text-muted-foreground">
+										{o.staffName} · Texted {o.sentLabel} · Wave {o.wave}
+									</span>
+								</li>
+							))}
+						</ul>
+						<div className="hidden overflow-x-auto rounded-lg border md:block">
+							<table className="w-full text-sm">
+								<thead className="bg-muted/50 text-left">
+									<tr>
+										<th className="px-3 py-2 font-medium">Slot</th>
+										<th className="px-3 py-2 font-medium">Client</th>
+										<th className="px-3 py-2 font-medium">Service</th>
+										<th className="px-3 py-2 font-medium">Texted</th>
+										<th className="px-3 py-2 font-medium">Outcome</th>
 									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+								</thead>
+								<tbody>
+									{offers.map((o) => (
+										<tr key={o.id} className="border-t">
+											<td className="px-3 py-2">
+												{o.slotLabel}
+												<span className="block text-xs text-muted-foreground">{o.staffName}</span>
+											</td>
+											<td className="px-3 py-2">{o.clientName}</td>
+											<td className="px-3 py-2">{o.serviceName}</td>
+											<td className="px-3 py-2">
+												{o.sentLabel}
+												<span className="block text-xs text-muted-foreground">Wave {o.wave}</span>
+											</td>
+											<td className="px-3 py-2">
+												<Badge variant={o.status === 'claimed' ? 'default' : 'secondary'}>
+													{OFFER_STATUS_LABELS[o.status]}
+												</Badge>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					</>
 				)}
 			</section>
 		</>
