@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Logo } from '@/components/brand/logo';
 import { DemoEntry } from '@/components/demo/demo-entry';
+import { PhoneFrame } from '@/components/marketing/phone-frame';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { buttonVariants } from '@/components/ui/button';
 import { getDemoShopSlug } from '@/lib/env';
@@ -161,22 +162,27 @@ export default function Home() {
 									</h3>
 									<p className="text-pretty text-muted-foreground">{feature.body}</p>
 								</div>
-								<Image
-									src={feature.image.src}
-									width={feature.image.width}
-									height={feature.image.height}
-									alt={feature.image.alt}
-									sizes={
-										'phone' in feature
-											? '(min-width: 768px) 280px, 70vw'
-											: '(min-width: 768px) 560px, 100vw'
-									}
-									className={
-										'phone' in feature
-											? 'mx-auto w-full max-w-70 rounded-3xl border-4 border-foreground/80 shadow-lg'
-											: 'w-full rounded-xl border shadow-lg'
-									}
-								/>
+								{'phone' in feature ? (
+									<PhoneFrame>
+										<Image
+											src={feature.image.src}
+											width={feature.image.width}
+											height={feature.image.height}
+											alt={feature.image.alt}
+											sizes="(min-width: 768px) 260px, 65vw"
+											className="block h-auto w-full"
+										/>
+									</PhoneFrame>
+								) : (
+									<Image
+										src={feature.image.src}
+										width={feature.image.width}
+										height={feature.image.height}
+										alt={feature.image.alt}
+										sizes="(min-width: 768px) 560px, 100vw"
+										className="w-full rounded-xl border shadow-lg"
+									/>
+								)}
 							</article>
 						))}
 					</div>
