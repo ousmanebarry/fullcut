@@ -62,6 +62,7 @@ test.describe('waitlist refill', () => {
 		// Client A cancels from the manage link; the freed slot is queued for the waitlist.
 		await clientA.getByRole('link', { name: 'Manage booking' }).click();
 		await expect(clientA).toHaveURL(/\/b\/[A-Za-z0-9_-]{43}$/);
+		await clientA.waitForLoadState('networkidle');
 		await clientA.getByRole('button', { name: 'Cancel booking' }).click();
 		await clientA.getByRole('button', { name: 'Yes, cancel it' }).click();
 		await expect(clientA.getByText('Your booking is cancelled.')).toBeVisible();
