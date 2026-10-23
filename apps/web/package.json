@@ -14,7 +14,8 @@
 		"test:e2e": "playwright test",
 		"check:bundle": "node scripts/check-client-bundle.mjs",
 		"jobs:dev": "node scripts/jobs-dev.mjs",
-		"screenshots": "node scripts/screenshots.mjs"
+		"screenshots": "node scripts/screenshots.mjs",
+		"gallery": "node scripts/gallery.mjs"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.9.0",
