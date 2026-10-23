@@ -40,7 +40,6 @@ export default async function ShopOpengraphImage({
 			}}
 		>
 			{logoUrl ? (
-				// eslint-disable-next-line @next/next/no-img-element -- ImageResponse only renders plain <img>.
 				<img
 					src={logoUrl}
 					alt=""
