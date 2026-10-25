@@ -16,7 +16,9 @@ Flat price. Zero commission. Your clients stay yours. And the app actively fills
 
 </div>
 
-![Fullcut demo](docs/media/demo.gif)
+<video src="docs/media/demo.mp4" controls muted loop playsinline width="100%">
+  <a href="docs/media/demo.mp4">Watch the Fullcut demo</a>
+</video>
 
 **Screenshots:** [light desktop](docs/media/screens/light/desktop) · [light phone](docs/media/screens/light/phone) · [dark desktop](docs/media/screens/dark/desktop) · [dark phone](docs/media/screens/dark/phone)
 
